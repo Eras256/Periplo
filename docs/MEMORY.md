@@ -288,3 +288,19 @@
   (`gh run rerun`) rather than assuming the visibility change fixed it.
   `build` passed in 24s. Two real, stacked bugs, two real fixes, one
   empirical confirmation at the end — no step of this was assumed.
+- **The user then pushed back on that verification itself** — right to:
+  a manual rerun isn't proof the *normal* trigger path works, and a
+  published causal claim ("osv-scan broke the file") needed to survive
+  scrutiny, not just sound plausible. Re-checked both halves properly
+  instead of either defending the original story unexamined or caving to
+  correct it without evidence: pulled the raw job-count API response for
+  a pre-fix run (`{"total_count":0,"jobs":[]}`, structurally different
+  from a billing-blocked-but-scheduled job) to confirm the two-cause story
+  was real, and separately confirmed the fix holds under an organic
+  `push` trigger, not just a manual rerun. Both checks came back
+  supporting the original diagnosis — which is a materially stronger
+  claim than the first pass, because now there's API evidence attached,
+  not just "it worked when I tried it." Matches the user's own framing:
+  catching a wrong verification method and re-verifying properly is
+  better evidence of discipline than getting it right by luck the first
+  time.

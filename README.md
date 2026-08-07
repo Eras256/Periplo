@@ -1,5 +1,7 @@
 # Periplo
 
+[![CI](https://github.com/Eras256/Periplo/actions/workflows/ci.yml/badge.svg)](https://github.com/Eras256/Periplo/actions/workflows/ci.yml)
+
 The discovery layer for x402-payable services on Stellar.
 
 **Status: Phase 3 (facilitator) complete, and live on `stellar:testnet`
@@ -134,16 +136,34 @@ Baseline transcripts backing the conformance claims above:
 [`conformance/baseline/x402-org/verify-settle-malformed.md`](conformance/baseline/x402-org/verify-settle-malformed.md).
 Settled transaction evidence: [`conformance/RESULTS.md`](conformance/RESULTS.md).
 
-CI (`.github/workflows/ci.yml`) runs the same gate on every push, and is
-**confirmed green as of 2026-08-07** — [run
-31222094411](https://github.com/Eras256/Periplo/actions/runs/31222094411),
-`build` passed in 24s. It was silently broken from Phase 1 through Phase 3
-for two stacked reasons, both real and both fixed: a malformed
-reusable-workflow reference in a since-removed `osv-scan` job made GitHub
-reject the whole file before scheduling any job, and — once that was
-fixed — a private-repo Actions minutes/billing limit blocked the job from
-starting at all, resolved by making the repo public. See `docs/DEFERRED.md`
-for the full timeline; re-adding a working `osv-scan` job is still open.
+CI (`.github/workflows/ci.yml`, badge above) runs the same gate on every
+push. **Confirmed green via a genuine push-triggered run, not a manual
+rerun**: [run
+31222406798](https://github.com/Eras256/Periplo/actions/runs/31222406798)
+(triggered by the `docs: CI confirmed green...` commit itself), `build`
+passed in 23s.
+
+It was silently broken from Phase 1 through Phase 3, for two independently
+verified causes, not one — checked via the GitHub API, not inferred from
+a plausible-sounding story:
+
+1. A malformed reusable-workflow reference in a since-removed `osv-scan`
+   job made GitHub reject the whole workflow file before scheduling any
+   job at all — confirmed via `gh api .../runs/<id>/jobs` on a pre-fix run
+   returning `{"total_count":0,"jobs":[]}`. Removing that job alone
+   produced a run where a `build` job entry *was* created (12s, not 0s).
+2. That `build` job then failed to start with GitHub reporting a
+   spending-limit/billing block. The project owner correctly diagnosed
+   this as the private-repo Actions-minutes limit and made the repo
+   public. A manually re-triggered run of the exact same workflow then
+   executed and passed — and the very next *organic* push confirmed it
+   independently (the run linked above).
+
+These are two distinct, sequential failures with two different GitHub
+error messages and two different job-scheduling shapes (zero jobs
+scheduled vs. one job scheduled-but-blocked) — not a single misdiagnosed
+cause. See `docs/DEFERRED.md` for the full timeline and raw evidence.
+Re-adding a working `osv-scan` job is still open.
 
 ## Deployment (what actually runs)
 

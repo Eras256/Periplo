@@ -423,12 +423,27 @@ Cause, per the project owner: the repo was private, and private repos on
 GitHub only get a limited free tier of Actions minutes before requiring
 billing/a spending limit — public repos get free standard-runner minutes
 without that constraint. **Fixed** by making `Eras256/Periplo` public.
-Verified, not assumed: `gh run rerun 31222094411` after the visibility
-change actually executed this time (`in_progress`, not an instant
-billing-error failure) and finished `build` — **success, 24s**
-(`https://github.com/Eras256/Periplo/actions/runs/31222094411`). CI is
-confirmed green as of 2026-08-07, both the workflow-file bug and the
-billing block resolved.
+
+**Verified twice, not assumed once:**
+1. `gh run rerun 31222094411` after the visibility change actually
+   executed this time (`in_progress`, not an instant billing-error
+   failure) and finished `build` — success, 24s.
+2. The project owner (correctly) pushed back on trusting a manual rerun
+   alone — a rerun can behave differently from an organic trigger. The
+   very next real `push` (no `rerun` involved) triggered its own new run,
+   `31222406798`, and it also passed for real: `build` in 23s
+   (`https://github.com/Eras256/Periplo/actions/runs/31222406798`).
+
+Also re-verified the earlier "workflow file issue" runs weren't actually
+the same billing problem wearing a different message, rather than just
+asserting the two-cause story: `gh api
+repos/Eras256/Periplo/actions/runs/31220202302/jobs` (a pre-fix, `push`-
+triggered run) returns `{"total_count":0,"jobs":[]}` — literally zero job
+entries created. That's structurally different from the billing block,
+which *does* create a `build` job entry and then blocks it from starting.
+Two distinct GitHub error messages, two distinct job-scheduling shapes,
+two independent fixes, both confirmed against real runs — not one
+misdiagnosed cause redescribed. CI is confirmed green as of 2026-08-07.
 
 One harmless annotation surfaced on the passing run: `actions/checkout@v4`,
 `actions/setup-node@v4`, and `pnpm/action-setup@v4` are running on a
