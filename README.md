@@ -134,12 +134,16 @@ Baseline transcripts backing the conformance claims above:
 [`conformance/baseline/x402-org/verify-settle-malformed.md`](conformance/baseline/x402-org/verify-settle-malformed.md).
 Settled transaction evidence: [`conformance/RESULTS.md`](conformance/RESULTS.md).
 
-CI (`.github/workflows/ci.yml`) runs the same gate on every push. It was
-silently broken from Phase 1 through Phase 3 — a malformed reusable-workflow
-reference in a since-removed `osv-scan` job made GitHub reject the whole
-file before scheduling any job, so `build` never actually ran in CI despite
-every phase's local gate passing (see `docs/DEFERRED.md`). Fixed 2026-08-07;
-re-adding a working `osv-scan` job is tracked there too.
+CI (`.github/workflows/ci.yml`) runs the same gate on every push, and is
+**confirmed green as of 2026-08-07** — [run
+31222094411](https://github.com/Eras256/Periplo/actions/runs/31222094411),
+`build` passed in 24s. It was silently broken from Phase 1 through Phase 3
+for two stacked reasons, both real and both fixed: a malformed
+reusable-workflow reference in a since-removed `osv-scan` job made GitHub
+reject the whole file before scheduling any job, and — once that was
+fixed — a private-repo Actions minutes/billing limit blocked the job from
+starting at all, resolved by making the repo public. See `docs/DEFERRED.md`
+for the full timeline; re-adding a working `osv-scan` job is still open.
 
 ## Deployment (what actually runs)
 

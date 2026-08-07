@@ -411,21 +411,32 @@ running `pnpm ci` locally and assuming CI mirrors it.
   reachability problem, since the actual behavior (not the warning text)
   is what was verified.
 
-## CI, part 2 — the workflow-file bug is fixed, but a separate billing block remains
+## CI, part 2 — resolved: the billing block was private-repo Actions minutes
 
-After removing the broken `osv-scan` job, the next push's run actually
-parsed and scheduled the `build` job (12s runtime, not 0s) — confirming
-the workflow-file fix worked. But the job itself never started:
+After removing the broken `osv-scan` job, the next push's run parsed and
+scheduled `build` (12s runtime, not 0s — confirming the workflow-file fix
+worked), but the job itself never started:
 > "The job was not started because recent account payments have failed or
-> your spending limit needs to be increased. Please check the 'Billing &
-> plans' section in your settings"
+> your spending limit needs to be increased."
 
-This is a GitHub Actions billing state on the `Eras256` account, entirely
-outside what this session can fix — genuinely blocked, per spec §12 rule
-5, logged here rather than worked around. **Action needed from the
-project owner**: check Settings → Billing & plans on the `Eras256`
-GitHub account (or the org CI runs under) and resolve the payment/limit
-issue. Once that's done, re-run the latest workflow (`gh run rerun
-<run-id>` or push any commit) to confirm `build` actually executes and
-passes — the workflow-file bug being fixed is necessary but not
-sufficient to call CI green; that step is still unverified.
+Cause, per the project owner: the repo was private, and private repos on
+GitHub only get a limited free tier of Actions minutes before requiring
+billing/a spending limit — public repos get free standard-runner minutes
+without that constraint. **Fixed** by making `Eras256/Periplo` public.
+Verified, not assumed: `gh run rerun 31222094411` after the visibility
+change actually executed this time (`in_progress`, not an instant
+billing-error failure) and finished `build` — **success, 24s**
+(`https://github.com/Eras256/Periplo/actions/runs/31222094411`). CI is
+confirmed green as of 2026-08-07, both the workflow-file bug and the
+billing block resolved.
+
+One harmless annotation surfaced on the passing run: `actions/checkout@v4`,
+`actions/setup-node@v4`, and `pnpm/action-setup@v4` are running on a
+deprecated internal Node 20 runner-action-runtime (unrelated to this
+project's own Node 22 pin — it's about the version GitHub's runner uses to
+execute the action's own code). Not urgent; worth bumping to newer action
+versions eventually.
+
+Re-adding a working `osv-scan` job (spec §6/§7 want it as a hard gate) is
+still open — next attempt should be validated against a real, isolated
+push before being trusted, same caution as before.

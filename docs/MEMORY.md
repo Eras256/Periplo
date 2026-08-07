@@ -282,3 +282,9 @@
 - Scaled the Fly app 2→1 machines after actually looking at
   `fly scale show` and `fly machines list` instead of trusting the
   default `fly deploy` chose.
+- **CI is now genuinely confirmed green** — the user correctly diagnosed
+  the remaining billing block as a private-repo Actions-minutes limit and
+  made the repo public; verified by re-running the exact failing workflow
+  (`gh run rerun`) rather than assuming the visibility change fixed it.
+  `build` passed in 24s. Two real, stacked bugs, two real fixes, one
+  empirical confirmation at the end — no step of this was assumed.
