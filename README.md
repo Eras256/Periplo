@@ -36,9 +36,9 @@ for a service without a human wiring up an integration first. It also carries
 cannot express (see [`spec/`](spec/), Phase 6, not yet written).
 
 This is a response to the Stellar Community Fund RFP *"X402 Facilitator with
-Bazaar (discovery) support"* (SCF #45, Q3 2026). Full scope: see the build
-specification this repository is being built against (not committed here —
-it's the brief, not the product).
+Bazaar (discovery) support"* (SCF #45, Q3 2026). Full scope: see
+[`docs/SPEC.md`](docs/SPEC.md), the build specification this repository is
+being built against.
 
 ## Architecture (planned — nothing below this line is deployed yet)
 
@@ -106,3 +106,17 @@ build spec's manifest and re-checked incrementally per phase; see
 A full re-verification pass with dates stated here is required before
 submission (spec §11) — not yet done, since most pinned packages aren't
 introduced into the codebase yet.
+
+## Documentation
+
+- [`docs/SPEC.md`](docs/SPEC.md) — the full build specification, phased 0–10.
+- [`CLAUDE.md`](CLAUDE.md) — repo guide for Claude Code sessions (commands,
+  architecture, working rules).
+- [`docs/SKILLS.md`](docs/SKILLS.md) — which `stellar-build` skills are
+  actually available in the build environment, mapped to spec phases.
+- [`docs/DEFERRED.md`](docs/DEFERRED.md) — everything deliberately not built
+  yet, and every environment divergence from the spec's assumptions.
+- [`docs/MEMORY.md`](docs/MEMORY.md) — running log of *why* things were
+  built the way they were.
+- [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md) — partial, dated snapshot of the
+  competitive landscape (regenerate before relying on it for the submission).
