@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+# Builds apps/facilitator only. Run from the repo root (build context must
+# include the pnpm workspace root — apps/facilitator has no runtime
+# dependency on packages/bazaar or packages/licence-check, but pnpm
+# workspace resolution needs the root lockfile/manifest regardless).
+
+FROM node:22-slim AS base
+RUN corepack enable
+WORKDIR /app
+
+FROM base AS deps
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages/licence-check/package.json packages/licence-check/package.json
+COPY packages/bazaar/package.json packages/bazaar/package.json
+COPY apps/facilitator/package.json apps/facilitator/package.json
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS build
+COPY tsconfig.json tsconfig.base.json ./
+COPY packages/licence-check packages/licence-check
+COPY packages/bazaar packages/bazaar
+COPY apps/facilitator apps/facilitator
+RUN pnpm --filter @periplo/facilitator build
+
+FROM base AS runtime
+ENV NODE_ENV=production
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/facilitator/node_modules ./apps/facilitator/node_modules
+COPY --from=build /app/apps/facilitator/dist ./apps/facilitator/dist
+COPY --from=build /app/apps/facilitator/package.json ./apps/facilitator/package.json
+
+EXPOSE 8402
+CMD ["node", "apps/facilitator/dist/serve.js"]

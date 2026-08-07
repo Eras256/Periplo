@@ -2,10 +2,17 @@
 
 The discovery layer for x402-payable services on Stellar.
 
-**Status: Phase 3 (facilitator) complete.** This README states
+**Status: Phase 3 (facilitator) complete, and live on `stellar:testnet`
+at https://periplo-testnet.fly.dev** (deployment pulled forward from
+Phase 10 at the project owner's request — not a sign the rest of Phase 10
+is done; see [`docs/DEFERRED.md`](docs/DEFERRED.md)). This README states
 only what is built, linked, tested, or hashed today. Everything else is
-roadmap, marked as such. See [`docs/DEFERRED.md`](docs/DEFERRED.md) for
-what's deliberately not built yet and why.
+roadmap, marked as such.
+
+**No frontend yet.** The developer hub (`apps/hub`) is Phase 9 — not
+started. `/browse`, `/playground`, `/status` and the rest of §10's routes
+don't exist. The only user-facing surface right now is the facilitator's
+JSON API itself.
 
 ## What's real right now
 
@@ -36,14 +43,17 @@ what's deliberately not built yet and why.
   run for real against the project, not mocked). See
   [`packages/bazaar/src/db`](packages/bazaar/src/db) for the typed client.
 - [`apps/facilitator`](apps/facilitator) — `verify`/`settle`/`supported`
-  for the `exact` scheme on both Stellar networks, built on
-  `@x402/core` + `@x402/stellar` (settlement logic is theirs, not
-  reimplemented). A **real settled transaction on `stellar:testnet`** is
-  recorded in [`conformance/RESULTS.md`](conformance/RESULTS.md), with the
-  hash independently checked against Horizon — not just printed by our own
+  for the `exact` scheme, built on `@x402/core` + `@x402/stellar`
+  (settlement logic is theirs, not reimplemented). A **real settled
+  transaction on `stellar:testnet`** is recorded in
+  [`conformance/RESULTS.md`](conformance/RESULTS.md), with the hash
+  independently checked against Horizon — not just printed by our own
   script and trusted. Importable as a library (no HTTP required) for
   self-facilitation inside a resource server, or wrapped in the included
-  Hono app for hosted/self-hosted use.
+  Hono app for hosted/self-hosted use. **Live at
+  https://periplo-testnet.fly.dev** — try `GET /supported` or
+  `GET /health` directly. `stellar:pubnet` is not configured (no mainnet
+  key exists yet, deliberately).
 
 Nothing else — no search ranking, no contract, no hub —
 exists in this repository yet. Do not infer capability

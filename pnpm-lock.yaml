@@ -26,6 +26,9 @@ importers:
 
   apps/facilitator:
     dependencies:
+      '@hono/node-server':
+        specifier: 2.1.0
+        version: 2.1.0(hono@4.13.0)
       '@stellar/stellar-sdk':
         specifier: 16.2.0
         version: 16.2.0(debug@4.4.3)
@@ -264,6 +267,12 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@hono/node-server@2.1.0':
+    resolution: {integrity: sha512-XovyyCCnBzW+zKu+z/zq8hwNs4KOR5rEMAOxo2f40Q5xoOI37IMm6MIg2COOUtUApo0i6850MTBKH2u4QLGIqg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      hono: ^4
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
@@ -1150,6 +1159,10 @@ snapshots:
 
   '@esbuild/win32-x64@0.28.1':
     optional: true
+
+  '@hono/node-server@2.1.0(hono@4.13.0)':
+    dependencies:
+      hono: 4.13.0
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 

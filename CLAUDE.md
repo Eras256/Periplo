@@ -32,6 +32,14 @@ Actions secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
 `apps/facilitator/src/core.test.ts`; both skip themselves (not a failure)
 when their env vars aren't set.
 
+**`apps/facilitator` is also live on Fly.io** at
+`https://periplo-testnet.fly.dev` (`stellar:testnet` only) — pulled
+forward from Phase 10 at explicit request, not a sign the rest of Phase 10
+is done (see `docs/DEFERRED.md`). Redeploy with
+`fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator -a periplo-testnet`
+from the repo root; secrets are set via `fly secrets set -a periplo-testnet`,
+never in `fly.facilitator.toml`.
+
 ## Non-negotiable constraints (spec §1) — check every change against these
 
 - **Apache-2.0 only.** No AGPL, no other copyleft, anywhere in the shipped

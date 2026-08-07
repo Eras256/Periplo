@@ -314,3 +314,45 @@ anywhere obvious beforehand. Any seller-side helper built in Phase 4 that
 constructs `paymentRequirements` for Stellar must set this field, or every
 client using `@x402/stellar` against it will fail before even reaching the
 facilitator.
+
+## Phase 10 — started early, at explicit request (deployment, not the full phase)
+
+`apps/facilitator` is live on Fly.io (`stellar:testnet` only) at
+`https://periplo-testnet.fly.dev`, deployed 2026-08-07 out of the normal
+phase sequence because the project owner asked for it directly. **This is
+not "Phase 10 complete"** — it's the one piece (facilitator deployment)
+pulled forward; the rest of Phase 10's scope (an equivalent
+`periplo-mainnet` app, the runbook, monitoring beyond a bare `/health`,
+public telemetry endpoint, both example integrations, hardening pass,
+Matrix/Mastodon channels) is still not built, and shouldn't be inferred
+from the app being live.
+
+- **`@hono/node-server@2.1.0` (MIT) added** — this closes the gap flagged
+  in Phase 3's entry above ("No Node HTTP adapter for Hono chosen yet").
+  It's outside spec §2's manifest; flagged here rather than silently
+  bundled into an unrelated commit, per working rule 6, even though the
+  deploy itself was the explicit ask that made it necessary.
+- **`periplo-mainnet` does not exist and won't until a real mainnet
+  fee-sponsor key exists.** Spec §2/§13 commit to both networks, but
+  nothing about "deploy now" implies fabricating mainnet infrastructure
+  ahead of having real funds/a real key to back it — that's a distinct,
+  later decision, not an oversight.
+- **Fly API token** was pasted directly in the build session (same
+  handling as the Supabase/Stellar secrets before it): stored in local
+  `.env` only, never committed. Not actually needed for this deploy — the
+  `fly` CLI on this machine was already authenticated interactively
+  (`ticketsafes@gmail.com`) — kept for a possible future GitHub Actions
+  deploy workflow instead.
+- **Docker build context is the whole monorepo** (`Dockerfile.facilitator`
+  builds only `apps/facilitator`, but needs the workspace root for pnpm
+  resolution) — added `.dockerignore` to keep `node_modules`/`dist` out of
+  the ~217MB context Fly's builder otherwise re-uploads on every deploy.
+- **Circle testnet USDC**: still not obtained (faucet needs a human, see
+  the Phase 3 entry above). The project owner offered to fund an address
+  directly — `STELLAR_TEST_BUYER_PUBLIC` in `.env` /
+  `GA3CTEOWYFXEHDJZYMCXKQIVOQ2NK4MHTPKWKJVAEEOG3LWBKN2EUSYP` is the address
+  to send to, on Stellar testnet specifically. Once funded, the demo
+  settlement (`apps/facilitator/scripts/settle-demo.ts`) can be re-run
+  against real USDC instead of the self-issued `PTEST` token, which would
+  strengthen — not fix, since nothing about the current result is
+  asset-specific — the conformance evidence.

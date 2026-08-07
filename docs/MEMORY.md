@@ -227,3 +227,31 @@
   100 tests total (78 after Phase 2, 22 new). One real settled transaction
   on `stellar:testnet`, recorded in `conformance/RESULTS.md` with the
   Horizon verification, not just the hash.
+
+## 2026-08-07 — Fly.io deployment (Phase 10 pulled forward, at request)
+
+- **Deployed `apps/facilitator` to Fly.io (`periplo-testnet`) before the
+  rest of Phase 10 exists**, because the project owner asked directly
+  rather than waiting for phase sequence. Documented as a partial pull,
+  not "Phase 10 done" — see `docs/DEFERRED.md` for exactly what's still
+  missing (mainnet app, runbook, telemetry, examples, hardening, comms
+  channels).
+- **`@hono/node-server` added** to actually bind a port — this was the
+  exact gap Phase 3's own memory entry flagged and deliberately left
+  unresolved ("ask, don't sneak in"). The ask arrived in the form of "go
+  deploy it," which is as much of an answer as a dependency addition
+  needs.
+- **Verified the live deployment the same way the local build was
+  verified**: `curl` against the real `https://periplo-testnet.fly.dev`
+  for `/health`, `/supported`, and a malformed `/verify` call — all three
+  matched local behavior and the reference facilitator's captured shape
+  exactly. Not just "the deploy command exited 0."
+- **Fly API token pasted in chat handled the same way as every other
+  credential this session**: local `.env`, never committed. Turned out
+  unnecessary for the actual deploy (the `fly` CLI was already
+  authenticated on this machine from the user's own terminal session) —
+  kept for a possible future CI deploy workflow rather than discarded.
+- **Did not create `periplo-mainnet`.** "Deploy it" was read as "deploy
+  what exists and is real" (a funded testnet key), not as license to
+  fabricate a mainnet app with no backing key — that's a distinct decision
+  for whenever a real mainnet fee-sponsor key exists.
