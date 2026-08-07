@@ -21,18 +21,28 @@ invoke it by name via `Skill` and check the result.**
 | --- | --- | --- |
 | `standards` | Invoked directly (Phase 0) | Returned SEP/CAP map, ecosystem reference, and the Raven MCP connect command (`claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"`). Used this to connect Raven — see below. |
 | `init` | Invoked directly (Phase 0) | Used to scaffold `CLAUDE.md`. |
-| `code-review`, `review-edge-case-hunter`, `security-review` | Listed in the session's available-skills reminder | Not yet invoked — spec §0.1 says run both before declaring any gate passed; Phase 0's gate was verified by directly running the gate commands and reading their output instead. Revisit before declaring later phases' gates passed, especially 1 (trust boundary), 3 (facilitator safety), 6 (contract).
+| `code-review`, `review-edge-case-hunter`, `security-review` | Listed in the session's available-skills reminder | **Still not invoked as of Phase 3.** Every gate through Phase 3 (including 3's facilitator-safety checks) was verified by running the real gate commands, real integration tests against live testnet/Supabase, and a real settled transaction cross-checked against Horizon — not by these review skills. That's a legitimate substitute for "did it work," but not for "did a second pass catch something the first pass missed." Genuinely overdue — run at least `security-review` before Phase 6 (the `upto` contract, real money-adjacent) if not sooner.
 
-## Named in spec §0.1, not yet exercised
+## Named in spec §0.1, still not exercised through Phase 3 + deployment
 
 These showed up in the fuller available-skills listing surfaced mid-session
 (not just the initial 13), so they're presumed real on the same basis as
-`standards`, but none has actually been invoked yet — don't assume their
-output shape until one has:
+`standards`, but **none has actually been invoked** — not in Phase 2
+(data layer), Phase 3 (facilitator), or the Fly deployment either, despite
+spec §0.1 naming `agentic-payments` for exactly Phase 3's work:
 
-`agentic-payments`, `data` *(not seen in the listing yet — check when Phase
-2 starts; may not exist under that exact name)*, `dapp`, `assets`,
-`smart-contracts`, `tyler-architect`, `deploy-stellar-mainnet`.
+`agentic-payments`, `data`, `dapp`, `assets`, `smart-contracts`,
+`tyler-architect`, `deploy-stellar-mainnet`.
+
+**Pattern worth being honest about**: every one of those phases ended up
+using *direct* verification instead — reading `@x402/stellar`'s actual
+shipped source and type definitions, live `curl`/API calls against
+Horizon and Soroban RPC, and the `stellar`/`supabase`/`fly` CLIs directly
+— rather than going through a skill first. Not a rejection of the skills
+specifically; it's what "trust reality over documentation" (spec §12 rule
+3) ended up meaning in practice for this build. Worth trying one of these
+skills deliberately in Phase 5 or 6 to see whether it changes anything, so
+this isn't just a habit going unexamined.
 
 ## Explicitly not to be used during the build
 

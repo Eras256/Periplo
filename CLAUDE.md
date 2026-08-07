@@ -13,12 +13,20 @@ directly rather than read prose claiming conformance.
 The full build plan lives at [`docs/SPEC.md`](docs/SPEC.md) — read it before
 starting any phase. It is phased (0–10); each phase ends in a gate command
 that must exit 0 before the next phase starts. **Current status: Phase 3
-complete** — see [`docs/DEFERRED.md`](docs/DEFERRED.md),
+complete, Phase 4 starting** — see [`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`conformance/RESULTS.md`](conformance/RESULTS.md),
 [`conformance/baseline/`](conformance/baseline),
 [`packages/bazaar`](packages/bazaar), [`supabase/`](supabase), and
 [`apps/facilitator`](apps/facilitator) for what exists concretely. Do not
 start a phase whose predecessor hasn't cleared its gate.
+
+**CI passing locally is not the same claim as CI passing.** `.github/workflows/ci.yml`
+silently failed to run at all from Phase 1 through Phase 3 (two stacked,
+independently-diagnosed causes — a malformed reusable-workflow reference,
+then a private-repo Actions-minutes billing block once that was fixed;
+full evidence in `docs/DEFERRED.md`), while every phase's local `pnpm ci`
+was genuinely green the whole time. Check `gh run list -R Eras256/Periplo`
+periodically — don't assume CI mirrors the local gate.
 
 **Supabase project and a Stellar testnet fee-sponsor account are both
 live** (provisioned mid-build, not self-hosted by this session).
@@ -33,12 +41,22 @@ Actions secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
 when their env vars aren't set.
 
 **`apps/facilitator` is also live on Fly.io** at
-`https://periplo-testnet.fly.dev` (`stellar:testnet` only) — pulled
-forward from Phase 10 at explicit request, not a sign the rest of Phase 10
-is done (see `docs/DEFERRED.md`). Redeploy with
+`https://periplo-testnet.fly.dev` (`stellar:testnet` only, 1 machine —
+scaled down from Fly's default-2 via `fly scale count 1`; `docs/DEFERRED.md`
+has the reasoning) — pulled forward from Phase 10 at explicit request, not
+a sign the rest of Phase 10 is done. Redeploy with
 `fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator -a periplo-testnet`
 from the repo root; secrets are set via `fly secrets set -a periplo-testnet`,
 never in `fly.facilitator.toml`.
+
+**Real Stellar testnet test fixtures exist for exercising a live payment**,
+not just `PTEST` (the self-issued token from Phase 3, since Circle's
+faucet has no API): `STELLAR_TEST_BUYER_PUBLIC` now also holds real
+testnet USDC with an established trustline
+(`GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` is the real
+issuer — read authoritatively off the SAC contract's own `name()` call,
+not guessed). `apps/facilitator/scripts/settle-demo.ts` can target either
+asset by env var.
 
 ## Non-negotiable constraints (spec §1) — check every change against these
 
@@ -168,11 +186,15 @@ where they'd bite:**
   `extra.areFeesSponsored: true`, or the client throws before it even
   builds the transaction.
 
-No Node HTTP adapter (e.g. `@hono/node-server`) is wired up yet — tests
-exercise the app via Hono's in-memory `app.request()`, sufficient for this
-phase's gate but not for an actual deployment. Adding one is a new
-dependency outside spec §2's manifest — flag it, don't just add it (spec
-§12 rule 6), when a phase actually needs it (Phase 10, most likely).
+`src/serve.ts` binds `@hono/node-server` (MIT, added outside spec §2's
+manifest — flagged per working rule 6, not silently added, when the
+project owner asked for the Fly deploy directly) to `0.0.0.0:$PORT`,
+reading fee-sponsor secrets from `STELLAR_FEE_SPONSOR_SECRET[_TESTNET|_PUBNET]`.
+Tests still exercise the app via Hono's in-memory `app.request()` — no
+network needed for `pnpm test`. `GET /` returns a small JSON description
+of the service (no claims beyond what's real — no frontend exists, see
+`apps/hub` below); it existed only as a bare 404 before a live user check
+surfaced the gap.
 
 `conformance/baseline/` holds real, captured HTTP transcripts (not
 reconstructed from documentation) against the public reference facilitator
