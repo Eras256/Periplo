@@ -105,3 +105,59 @@
 - Gate: `pnpm install && pnpm typecheck && pnpm lint && pnpm test` exits 0;
   70 tests total, 45 covering `checkRouteTemplate` alone (gate requires
   ≥20). Committed and pushed.
+
+## 2026-08-07 — Phase 2
+
+- **Real Supabase project provisioned mid-session** (user supplied
+  credentials directly). Handling and the rotation note are in
+  `docs/DEFERRED.md`, not repeated here — this section is about the schema
+  design decisions.
+- **Migrations went through the pooler (port 6543), not the direct
+  connection (port 5432)** — the direct host is IPv6-only and this sandbox
+  has no IPv6 egress. Verified with a plain `curl -6` test before
+  concluding it was an environment limit rather than a Supabase network
+  restriction. See `docs/DEFERRED.md` for the full finding.
+- **Two proactive deviations from the spec's literal SQL**, both applied
+  *before* attempting the migration rather than discovered by a failed
+  push — reasoned about known PostgreSQL behavior first, then verified
+  empirically that the fix worked: (1) `to_tsvector('english', text)` is
+  STABLE not IMMUTABLE, so the `fts` generated column wraps it in a
+  project-local IMMUTABLE SQL function (`periplo_fts`); (2) plain
+  `unique (url, route_template, tool_name)` doesn't dedupe when either of
+  the last two columns is NULL (standard SQL: NULL ≠ NULL), so the
+  constraint uses `unique nulls not distinct` (PG15+) instead. Both are
+  documented inline in the migration SQL itself, not just here.
+- **RLS policy alone wasn't enough — needed explicit grants too.**
+  Supabase's current default doesn't auto-expose new tables to the
+  `anon`/`authenticated` Data API roles; without `grant select on
+  resources to anon, authenticated`, the RLS policy would have been
+  unreachable dead code (PostgREST denies at the grant level first).
+  Caught by reading `supabase/config.toml`'s own generated comment about
+  `auto_expose_new_tables`, not by trial and error.
+- **Verified the whole RLS design twice**: once by hand with raw `curl`
+  against the PostgREST REST API (anon SELECT 200, anon INSERT 401 with
+  an RLS-violation code, service-role INSERT 201) *before* investing in
+  writing the TypeScript test suite, then again as an automated,
+  repeatable `vitest` integration suite
+  (`packages/bazaar/src/db/resources.integration.test.ts`) that runs for
+  real against the live project — gated on `SUPABASE_URL` /
+  `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` being present (via
+  Node's built-in `process.loadEnvFile()`, no `dotenv` dependency added)
+  so it skips cleanly rather than failing on a fork or a secrets-less
+  environment. Every test that inserts a row cleans it up via the
+  service-role client in `afterEach`.
+- **A real TypeScript/postgrest-js gotcha cost the most time this phase**:
+  declaring the Supabase `Database`/`ResourceRow` types as `interface`
+  instead of `type` silently collapsed every query's inferred type to
+  `never` (not a type error — a silent wrong-type resolution). Diagnosed
+  with an isolated, disposable repro file using hand-written conditional
+  types mirroring postgrest-js's internals, deleted once the cause was
+  confirmed, not left in the codebase. Full explanation in
+  `docs/DEFERRED.md` and inline in `client.ts` — worth remembering before
+  writing any future generated-types file for this project.
+- Gate: `pnpm install && pnpm typecheck && pnpm lint && pnpm test` exits 0
+  against the real Supabase project; 78 tests total (70 after Phase 1, 8
+  new — 7 RLS integration tests plus 1 always-on gating-visibility test).
+  GitHub Actions secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+  `SUPABASE_SERVICE_ROLE_KEY`) set on the repo so CI runs the same
+  integration suite for real, not just locally.

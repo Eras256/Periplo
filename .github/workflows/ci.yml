@@ -32,7 +32,16 @@ jobs:
         run: pnpm lint
 
       - name: Test
+        # SUPABASE_* secrets gate the Phase 2 RLS integration tests
+        # (packages/bazaar/src/db/resources.integration.test.ts) — they're
+        # not set on PRs from forks (GitHub doesn't expose repo secrets to
+        # those runs), so that suite skips gracefully rather than failing;
+        # see docs/DEFERRED.md.
         run: pnpm test
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Licence gate (no AGPL / copyleft transitive — spec §1)
         run: pnpm licence-check

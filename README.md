@@ -2,7 +2,7 @@
 
 The discovery layer for x402-payable services on Stellar.
 
-**Status: Phase 1 (catalog trust boundary) complete.** This README states
+**Status: Phase 2 (data layer) complete.** This README states
 only what is built, linked, tested, or hashed today. Everything else is
 roadmap, marked as such. See [`docs/DEFERRED.md`](docs/DEFERRED.md) for
 what's deliberately not built yet and why.
@@ -29,9 +29,15 @@ what's deliberately not built yet and why.
   `/supported` response for `stellar:testnet` (confirming
   `extra.areFeesSponsored: true`), and confirmation that it has no discovery
   (Bazaar) endpoints today — the gap this project fills.
+- [`supabase/migrations`](supabase/migrations) — the live catalog schema on
+  a real Supabase project: the `resources` table, its full-text (`gin`) and
+  vector (`hnsw`) retrieval indexes, and row-level security (public read;
+  writes only via the service role — verified with automated tests that
+  run for real against the project, not mocked). See
+  [`packages/bazaar/src/db`](packages/bazaar/src/db) for the typed client.
 
-Nothing else — no facilitator, no live catalog/database, no search, no
-contract, no hub — exists in this repository yet. Do not infer capability
+Nothing else — no facilitator, no search ranking, no contract, no hub —
+exists in this repository yet. Do not infer capability
 from the rest of this document; the rest of this document is architecture,
 not status.
 

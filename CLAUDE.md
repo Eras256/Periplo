@@ -12,11 +12,21 @@ directly rather than read prose claiming conformance.
 
 The full build plan lives at [`docs/SPEC.md`](docs/SPEC.md) — read it before
 starting any phase. It is phased (0–10); each phase ends in a gate command
-that must exit 0 before the next phase starts. **Current status: Phase 1
+that must exit 0 before the next phase starts. **Current status: Phase 2
 complete** — see [`docs/DEFERRED.md`](docs/DEFERRED.md),
-[`conformance/baseline/`](conformance/baseline), and
-[`packages/bazaar`](packages/bazaar) for what exists concretely.
-Do not start a phase whose predecessor hasn't cleared its gate.
+[`conformance/baseline/`](conformance/baseline),
+[`packages/bazaar`](packages/bazaar), and [`supabase/`](supabase) for what
+exists concretely. Do not start a phase whose predecessor hasn't cleared
+its gate.
+
+**Supabase project is live** (provisioned mid-build, not self-hosted by
+this session). Credentials live in a local, gitignored `.env` and in this
+repo's GitHub Actions secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`) — never in a committed file. Run
+`export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 22` then
+`pnpm test` locally to exercise the real RLS integration suite in
+`packages/bazaar/src/db/resources.integration.test.ts`; it skips itself
+(not a failure) when those env vars aren't set.
 
 ## Non-negotiable constraints (spec §1) — check every change against these
 
@@ -104,6 +114,22 @@ soft-drop: it's the catalog key, so an invalid one hard-rejects the whole
 listing rather than being softly dropped. Catalog storage must always key
 on the client's **original** (un-decoded) `routeTemplate` string — decoding
 is for validation only, never for what gets stored.
+
+`supabase/` (Phase 2) is the Supabase CLI's own project layout —
+`config.toml` plus `migrations/*.sql`, applied with `supabase db push
+--db-url <pooler-url>` (the direct/session connection is IPv6-only and
+unreachable from this build's sandbox; the pooler works fine for plain DDL
+— see `docs/DEFERRED.md`). `packages/bazaar/src/db/` is the TypeScript
+side: `client.ts` (typed `createAnonClient`/`createServiceRoleClient`
+factories — **`Database`/`ResourceRow` must stay declared with `type`, not
+`interface`**, or `@supabase/supabase-js`'s query builder silently
+resolves every result to `never` instead of erroring; see the comments in
+`client.ts` and `docs/DEFERRED.md` before changing this) and
+`resources.integration.test.ts` (real RLS tests against the live project,
+`describe.skipIf`-gated on `SUPABASE_*` env vars so they degrade to a skip
+rather than a failure without credentials). The `resources` table is
+public-read (RLS + explicit grants for `anon`/`authenticated`); only the
+service-role key can write, and that key must never reach a browser bundle.
 
 `conformance/baseline/` holds real, captured HTTP transcripts (not
 reconstructed from documentation) against the public reference facilitator

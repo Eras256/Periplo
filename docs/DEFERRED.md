@@ -145,3 +145,83 @@ starts actually mattering.
 Nothing in this category yet. Phase 0 as scoped (§5) is monorepo tooling +
 baseline capture; both are complete for what's reachable without the
 external accounts above.
+
+## Phase 2 — environment divergences and real findings
+
+Supabase project provisioned and credentials supplied directly in the build
+session (2026-08-07). **Handling:** credentials went straight into a local
+`.env` (gitignored, never committed — verified with `git status --porcelain`
+and `git check-ignore -v .env` before every commit this phase) and into this
+repo's GitHub Actions secrets (`gh secret set`, values piped via stdin, never
+put in an argv or echoed). **Rotation note:** the DB password and both
+service-role/anon JWTs were pasted as plaintext chat content, which may be
+retained in conversation history outside this repo's control — rotating
+them (Supabase dashboard → Settings → Database / API) once Phase 2's
+migrations are confirmed stable is good hygiene, not an emergency, since
+nothing else has had access to them.
+
+### Direct Postgres connection (port 5432) is unreachable from this sandbox
+`db.<ref>.supabase.co` resolves **IPv6-only**, and this sandbox has no IPv6
+egress at all (verified: `curl -6` to an external IPv6 host also fails, not
+just to Supabase). `supabase db push --db-url <direct-url>` failed with
+`ECONNREFUSED` on the IPv6 address before any DNS/auth issue was even
+reached. **Fix:** used the transaction-pooler connection instead (port 6543,
+`aws-0-ca-central-1.pooler.supabase.com`, resolves IPv4), which Supabase
+itself documents as the recommended path for IPv4-only environments. All
+migrations and integration tests in this phase went through the pooler.
+Plain DDL (CREATE TABLE/INDEX/POLICY, no CONCURRENTLY, no advisory locks)
+worked fine through it — no caveats hit in practice. If a future phase needs
+the direct connection specifically, this sandbox is the blocker, not Supabase.
+
+### `to_tsvector('english', text)` is not IMMUTABLE — can't use it directly in a generated column
+The master spec's literal SQL (§5 Phase 2) defines `fts` as
+`generated always as (to_tsvector('english', ...)) stored`. PostgreSQL's
+two-argument `to_tsvector(regconfig, text)` is marked STABLE, not IMMUTABLE
+(the named text search configuration could theoretically change), and
+generated columns require an IMMUTABLE expression. This is a standing,
+well-known PostgreSQL limitation, not something specific to Supabase or this
+schema. **Fix, applied proactively rather than after a failed migration:**
+wrapped it in `periplo_fts(text) returns tsvector language sql immutable`,
+which is a safe promise here because `'english'` is a literal, never a
+variable, in this project. See `supabase/migrations/*_resources.sql` for
+the full reasoning inline.
+
+### Plain `unique (url, route_template, tool_name)` doesn't dedupe the way the spec intends
+Standard SQL `UNIQUE` treats `NULL` as distinct from `NULL`, so two HTTP
+listings sharing `(url, route_template)` with `tool_name` NULL in both rows
+would NOT collide and could both be inserted — silently defeating "one
+catalog entry per resource." **Fix:** `unique nulls not distinct (...)`
+(PostgreSQL 15+, supported on Supabase's managed Postgres — confirmed by
+the migration applying cleanly). Not in the master spec's literal SQL;
+added and documented rather than reproducing a schema bug verbatim.
+
+### `auto_expose_new_tables` defaults to off — RLS policies alone aren't enough
+Supabase's current default (confirmed via `supabase init`'s generated
+`config.toml` comment, not assumed) does **not** auto-grant the
+`anon`/`authenticated` Data API roles access to newly created tables. An RLS
+policy with no matching `GRANT` is unreachable dead code — PostgREST rejects
+the request at the grant level before RLS is even evaluated. **Fix:**
+explicit `grant select on resources to anon, authenticated;` (plus
+`grant usage on schema public`) alongside the RLS policy. Verified end to
+end with real HTTP requests (anon SELECT 200, anon INSERT 401 RLS violation,
+service-role INSERT 201) before writing the automated test suite, and again
+via the automated `resources.integration.test.ts` suite, which passes for
+real against the live project (`pnpm test`, gated by
+`SUPABASE_URL`/`SUPABASE_ANON_KEY`/`SUPABASE_SERVICE_ROLE_KEY`, present in
+this repo's GitHub Actions secrets and in local `.env`).
+
+### `@supabase/supabase-js@2.112.2`'s generic types silently collapse to `never` with an `interface`
+Not a Supabase-specific bug — a general TypeScript behavior that happens to
+bite hard here. `postgrest-js`'s `.from()` resolves its row/insert/update
+types via a conditional type that checks `Row extends Record<string,
+unknown>`. A named `interface` does **not** satisfy that check the way a
+`type` object literal does, even though both are otherwise structurally
+identical and an `interface` value assigns to `Record<string, unknown>`
+just fine directly. The failure mode is silent and confusing: every
+`.from("resources")` call's inferred argument/result type quietly becomes
+`never` instead of raising a type error pointing at the real cause.
+Diagnosed empirically with an isolated conditional-type repro (not by
+guessing) — see `packages/bazaar/src/db/client.ts`'s comments. **Fix:**
+`Database` and `ResourceRow` are declared with `type`, not `interface`.
+Worth remembering for any future generated-types file (Phase 4/5 will need
+richer row types as the schema grows).

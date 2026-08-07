@@ -2,12 +2,15 @@
   "name": "@periplo/bazaar",
   "private": true,
   "version": "0.0.0",
-  "description": "Catalog trust boundary: routeTemplate validation and soft-drop metadata extraction (spec Phase 1).",
+  "description": "Catalog: trust boundary (routeTemplate + soft-drop, Phase 1) and Supabase data layer (Phase 2).",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.2"
   }
 }
