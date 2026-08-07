@@ -1,0 +1,29 @@
+{
+  "name": "periplo",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Discovery layer for x402-payable services on Stellar.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.20.0",
+  "scripts": {
+    "typecheck": "tsc -b --pretty",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "licence-check": "tsx packages/licence-check/src/cli.ts",
+    "ci": "pnpm typecheck && pnpm lint && pnpm test && pnpm licence-check"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.7",
+    "@types/node": "26.1.2",
+    "tsx": "4.23.9",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}

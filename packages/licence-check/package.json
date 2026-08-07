@@ -1,0 +1,16 @@
+{
+  "name": "@periplo/licence-check",
+  "private": true,
+  "version": "0.0.0",
+  "description": "CI gate: fails the build on any AGPL/copyleft license in the dependency graph (spec §1).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "periplo-licence-check": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Phase 0 gate (master spec): pnpm install && pnpm typecheck && pnpm lint && pnpm test
+# must exit 0. licence-check and osv-scan are additional CI-only gates from §6/§7.
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.20.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Licence gate (no AGPL / copyleft transitive — spec §1)
+        run: pnpm licence-check
+
+  # NOTE (docs/DEFERRED.md): this job's reusable-workflow reference was
+  # scaffolded from the latest confirmed osv-scanner-action release tag
+  # (v2.3.8, checked 2026-08-07) but has not yet had a live CI run against
+  # this repo to confirm the call signature. continue-on-error is set until
+  # that first live run is verified; then this should be tightened to a hard
+  # gate per spec §6/§7 (osv-scanner + licence gate in CI, fail on AGPL).
+  osv-scan:
+    needs: build
+    continue-on-error: true
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.8
+    with:
+      scan-args: |-
+        --lockfile=pnpm-lock.yaml

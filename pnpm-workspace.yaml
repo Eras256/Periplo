@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+allowBuilds:
+  # esbuild's install script only fetches its own platform-specific binary
+  # (no arbitrary code beyond that) and is required for tsx/vitest to work.
+  esbuild: true
+minimumReleaseAgeExclude:
+  - tsx@4.23.9
