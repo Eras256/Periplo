@@ -32,6 +32,24 @@ function toSdkTypes(body: VerifyOrSettleRequestBody): {
 export function createFacilitatorApp(core: FacilitatorCore): Hono {
   const app = new Hono();
 
+  // No claim beyond what's true today: this is an API-only service
+  // (apps/hub, the human-facing developer hub, is Phase 9 and doesn't
+  // exist yet — spec §5). The root route exists so hitting the bare host
+  // in a browser explains itself instead of 404ing with no context.
+  app.get("/", (c) =>
+    c.json({
+      service: "periplo-facilitator",
+      description: "x402 facilitator for Stellar — verify/settle/supported for the exact scheme.",
+      endpoints: {
+        health: "/health",
+        supported: "/supported",
+        verify: "POST /verify",
+        settle: "POST /settle",
+      },
+      repository: "https://github.com/Eras256/Periplo",
+    })
+  );
+
   app.get("/health", (c) => c.json({ status: "ok" }));
 
   app.get("/supported", (c) => c.json(core.getSupported()));

@@ -13,6 +13,8 @@ import type { FacilitatorCore } from "./core.js";
 /** Every JSON body this test suite reads back, loosely — just enough shape for the assertions below. */
 interface TestResponseBody {
   status?: string;
+  service?: string;
+  endpoints?: Record<string, string>;
   kinds?: Array<{ network?: string; extra?: { areFeesSponsored?: boolean } }>;
   isValid?: boolean;
   invalidReason?: string;
@@ -72,6 +74,17 @@ const validRequestBody = {
     extra: {},
   },
 };
+
+describe("GET /", () => {
+  it("explains the service instead of 404ing with no context", async () => {
+    const app = createFacilitatorApp(fakeCore());
+    const res = await app.request("/");
+    expect(res.status).toBe(200);
+    const body = await readJson(res);
+    expect(body.service).toBe("periplo-facilitator");
+    expect(body.endpoints).toMatchObject({ health: "/health", supported: "/supported" });
+  });
+});
 
 describe("GET /health", () => {
   it("returns ok", async () => {

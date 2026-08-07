@@ -32,8 +32,12 @@ async function main(): Promise<void> {
   const core = await createFacilitatorCore({ signers: loadSigners() });
   const app = createFacilitatorApp(core);
 
-  serve({ fetch: app.fetch, port: PORT }, (info) => {
-    console.log(`Periplo facilitator listening on :${info.port}`);
+  // Explicit 0.0.0.0: @hono/node-server's default hostname isn't
+  // guaranteed reachable from outside the container in every environment
+  // (Fly's proxy flagged this once — worked anyway in practice, but no
+  // reason to rely on a default here).
+  serve({ fetch: app.fetch, port: PORT, hostname: "0.0.0.0" }, (info) => {
+    console.log(`Periplo facilitator listening on ${info.address}:${info.port}`);
   });
 }
 

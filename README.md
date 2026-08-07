@@ -29,8 +29,8 @@ JSON API itself.
   `%2e%2e` and `/%2f%2fevil.example`-style bypasses of a naive check) and
   `softDropFields` (a listing keeps every metadata field that validates,
   drops only the ones that don't — never rejected wholesale over one bad
-  field). 70 unit tests across the repo, 45 of them exercising
-  `checkRouteTemplate` alone (gate requires ≥20).
+  field). 45 unit tests exercise `checkRouteTemplate` alone (gate requires
+  ≥20) — 101 tests total across the whole repo as of Phase 3.
 - [`conformance/baseline/`](conformance/baseline) — real, captured HTTP
   transcripts against the public `x402.org` reference facilitator: its
   `/supported` response for `stellar:testnet` (confirming
@@ -51,9 +51,10 @@ JSON API itself.
   script and trusted. Importable as a library (no HTTP required) for
   self-facilitation inside a resource server, or wrapped in the included
   Hono app for hosted/self-hosted use. **Live at
-  https://periplo-testnet.fly.dev** — try `GET /supported` or
-  `GET /health` directly. `stellar:pubnet` is not configured (no mainnet
-  key exists yet, deliberately).
+  https://periplo-testnet.fly.dev** — try `GET /`, `GET /health`, or
+  `GET /supported` directly. `stellar:pubnet` is not configured (no
+  mainnet key exists yet, deliberately). See
+  [Deployment](#deployment-what-actually-runs) below for how it's run.
 
 Nothing else — no search ranking, no contract, no hub —
 exists in this repository yet. Do not infer capability
@@ -75,7 +76,12 @@ Bazaar (discovery) support"* (SCF #45, Q3 2026). Full scope: see
 [`docs/SPEC.md`](docs/SPEC.md), the build specification this repository is
 being built against.
 
-## Architecture (planned — nothing below this line is deployed yet)
+## Architecture
+
+Only the **Facilitator** node below is real and deployed (see "What's real
+right now" above and [Deployment](#deployment-what-actually-runs)).
+Bazaar, Search, the Hub, and the `upto` contract are planned — this
+diagram is the target shape, not a status report.
 
 ```mermaid
 flowchart LR
@@ -128,12 +134,37 @@ Baseline transcripts backing the conformance claims above:
 [`conformance/baseline/x402-org/verify-settle-malformed.md`](conformance/baseline/x402-org/verify-settle-malformed.md).
 Settled transaction evidence: [`conformance/RESULTS.md`](conformance/RESULTS.md).
 
+CI (`.github/workflows/ci.yml`) runs the same gate on every push. It was
+silently broken from Phase 1 through Phase 3 — a malformed reusable-workflow
+reference in a since-removed `osv-scan` job made GitHub reject the whole
+file before scheduling any job, so `build` never actually ran in CI despite
+every phase's local gate passing (see `docs/DEFERRED.md`). Fixed 2026-08-07;
+re-adding a working `osv-scan` job is tracked there too.
+
+## Deployment (what actually runs)
+
+`apps/facilitator` is live on Fly.io, `stellar:testnet` only:
+**https://periplo-testnet.fly.dev** — 1 machine (`shared-cpu-1x`, 512MB,
+region `iad`), auto-stops when idle and auto-starts on request
+(`auto_stop_machines`/`auto_start_machines` in
+[`fly.facilitator.toml`](fly.facilitator.toml)). No `periplo-mainnet` app
+exists — there's no mainnet fee-sponsor key to back it, deliberately.
+
+```bash
+fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator -a periplo-testnet
+```
+
+Run from the repo root (the Docker build context has to include the pnpm
+workspace root, even though the image only ships `apps/facilitator`).
+Secrets (`STELLAR_FEE_SPONSOR_SECRET`, `STELLAR_NETWORK`) are set via
+`fly secrets set -a periplo-testnet`, never committed or put in
+`fly.facilitator.toml`.
+
 ## Licence
 
 Apache-2.0 — see [`LICENSE`](LICENSE). No AGPL or other copyleft dependency
 is permitted anywhere in the dependency path; enforced in CI by
-`packages/licence-check` (see [`docs/DEFERRED.md`](docs/DEFERRED.md) for the
-one job — `osv-scan` — still pending its first live CI run).
+`packages/licence-check`.
 
 ## Dependency versions
 

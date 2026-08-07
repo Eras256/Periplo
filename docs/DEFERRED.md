@@ -347,12 +347,66 @@ from the app being live.
   builds only `apps/facilitator`, but needs the workspace root for pnpm
   resolution) — added `.dockerignore` to keep `node_modules`/`dist` out of
   the ~217MB context Fly's builder otherwise re-uploads on every deploy.
-- **Circle testnet USDC**: still not obtained (faucet needs a human, see
-  the Phase 3 entry above). The project owner offered to fund an address
-  directly — `STELLAR_TEST_BUYER_PUBLIC` in `.env` /
-  `GA3CTEOWYFXEHDJZYMCXKQIVOQ2NK4MHTPKWKJVAEEOG3LWBKN2EUSYP` is the address
-  to send to, on Stellar testnet specifically. Once funded, the demo
-  settlement (`apps/facilitator/scripts/settle-demo.ts`) can be re-run
-  against real USDC instead of the self-issued `PTEST` token, which would
-  strengthen — not fix, since nothing about the current result is
-  asset-specific — the conformance evidence.
+- **Circle testnet USDC — first funding attempt bounced, cause found and
+  fixed.** The project owner funded `STELLAR_TEST_BUYER_PUBLIC` via
+  Circle's faucet ("Tokens sent, 20 testnet USDC..."), but the buyer
+  account had no classic trustline for USDC yet — same "trustline entry
+  is missing" failure mode discovered with `PTEST` earlier in this phase,
+  now confirmed to apply to real USDC too (it's classic-asset-backed, not
+  a pure Soroban-native token). Checked directly: no balance, no claimable
+  balance either, so the transfer genuinely never landed rather than
+  being recoverable. **Fixed**: established the trustline
+  (`USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` — the
+  real issuer, read authoritatively off the SAC contract's own `name()`
+  call rather than guessed) via the `stellar` CLI using the buyer's key
+  this project already holds. Balance is `0.0000000 USDC`, ready to
+  receive — needs a resend from the faucet now that the trustline exists.
+
+## CI was broken from Phase 1 through Phase 3 — the local gate was real, the CI gate wasn't
+
+`gh run list` showed every push since Phase 1 failing in ~0 seconds with
+zero jobs scheduled — GitHub rejected `.github/workflows/ci.yml` outright
+before running anything, including the `build` job (typecheck/lint/test/
+licence-check). Root cause: the `osv-scan` job's reusable-workflow call
+(`google/osv-scanner-action/.../osv-scanner-reusable.yml@v2.3.8`,
+originally flagged in Phase 0's own commit as unverified) had a workflow
+file issue GitHub's schema validator rejects, and that rejection takes
+down the *entire* file, not just that one job. This was flagged as a risk
+in every phase's `docs/DEFERRED.md` entry ("has not yet had a live CI run
+to confirm the call signature") but never actually followed up on until
+now, checking `gh run list` directly rather than continuing to trust the
+local `pnpm ci` result as a stand-in for CI passing. **Fix**: removed the
+broken `osv-scan` job outright rather than guess at the correct reusable-
+workflow syntax a second time; `build` now runs on its own. Re-adding a
+working `osv-scan` job (spec §6/§7 want it as a hard gate) is still open —
+next attempt should be validated against a real, isolated push before
+being trusted, not assumed correct from the manifest/release-tag check
+alone.
+**Lesson for future phases**: "the gate passed" claims in commit messages
+so far were accurate for the *local* gate every time (never fabricated),
+but conflated with CI passing when CI silently wasn't running at all.
+Worth periodically checking `gh run list` directly rather than only
+running `pnpm ci` locally and assuming CI mirrors it.
+
+## Fly deployment follow-ups (from live testing after the initial deploy)
+
+- **Scaled from 2 machines to 1** (`fly scale count 1`). Fly creates 2 by
+  default for zero-downtime rolling deploys; for a testnet demo (not yet
+  under any uptime SLA — that's Phase 10's runbook territory) 1 is
+  simpler and cheaper, and `min_machines_running = 1` in
+  `fly.facilitator.toml` already covers "never 0." Both machines were
+  observed idling to `stopped` between requests regardless
+  (`auto_stop_machines = "stop"`) and Fly's proxy auto-starts one on
+  demand — confirmed this works via a real cold request, not assumed.
+- **Added a `GET /` route.** Hitting the bare host 404ed with no context
+  (nothing was ever routed there) — not a bug, but confusing without
+  explanation, so it now returns a small JSON description of the service
+  and its real endpoints. No new claims: it's honest about what exists
+  today (no frontend, no `/browse` etc.).
+- **`fly deploy` prints a "not listening on the expected address" warning
+  every time** even with `@hono/node-server`'s `hostname` explicitly set
+  to `0.0.0.0`. Real external `curl` requests succeed regardless (checked
+  after both the warned and the explicit-hostname deploys) — treated as a
+  startup-timing false positive in Fly's smoke-check, not a real
+  reachability problem, since the actual behavior (not the warning text)
+  is what was verified.

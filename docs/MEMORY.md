@@ -255,3 +255,30 @@
   what exists and is real" (a funded testnet key), not as license to
   fabricate a mainnet app with no backing key — that's a distinct decision
   for whenever a real mainnet fee-sponsor key exists.
+
+## 2026-08-07 — Live-testing follow-up (user checked the deployment directly)
+
+- **The user checking the live URL themselves surfaced two real gaps a
+  local gate never would have**: the bare root 404ing with no explanation,
+  and — far more important — that CI had been silently broken since
+  Phase 1. Neither showed up in any local `pnpm ci` run, because neither
+  is something `pnpm ci` checks. Worth remembering generally: "the local
+  gate is green" and "the deployed/CI thing actually works end to end"
+  are different claims, and only one of them was being verified after
+  each phase.
+- **Checked `gh run list` directly rather than continuing to assume CI
+  mirrored local results** — found every run since Phase 1 failing in
+  ~0s with zero jobs scheduled (a malformed reusable-workflow reference
+  broke the whole workflow file's parsing, not just that one job). Fixed
+  by removing the broken job rather than attempting a second guess at its
+  syntax under time pressure — a working `osv-scan` job is worth getting
+  right deliberately, not worth risking breaking `build` again to add
+  back quickly.
+- **Real USDC hit the exact same trustline requirement `PTEST` did** —
+  confirms that finding wasn't an artifact of the self-issued test asset.
+  Fixed directly (the buyer's key was already available) rather than
+  telling the user to resend blind and hoping it would work the second
+  time.
+- Scaled the Fly app 2→1 machines after actually looking at
+  `fly scale show` and `fly machines list` instead of trusting the
+  default `fly deploy` chose.
