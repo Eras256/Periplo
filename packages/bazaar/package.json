@@ -1,0 +1,13 @@
+{
+  "name": "@periplo/bazaar",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Catalog trust boundary: routeTemplate validation and soft-drop metadata extraction (spec Phase 1).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

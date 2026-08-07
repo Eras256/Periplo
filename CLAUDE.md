@@ -12,9 +12,10 @@ directly rather than read prose claiming conformance.
 
 The full build plan lives at [`docs/SPEC.md`](docs/SPEC.md) — read it before
 starting any phase. It is phased (0–10); each phase ends in a gate command
-that must exit 0 before the next phase starts. **Current status: Phase 0
-complete** — see [`docs/DEFERRED.md`](docs/DEFERRED.md) and
-[`conformance/baseline/`](conformance/baseline) for what exists concretely.
+that must exit 0 before the next phase starts. **Current status: Phase 1
+complete** — see [`docs/DEFERRED.md`](docs/DEFERRED.md),
+[`conformance/baseline/`](conformance/baseline), and
+[`packages/bazaar`](packages/bazaar) for what exists concretely.
 Do not start a phase whose predecessor hasn't cleared its gate.
 
 ## Non-negotiable constraints (spec §1) — check every change against these
@@ -74,8 +75,8 @@ each package's `tsconfig.json`, which extends `tsconfig.base.json`.
 `{ "path": "packages/<name>" }` entry added to root `tsconfig.json`'s
 `references` array, or `tsc -b` silently skips it.**
 
-Only `packages/licence-check` exists so far (Phase 0). Everything else in
-the target layout (`apps/facilitator`, `apps/hub`, `packages/bazaar`,
+Only `packages/licence-check` and `packages/bazaar` exist so far (Phases
+0–1). Everything else in the target layout (`apps/facilitator`, `apps/hub`,
 `packages/search`, `packages/mcp`, `packages/helpers`, `contracts/`,
 `spec/`, `conformance/` runner, `examples/`) is **planned, not built** — see
 `docs/SPEC.md` §3 for what belongs where. Don't create empty placeholder
@@ -91,6 +92,18 @@ gate, and reports devDependency-only copyleft findings as warnings — the
 concrete case that motivated the split is `vitest` → `vite` →
 `lightningcss` (MPL-2.0), unavoidable while pinning `vitest@4.1.10` but
 never bundled into a deployed service.
+
+`packages/bazaar` is the catalog trust boundary (Phase 1):
+`checkRouteTemplate` (decode-fully-THEN-validate against traversal/absolute/
+protocol-relative attacks, incl. percent-encoding and backslash variants —
+see the module doc in `route-template.ts` for the full reasoning) and
+`softDropFields` (a generic, schema-agnostic field-level soft-drop
+mechanism — Phase 4 supplies the actual discovery-payload schema, this
+package only supplies the mechanism). `routeTemplate` never goes through
+soft-drop: it's the catalog key, so an invalid one hard-rejects the whole
+listing rather than being softly dropped. Catalog storage must always key
+on the client's **original** (un-decoded) `routeTemplate` string — decoding
+is for validation only, never for what gets stored.
 
 `conformance/baseline/` holds real, captured HTTP transcripts (not
 reconstructed from documentation) against the public reference facilitator

@@ -1,4 +1,4 @@
 {
   "files": [],
-  "references": [{ "path": "packages/licence-check" }]
+  "references": [{ "path": "packages/licence-check" }, { "path": "packages/bazaar" }]
 }

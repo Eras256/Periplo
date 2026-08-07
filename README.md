@@ -2,10 +2,10 @@
 
 The discovery layer for x402-payable services on Stellar.
 
-**Status: Phase 0 (foundation) — in progress.** This README states only what
-is built, linked, tested, or hashed today. Everything else is roadmap, marked
-as such. See [`docs/DEFERRED.md`](docs/DEFERRED.md) for what's deliberately
-not built yet and why.
+**Status: Phase 1 (catalog trust boundary) complete.** This README states
+only what is built, linked, tested, or hashed today. Everything else is
+roadmap, marked as such. See [`docs/DEFERRED.md`](docs/DEFERRED.md) for
+what's deliberately not built yet and why.
 
 ## What's real right now
 
@@ -15,15 +15,25 @@ not built yet and why.
   the build on any AGPL/copyleft transitive dependency (constraint: spec §1).
   Unit-tested, including the exact AGPL-3.0-or-later case named in the spec
   (the OpenZeppelin Relayer license).
+- [`packages/bazaar`](packages/bazaar) — the catalog trust boundary:
+  `checkRouteTemplate` (percent-decode fully, *then* reject path traversal,
+  absolute URLs, protocol-relative paths, backslash traversal, null bytes,
+  and malformed/overlong encoding — decode-before-check is what stops
+  `%2e%2e` and `/%2f%2fevil.example`-style bypasses of a naive check) and
+  `softDropFields` (a listing keeps every metadata field that validates,
+  drops only the ones that don't — never rejected wholesale over one bad
+  field). 70 unit tests across the repo, 45 of them exercising
+  `checkRouteTemplate` alone (gate requires ≥20).
 - [`conformance/baseline/`](conformance/baseline) — real, captured HTTP
   transcripts against the public `x402.org` reference facilitator: its
   `/supported` response for `stellar:testnet` (confirming
   `extra.areFeesSponsored: true`), and confirmation that it has no discovery
   (Bazaar) endpoints today — the gap this project fills.
 
-Nothing else — no facilitator, no catalog, no search, no contract, no hub —
-exists in this repository yet. Do not infer capability from the rest of this
-document; the rest of this document is architecture, not status.
+Nothing else — no facilitator, no live catalog/database, no search, no
+contract, no hub — exists in this repository yet. Do not infer capability
+from the rest of this document; the rest of this document is architecture,
+not status.
 
 ## What Periplo is (planned)
 

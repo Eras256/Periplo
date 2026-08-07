@@ -67,3 +67,41 @@
   characters). Committed as-is rather than fabricating the missing
   entries — flagged inline as needing regeneration before it's relied on
   for the actual SCF submission's differentiation section.
+
+## 2026-08-07 — Phase 1
+
+- **`checkRouteTemplate` decodes with a bounded loop (8 iterations) and
+  treats non-stabilisation as a rejection in its own right**, not just a
+  practical DoS guard. Verified empirically (not assumed) exactly how many
+  decode passes different encoding depths need before choosing the bound:
+  triple-nested `%25`-wrapped traversal stabilises within 8 passes and is
+  still correctly caught as traversal; one layer deeper (9 passes) hits the
+  bound and is rejected as "exceeds maximum percent-encoding depth" without
+  ever getting to see what's underneath. A legitimate `routeTemplate` never
+  needs that much nesting, so treating the depth itself as the signal
+  doesn't cost any real functionality.
+- **Added a CR/LF rejection to `checkRouteTemplate`** beyond what spec
+  Phase 1's text explicitly enumerates (traversal / absolute / protocol-
+  relative / backslash / null byte / malformed encoding). Justified by
+  spec §6's broader injection-via-metadata concern (header/log injection if
+  a template is ever reflected unescaped) — a small, cheap addition, not
+  scope creep into something spec §12 rule 5 would need a deferral note
+  for, since it's strictly a hardening of the same function, not new
+  surface area.
+- **`softDropFields` was built schema-agnostic on purpose.** Phase 1's
+  text says "soft-drop extraction" without defining the discovery-payload
+  schema — that's explicitly Phase 4's job ("validate `info` against the
+  supplied schema"). Building `softDropFields` as a generic
+  `(raw, rules) -> {kept, dropped}` mechanism now, with field rules
+  supplied by the caller, means Phase 4 wires in the real schema later
+  without this package needing to change.
+- **`routeTemplate` is deliberately excluded from soft-drop.** It's the
+  catalog key; an invalid one means there's no valid listing to keep
+  fields *of*, so it hard-rejects via `checkRouteTemplate` before
+  soft-drop ever runs. Documented explicitly in both modules' doc comments
+  so this isn't rediscovered as a "bug" later (a routeTemplate silently
+  passing through soft-drop would be the trust-boundary failure Phase 1
+  exists to prevent).
+- Gate: `pnpm install && pnpm typecheck && pnpm lint && pnpm test` exits 0;
+  70 tests total, 45 covering `checkRouteTemplate` alone (gate requires
+  ≥20). Committed and pushed.
