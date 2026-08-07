@@ -410,3 +410,22 @@ running `pnpm ci` locally and assuming CI mirrors it.
   startup-timing false positive in Fly's smoke-check, not a real
   reachability problem, since the actual behavior (not the warning text)
   is what was verified.
+
+## CI, part 2 — the workflow-file bug is fixed, but a separate billing block remains
+
+After removing the broken `osv-scan` job, the next push's run actually
+parsed and scheduled the `build` job (12s runtime, not 0s) — confirming
+the workflow-file fix worked. But the job itself never started:
+> "The job was not started because recent account payments have failed or
+> your spending limit needs to be increased. Please check the 'Billing &
+> plans' section in your settings"
+
+This is a GitHub Actions billing state on the `Eras256` account, entirely
+outside what this session can fix — genuinely blocked, per spec §12 rule
+5, logged here rather than worked around. **Action needed from the
+project owner**: check Settings → Billing & plans on the `Eras256`
+GitHub account (or the org CI runs under) and resolve the payment/limit
+issue. Once that's done, re-run the latest workflow (`gh run rerun
+<run-id>` or push any commit) to confirm `build` actually executes and
+passes — the workflow-file bug being fixed is necessary but not
+sufficient to call CI green; that step is still unverified.
