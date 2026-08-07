@@ -12,21 +12,25 @@ directly rather than read prose claiming conformance.
 
 The full build plan lives at [`docs/SPEC.md`](docs/SPEC.md) — read it before
 starting any phase. It is phased (0–10); each phase ends in a gate command
-that must exit 0 before the next phase starts. **Current status: Phase 2
+that must exit 0 before the next phase starts. **Current status: Phase 3
 complete** — see [`docs/DEFERRED.md`](docs/DEFERRED.md),
+[`conformance/RESULTS.md`](conformance/RESULTS.md),
 [`conformance/baseline/`](conformance/baseline),
-[`packages/bazaar`](packages/bazaar), and [`supabase/`](supabase) for what
-exists concretely. Do not start a phase whose predecessor hasn't cleared
-its gate.
+[`packages/bazaar`](packages/bazaar), [`supabase/`](supabase), and
+[`apps/facilitator`](apps/facilitator) for what exists concretely. Do not
+start a phase whose predecessor hasn't cleared its gate.
 
-**Supabase project is live** (provisioned mid-build, not self-hosted by
-this session). Credentials live in a local, gitignored `.env` and in this
-repo's GitHub Actions secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
-`SUPABASE_SERVICE_ROLE_KEY`) — never in a committed file. Run
+**Supabase project and a Stellar testnet fee-sponsor account are both
+live** (provisioned mid-build, not self-hosted by this session).
+Credentials live in a local, gitignored `.env` and in this repo's GitHub
+Actions secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `STELLAR_FEE_SPONSOR_SECRET`,
+`STELLAR_FEE_SPONSOR_PUBLIC`) — never in a committed file. Run
 `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 22` then
-`pnpm test` locally to exercise the real RLS integration suite in
-`packages/bazaar/src/db/resources.integration.test.ts`; it skips itself
-(not a failure) when those env vars aren't set.
+`pnpm test` locally to exercise the real integration suites in
+`packages/bazaar/src/db/resources.integration.test.ts` and
+`apps/facilitator/src/core.test.ts`; both skip themselves (not a failure)
+when their env vars aren't set.
 
 ## Non-negotiable constraints (spec §1) — check every change against these
 
@@ -85,8 +89,8 @@ each package's `tsconfig.json`, which extends `tsconfig.base.json`.
 `{ "path": "packages/<name>" }` entry added to root `tsconfig.json`'s
 `references` array, or `tsc -b` silently skips it.**
 
-Only `packages/licence-check` and `packages/bazaar` exist so far (Phases
-0–1). Everything else in the target layout (`apps/facilitator`, `apps/hub`,
+Only `packages/licence-check`, `packages/bazaar`, and `apps/facilitator`
+exist so far (Phases 0–3). Everything else in the target layout (`apps/hub`,
 `packages/search`, `packages/mcp`, `packages/helpers`, `contracts/`,
 `spec/`, `conformance/` runner, `examples/`) is **planned, not built** — see
 `docs/SPEC.md` §3 for what belongs where. Don't create empty placeholder
@@ -131,11 +135,44 @@ rather than a failure without credentials). The `resources` table is
 public-read (RLS + explicit grants for `anon`/`authenticated`); only the
 service-role key can write, and that key must never reach a browser bundle.
 
+`apps/facilitator` (Phase 3) is `verify`/`settle`/`supported` for the
+`exact` scheme, built on `@x402/core` + `@x402/stellar` (spec §1: do not
+reimplement verify/settle). `src/core.ts` is the importable library core —
+`createFacilitatorCore(config)` wraps `@x402/core`'s `x402Facilitator`
+dispatching to `@x402/stellar`'s `ExactStellarScheme`, which already
+implements the per-payment facilitator-safety checks internally (not
+reimplemented here). `src/app.ts` is a thin Hono HTTP layer around that
+core — deployment paths 1/2 (hosted/self-hosted); path 3
+(self-facilitation inside a resource server) imports `core.ts` directly
+and skips HTTP entirely. `src/boot-safety.ts` is this repo's own addition,
+not from the libraries: refuses to construct a `FacilitatorCore` if any
+configured fee-sponsor account holds a non-native-XLM balance (spec §1
+constraint 3 — a fee-only account has nothing to move).
+
+**Two import traps specific to `@x402/stellar`, both documented inline
+where they'd bite:**
+- Import `ExactStellarScheme` for the facilitator from
+  `@x402/stellar/exact/facilitator`, **not** the package's main entry —
+  the main entry re-exports the *client* variant under the same class
+  name. Wrong import type-errors confusingly instead of pointing at the
+  real cause.
+- Any `paymentRequirements` built for the Stellar `exact` scheme needs
+  `extra.areFeesSponsored: true`, or the client throws before it even
+  builds the transaction.
+
+No Node HTTP adapter (e.g. `@hono/node-server`) is wired up yet — tests
+exercise the app via Hono's in-memory `app.request()`, sufficient for this
+phase's gate but not for an actual deployment. Adding one is a new
+dependency outside spec §2's manifest — flag it, don't just add it (spec
+§12 rule 6), when a phase actually needs it (Phase 10, most likely).
+
 `conformance/baseline/` holds real, captured HTTP transcripts (not
 reconstructed from documentation) against the public reference facilitator
 (`x402.org`). Treat it as the empirical spec for "conformant" that later
 phases build against — regenerate/extend it when the reference
 facilitator's behaviour changes, don't hand-edit the transcripts.
+`conformance/RESULTS.md` is the evidence table of settled transaction
+hashes, cross-checked against Horizon, not just printed and trusted.
 
 ## Working rules (spec §12)
 

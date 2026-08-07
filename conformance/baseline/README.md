@@ -25,6 +25,11 @@ raw response headers + body verbatim.
   `erc20ApprovalGasSponsoring`) does not include `bazaar`, and it has no
   discovery endpoints at all. Recorded here rather than assumed, per spec
   §5's "advertised support and reachable support are not the same thing."
+- [`x402-org/verify-settle-malformed.md`](x402-org/verify-settle-malformed.md)
+  (Phase 3) — `POST /facilitator/verify` and `POST /facilitator/settle`
+  with a deliberately malformed-but-well-shaped body: confirms both return
+  `200` (not `400`) with validity carried in the JSON body, and that
+  `invalidReason`/`errorReason` are populated on failure.
 
 ## Not yet captured
 

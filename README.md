@@ -2,7 +2,7 @@
 
 The discovery layer for x402-payable services on Stellar.
 
-**Status: Phase 2 (data layer) complete.** This README states
+**Status: Phase 3 (facilitator) complete.** This README states
 only what is built, linked, tested, or hashed today. Everything else is
 roadmap, marked as such. See [`docs/DEFERRED.md`](docs/DEFERRED.md) for
 what's deliberately not built yet and why.
@@ -35,8 +35,17 @@ what's deliberately not built yet and why.
   writes only via the service role — verified with automated tests that
   run for real against the project, not mocked). See
   [`packages/bazaar/src/db`](packages/bazaar/src/db) for the typed client.
+- [`apps/facilitator`](apps/facilitator) — `verify`/`settle`/`supported`
+  for the `exact` scheme on both Stellar networks, built on
+  `@x402/core` + `@x402/stellar` (settlement logic is theirs, not
+  reimplemented). A **real settled transaction on `stellar:testnet`** is
+  recorded in [`conformance/RESULTS.md`](conformance/RESULTS.md), with the
+  hash independently checked against Horizon — not just printed by our own
+  script and trusted. Importable as a library (no HTTP required) for
+  self-facilitation inside a resource server, or wrapped in the included
+  Hono app for hosted/self-hosted use.
 
-Nothing else — no facilitator, no search ranking, no contract, no hub —
+Nothing else — no search ranking, no contract, no hub —
 exists in this repository yet. Do not infer capability
 from the rest of this document; the rest of this document is architecture,
 not status.
@@ -105,7 +114,9 @@ pnpm licence-check
 
 Baseline transcripts backing the conformance claims above:
 [`conformance/baseline/x402-org/supported.md`](conformance/baseline/x402-org/supported.md),
-[`conformance/baseline/x402-org/discovery-404.md`](conformance/baseline/x402-org/discovery-404.md).
+[`conformance/baseline/x402-org/discovery-404.md`](conformance/baseline/x402-org/discovery-404.md),
+[`conformance/baseline/x402-org/verify-settle-malformed.md`](conformance/baseline/x402-org/verify-settle-malformed.md).
+Settled transaction evidence: [`conformance/RESULTS.md`](conformance/RESULTS.md).
 
 ## Licence
 

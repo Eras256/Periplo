@@ -161,3 +161,69 @@
   GitHub Actions secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
   `SUPABASE_SERVICE_ROLE_KEY`) set on the repo so CI runs the same
   integration suite for real, not just locally.
+
+## 2026-08-07 — Phase 3
+
+- **Facilitator core built as a thin wrapper around `@x402/core`'s
+  `x402Facilitator` + `@x402/stellar`'s `ExactStellarScheme`, deliberately
+  not reimplementing anything the libraries already do.** Reading the
+  actual shipped `.d.ts` files (and, once behavior got confusing, the
+  source embedded in the published sourcemaps) turned up that
+  `ExactStellarScheme` already implements every one of spec's five
+  facilitator-safety checks internally (facilitator not `from`, not a
+  client-auth-entry signer, simulation emits only the expected transfer).
+  This repo's own code only adds what the libraries have no reason to
+  know about: the HTTP layer, and the boot-time non-custodial check.
+- **The boot-time non-custodial check (spec §1 constraint 3) is
+  implemented as "the fee-sponsor account must hold only native XLM."**
+  Concrete, testable, and directly enforces the actual risk (a fee-only
+  key has nothing to move even if it were compromised or misconfigured as
+  something else). Dependency-injected (`AccountLoader`) so it's unit
+  tested with fakes, not just trusted against live network calls.
+- **Wire format was checked against the real reference facilitator before
+  writing the schemas**, same as Phase 0: `POST /verify` and `/settle`
+  with a malformed body against `x402.org` confirmed `200` (not `400`),
+  with the failure reason always populated. This repo's own Hono routes
+  replicate that: `zod` validates the outer envelope only (returning `400`
+  for a genuinely broken request), and anything that fails inside the
+  actual payment logic comes back as `200` with `isValid`/`success: false`
+  — matching observed behavior, not guessed from the types alone.
+- **Getting one real settled transaction took more debugging than
+  everything else in this phase combined**, and every step of it was a
+  real, verified finding rather than a guess:
+  - Circle's testnet USDC faucet needs a browser/CAPTCHA, no API — so
+    this project issued its own test SEP-41 token (`PTEST`, a classic
+    asset wrapped via `stellar contract asset deploy`, no custom contract
+    code) rather than block the whole gate on a human doing a CAPTCHA.
+  - First attempt paid the token's own issuer — classic Stellar redeems
+    (burns) an asset sent back to its issuer, so the SAC bridge correctly
+    emitted a `burn` event, and `@x402/stellar` correctly rejected it as
+    not a `transfer`. Diagnosed by decoding the raw simulation diagnostic
+    events by hand (not by guessing from the error string), which also
+    surfaced that a classic-asset SAC needs a trustline on **both** ends
+    even when bridging through Soroban.
+  - Fixed by using a genuine third-party seller account with its own
+    trustline. Second attempt settled cleanly.
+  - Independently verified the result against Horizon afterward, not just
+    trusted the script's own printed output: `successful: true`, the fee
+    was charged to the *facilitator's* account (real fee sponsorship, not
+    just a claimed one), and the seller's on-chain balance moved by
+    exactly the paid amount.
+- **Found and documented, not silently worked around**: the package's
+  main entry re-exports the CLIENT variant of `ExactStellarScheme` under
+  the same class name as the FACILITATOR variant, which lives at a
+  different subpath (`@x402/stellar/exact/facilitator`). Importing the
+  wrong one produces a confusing type error that doesn't point at the
+  real cause. Also: the client throws unless
+  `paymentRequirements.extra.areFeesSponsored` is `true` — undocumented
+  anywhere obvious, found by reading the actual thrown error.
+- **Did not add `@hono/node-server`** even though `apps/facilitator`
+  can't yet run as an actual listening service without it — it's a
+  dependency outside spec §2's manifest, and per working rule 6 that's a
+  flag-and-ask, not a quiet addition, even under time pressure to finish
+  the phase. Tests use Hono's own in-memory `app.request()` instead,
+  which is sufficient for this phase's gate.
+- Gate: `pnpm install && pnpm typecheck && pnpm lint && pnpm test` exits 0;
+  100 tests total (78 after Phase 2, 22 new). One real settled transaction
+  on `stellar:testnet`, recorded in `conformance/RESULTS.md` with the
+  Horizon verification, not just the hash.

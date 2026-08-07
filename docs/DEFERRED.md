@@ -225,3 +225,92 @@ guessing) — see `packages/bazaar/src/db/client.ts`'s comments. **Fix:**
 `Database` and `ResourceRow` are declared with `type`, not `interface`.
 Worth remembering for any future generated-types file (Phase 4/5 will need
 richer row types as the schema grows).
+
+## Phase 3 — environment divergences and real findings
+
+### Circle's testnet USDC faucet has no API — blocks using real testnet USDC for an automated settlement
+`faucet.circle.com` requires a browser and reCAPTCHA; there is no
+programmatic endpoint (checked directly, not assumed — see the WebFetch
+result in this phase's session). This session can't complete that flow.
+**Resolved, not deferred:** issued a self-owned test SEP-41 token instead
+(`PTEST`, classic asset wrapped as a Stellar Asset Contract via `stellar
+contract asset deploy` — no custom contract code needed) and used it for
+the Phase 3 gate's settled transaction. `@x402/stellar`'s exact scheme
+treats the asset address as a parameter; nothing in the facilitator's
+logic is USDC-specific. Getting a real testnet-USDC-funded account (via
+the faucet, which needs a human) would let a future session additionally
+prove it works with the canonical asset — not required for the gate, since
+the gate asks for *a* settled transaction hash, not specifically a USDC
+one, but worth doing before claiming full parity with the reference
+facilitator's asset support.
+
+### Paying a classic asset back to its own issuer is a burn, not a transfer
+First settlement attempt used the test asset's own issuer account as
+`payTo`. Under classic Stellar semantics, sending an asset to its issuer
+redeems/burns it — the Stellar Asset Contract (SAC) bridge correctly
+represents this as a `burn` event (`topics: [burn, from, asset_code]`),
+not a CAP-46 `transfer` event (`topics: [transfer, from, to, asset]`).
+`@x402/stellar`'s `validateSimulationEvents` requires a `transfer` event
+matching sender/recipient/amount exactly and rejects anything else
+(`invalid_exact_stellar_payload_event_not_transfer`) — working as
+designed; the bug was in the test setup, not the library. **Fix:** use a
+genuine third-party account, never the asset's own issuer, as `payTo`.
+Diagnosed by decoding the real simulation's diagnostic events directly
+(`Address.fromScAddress`/`scValToNative` over the raw XDR) rather than
+guessing from the error string alone — worth doing again if a similarly
+opaque `invalid_exact_stellar_payload_event_*` reason shows up later.
+
+### A classic-asset-backed SAC still requires a classic trustline on both ends
+Also discovered while diagnosing the above: transferring a classic-asset
+SAC token to an account with no trustline for that asset fails outright
+(`HostError: Error(Contract, #13)`, `"trustline entry is missing for
+account"`) — SAC does not let a classic asset bypass trustlines for plain
+G-accounts; that bridging only happens once the trustline exists. A
+genuinely Soroban-native token (not a classic-asset wrapper) wouldn't have
+this requirement, but this project's test asset is classic-backed since
+`stellar contract asset deploy` is what's actually available without
+writing a custom contract. **Fix:** the test seller account establishes a
+`PTEST` trustline before receiving the demo payment (see
+`apps/facilitator/scripts/settle-demo.ts` and the accounts recorded in
+`.env`). Real testnet/mainnet USDC is also classic-asset-backed, so a real
+x402 seller integrating against USDC needs the same trustline step —
+this is exactly the "an account needs a trustline before it can receive a
+SEP-41 asset... surface it as a distinct, actionable error" case spec §2
+already calls out; worth building that error path explicitly in a later
+phase (Phase 4 seller helpers, or the hub's `/buyers` trustline-step docs).
+
+### `@x402/stellar`'s facilitator `ExactStellarScheme` is a different export than the client one — same class name, different subpath
+The package's main entry (`@x402/stellar`) re-exports `ExactStellarScheme`
+from `./exact/client` (the CLIENT variant — `SchemeNetworkClient`, used to
+*build* a payment). The FACILITATOR variant (`SchemeNetworkFacilitator`,
+used to *verify/settle* one) is a separate subpath export,
+`@x402/stellar/exact/facilitator`. Importing the wrong one from the main
+barrel type-errors in a confusing way (TypeScript reports the argument as
+missing `ClientStellarSigner` properties, not "wrong class") rather than
+pointing at the real cause. **Fix:** `apps/facilitator/src/core.ts`
+imports explicitly from the `/exact/facilitator` subpath, with a comment
+explaining why, specifically so this isn't "fixed" back to the barrel
+import later by someone who sees `ExactStellarScheme` unqualified and
+assumes there's only one.
+
+### No Node HTTP adapter for Hono chosen yet — needed before real deployment
+`apps/facilitator` is tested via Hono's own `app.request()` (in-memory,
+no real port) — sufficient for Phase 3's gate (verify/settle logic +
+one settled transaction), but running this as an actual listening service
+(Fly.io, Phase 10, or any "hosted"/"self-hosted" deployment path) needs a
+Node HTTP adapter, most likely `@hono/node-server` (official, small,
+MIT-licensed). Not added yet: it's a new dependency outside spec §2's
+manifest, and working rule 6 says ask before adding one rather than
+sneaking it in alongside unrelated work. Flagging here now so it's a
+known, upcoming decision rather than a surprise at Phase 10.
+
+### `Exact scheme requires areFeesSponsored to be true` — client-side requirement, not just facilitator-side
+`@x402/stellar`'s client `ExactStellarScheme.createPaymentPayload` throws
+outright if `paymentRequirements.extra.areFeesSponsored` isn't `true` —
+the client needs to know fee sponsorship is happening so it doesn't try to
+provision its own fee payment when building the transaction. Found by
+running the demo script and reading the real error, not documented
+anywhere obvious beforehand. Any seller-side helper built in Phase 4 that
+constructs `paymentRequirements` for Stellar must set this field, or every
+client using `@x402/stellar` against it will fail before even reaching the
+facilitator.

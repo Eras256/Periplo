@@ -1,4 +1,8 @@
 {
   "files": [],
-  "references": [{ "path": "packages/licence-check" }, { "path": "packages/bazaar" }]
+  "references": [
+    { "path": "packages/licence-check" },
+    { "path": "packages/bazaar" },
+    { "path": "apps/facilitator" }
+  ]
 }
