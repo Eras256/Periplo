@@ -70,7 +70,11 @@ a **Bazaar**: an automatically-populated catalog of x402-payable HTTP and MCP
 services, with hybrid lexical + semantic search, so an agent can find and pay
 for a service without a human wiring up an integration first. It also carries
 `upto` — a metered payment scheme for Stellar that a plain SEP-41 allowance
-cannot express (see [`spec/`](spec/), Phase 6, not yet written).
+cannot express — the network spec is open upstream as a Draft PR at
+[x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098)
+([issue #3097](https://github.com/x402-foundation/x402/issues/3097)), with
+three on-chain assumptions marked open. The Soroban contract is Phase 6, not
+started.
 
 This is a response to the Stellar Community Fund RFP *"X402 Facilitator with
 Bazaar (discovery) support"* (SCF #45, Q3 2026). Full scope: see

@@ -468,13 +468,22 @@ billing check itself, not a regression back to the private-repo state —
 worth knowing this can happen even on a public repo, not worth blocking
 on. If it recurs persistently (not just once), revisit.
 
-## README follow-up: the `spec/` link for `upto` needs updating at Phase 6
+## README's `upto` link — resolved before Phase 6 formally started
 
-README's "What Periplo is (planned)" section links `upto`'s spec to
-[`spec/`](../spec/) with "Phase 6, not yet written" — accurate today
-(Phase 6 hasn't started), but once `spec/scheme_upto_stellar.md` exists
-and the upstream x402 PR opens (spec §5 Phase 6), that link should point
-at the actual PR, not an empty directory — the PR is the strongest piece
-of evidence Phase 6 produces and the README should surface it directly
-rather than make a reviewer go find it. Tracked here so it isn't missed
-when Phase 6 wraps up.
+README's "What Periplo is (planned)" section linked `upto`'s spec to
+[`spec/`](../spec/), a directory that has never existed in this repo — a
+dead link in the most-read file. Turned out moot rather than needing a
+wait for Phase 6: the network spec was already opened upstream directly
+against `x402-foundation/x402` (PR #3098, issue #3097, both verified real
+via the GitHub API — title, draft status, and the same three open
+on-chain assumptions this repo's own `docs/SPEC.md` §6 names), work done
+in parallel outside this repo's own phase sequence. README now links the
+PR directly instead of a local directory.
+
+**Deliberately not mirrored into this repo** (`spec/scheme_upto_stellar.md`
+does not exist here, and won't): the RFP deliverable is "merged upstream
+into the x402 package," so the PR itself is the evidence, not a local
+copy. A duplicate invites drift (one copy updates, the other doesn't) and
+a fork of a spec that's actively being upstreamed reads oddly — the
+spec's place is upstream. The Soroban contract
+(`contracts/upto-settlement`) is still genuinely Phase 6, not started.
