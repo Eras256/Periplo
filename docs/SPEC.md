@@ -1,12 +1,15 @@
 # Periplo — Master Build Specification
 
-> This is the governing build document for this repository, pasted verbatim
-> from the session that kicked off the build (2026-08-06/07) and committed
-> here so it survives across sessions instead of living only in chat
-> context. `CLAUDE.md` points here. Phase status and environment divergences
-> are tracked separately in `docs/DEFERRED.md` — this file is the brief, not
-> the status report; don't hand-edit it to reflect progress, update
-> `docs/DEFERRED.md` and `conformance/RESULTS.md` instead.
+> This is the governing build document for this repository, adapted from the
+> session that kicked off the build (2026-08-06/07) and committed here so it
+> survives across sessions instead of living only in chat context. `CLAUDE.md`
+> points here. Phase status and environment divergences are tracked separately
+> in `docs/DEFERRED.md` — this file is the brief, not the status report; don't
+> hand-edit it to reflect progress, update `docs/DEFERRED.md` and
+> `conformance/RESULTS.md` instead. Budget figures and submission-process
+> administrivia (tranche schedule, form-specific requirements) live in the
+> actual SCF submission, not here — this file is engineering scope and gates
+> only.
 
 ---
 
@@ -17,11 +20,10 @@ x402-payable services on Stellar. This is a submission to the Stellar Community
 Fund **RFP Track**, responding to the open RFP *"X402 Facilitator with Bazaar
 (discovery) support"* (SCF #45, Q3 2026).
 
-RFP Track is decided by **panel review only — no community vote**. The panel is
-9–11 community delegates with the SCF Pilot role, rotating quarterly; they wrote
-the RFP you are answering. Delegates are paid **$20 in XLM per submission they
-fully review**. They will not read prose they can test. They will point stock SDK
-code at your service rather than read a conformance claim.
+RFP Track is decided by **panel review only — no community vote**, and
+acceptance is tested at the wire level: an unmodified canonical x402 client is
+pointed at the service and either completes a payment end to end or it
+doesn't. A conformance claim in prose doesn't substitute for that.
 
 **Therefore: conformance at the wire level is the product.** Correct settlement
 plus a non-conformant wire format produces an unusable service.
@@ -198,34 +200,26 @@ documented rejection reason in this programme. If tempted, write it in
 
 ### Effort allocation
 
-The grant request is **$128,000 over 6 months** — 64 person-weeks at a blended
-~$2,000/week. Use this to judge how much depth each phase deserves. If a phase is
-running past its allocation, cut scope inside it rather than borrowing from
-another; the ratios matter to the submission because the RFP requires the Bazaar
-to carry the largest share of budget.
+Not all components carry equal weight. Use this to judge how much depth each
+phase deserves. If a phase is running past its allocation, cut scope inside it
+rather than borrowing from another — the RFP requires the Bazaar (catalog +
+search) to carry the largest share of the total effort, and the allocation
+below reflects that.
 
-| Line | Amount | Person-weeks | Phases |
-| --- | ---: | ---: | --- |
-| Search + relevance evaluation | $32,000 | 16 | 2, 5 |
-| Catalog + automatic cataloging + trust boundary | $24,000 | 12 | 1, 4 |
-| `upto`: spec + Soroban contract + upstream | $20,000 | 10 | 6 |
-| Facilitator on `@x402/stellar`, both networks | $17,000 | 8.5 | 3 |
-| MCP discovery server | $12,000 | 6 | 7 |
-| Developer hub | $10,000 | 5 | 9 |
-| Conformance + e2e both networks | $7,000 | 3.5 | 0, 8 |
-| Examples + production + runbook | $6,000 | 3 | 10 |
-| **Total** | **$128,000** | **64** | |
+| Line | Share | Phases |
+| --- | ---: | --- |
+| Search + relevance evaluation | 25% | 2, 5 |
+| Catalog + automatic cataloging + trust boundary | 19% | 1, 4 |
+| `upto`: spec + Soroban contract + upstream | 16% | 6 |
+| Facilitator on `@x402/stellar`, both networks | 13% | 3 |
+| MCP discovery server | 9% | 7 |
+| Developer hub | 8% | 9 |
+| Conformance + e2e both networks | 5% | 0, 8 |
+| Examples + production + runbook | 5% | 10 |
 
-Search is 25% of the total — the largest line, as the RFP requires. The hub is
-7.8%: it exists because the RFP names it, not because we are building a product.
-
-Tranches: 10% on award ($12,800) · 20% at MVP ($25,600) · 30% at testnet
-($38,400) · 40% at mainnet ($51,200). Each tranche form is due within **90
-calendar days** of the previous payment.
-
-**Not eligible for the budget, verified against the handbook:** audit fees (use
-the Audit Bank), marketing and user acquisition, bounties or token giveaways,
-legal and registration fees, reimbursement for past work.
+Search is the largest single line, as the RFP requires. The hub is the
+smallest meaningful one: it exists because the RFP names it explicitly, not
+because a product is being built around it.
 
 ---
 
