@@ -5,11 +5,10 @@
 The discovery layer for x402-payable services on Stellar.
 
 **Status: Phase 3 (facilitator) complete, and live on `stellar:testnet`
-at https://periplo-testnet.fly.dev** (deployment pulled forward from
-Phase 10 at the project owner's request — not a sign the rest of Phase 10
-is done; see [`docs/DEFERRED.md`](docs/DEFERRED.md)). This README states
-only what is built, linked, tested, or hashed today. Everything else is
-roadmap, marked as such.
+at https://periplo-testnet.fly.dev** (deployed early; the rest of Phase
+10 is not done — see [`docs/DEFERRED.md`](docs/DEFERRED.md)). This README
+states only what is built, linked, tested, or hashed today. Everything
+else is roadmap, marked as such.
 
 **No frontend yet.** The developer hub (`apps/hub`) is Phase 9 — not
 started. `/browse`, `/playground`, `/status` and the rest of §10's routes
@@ -137,33 +136,11 @@ Baseline transcripts backing the conformance claims above:
 Settled transaction evidence: [`conformance/RESULTS.md`](conformance/RESULTS.md).
 
 CI (`.github/workflows/ci.yml`, badge above) runs the same gate on every
-push. **Confirmed green via a genuine push-triggered run, not a manual
-rerun**: [run
-31222406798](https://github.com/Eras256/Periplo/actions/runs/31222406798)
-(triggered by the `docs: CI confirmed green...` commit itself), `build`
-passed in 23s.
-
-It was silently broken from Phase 1 through Phase 3, for two independently
-verified causes, not one — checked via the GitHub API, not inferred from
-a plausible-sounding story:
-
-1. A malformed reusable-workflow reference in a since-removed `osv-scan`
-   job made GitHub reject the whole workflow file before scheduling any
-   job at all — confirmed via `gh api .../runs/<id>/jobs` on a pre-fix run
-   returning `{"total_count":0,"jobs":[]}`. Removing that job alone
-   produced a run where a `build` job entry *was* created (12s, not 0s).
-2. That `build` job then failed to start with GitHub reporting a
-   spending-limit/billing block. The project owner correctly diagnosed
-   this as the private-repo Actions-minutes limit and made the repo
-   public. A manually re-triggered run of the exact same workflow then
-   executed and passed — and the very next *organic* push confirmed it
-   independently (the run linked above).
-
-These are two distinct, sequential failures with two different GitHub
-error messages and two different job-scheduling shapes (zero jobs
-scheduled vs. one job scheduled-but-blocked) — not a single misdiagnosed
-cause. See `docs/DEFERRED.md` for the full timeline and raw evidence.
-Re-adding a working `osv-scan` job is still open.
+push — confirmed green via an [organic push-triggered
+run](https://github.com/Eras256/Periplo/actions/runs/31222406798), not a
+manual rerun. It was silently broken from Phase 1 to Phase 3 for two
+independently verified causes; full timeline and raw evidence in
+[`docs/DEFERRED.md`](docs/DEFERRED.md).
 
 ## Deployment (what actually runs)
 
@@ -211,4 +188,4 @@ introduced into the codebase yet.
 - [`docs/MEMORY.md`](docs/MEMORY.md) — running log of *why* things were
   built the way they were.
 - [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md) — partial, dated snapshot of the
-  competitive landscape (regenerate before relying on it for the submission).
+  competitive landscape (regenerate before relying on it).

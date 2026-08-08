@@ -455,3 +455,14 @@ versions eventually.
 Re-adding a working `osv-scan` job (spec §6/§7 want it as a hard gate) is
 still open — next attempt should be validated against a real, isolated
 push before being trusted, same caution as before.
+
+## README follow-up: the `spec/` link for `upto` needs updating at Phase 6
+
+README's "What Periplo is (planned)" section links `upto`'s spec to
+[`spec/`](../spec/) with "Phase 6, not yet written" — accurate today
+(Phase 6 hasn't started), but once `spec/scheme_upto_stellar.md` exists
+and the upstream x402 PR opens (spec §5 Phase 6), that link should point
+at the actual PR, not an empty directory — the PR is the strongest piece
+of evidence Phase 6 produces and the README should surface it directly
+rather than make a reviewer go find it. Tracked here so it isn't missed
+when Phase 6 wraps up.

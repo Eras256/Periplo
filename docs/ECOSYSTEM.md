@@ -8,11 +8,10 @@
 > **This capture was truncated at 50,000 characters mid-paste** — the
 > "Developer Tooling · 137" section cuts off after the first entry
 > (AnChain.AI). Treat this file as a partial, dated snapshot, not the live
-> catalogue. Regenerate before relying on it for the actual SCF submission
-> (the source data updates upstream); the `stellar-competitive-landscape`
-> skill is the live-query path, but per `docs/SKILLS.md` it's reserved for
-> the submission workflow, not the code build — use it when drafting the
-> submission, not from inside this repo's build phases.
+> catalogue. Regenerate before relying on it — the source data updates
+> upstream. The `stellar-competitive-landscape` skill is the live-query
+> path; per `docs/SKILLS.md` it's reserved for drafting work, not invoked
+> from inside this repo's build phases.
 
 ---
 
