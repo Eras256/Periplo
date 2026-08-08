@@ -456,6 +456,18 @@ Re-adding a working `osv-scan` job (spec §6/§7 want it as a hard gate) is
 still open — next attempt should be validated against a real, isolated
 push before being trusted, same caution as before.
 
+**Update 2026-08-08 — the billing message resurfaced once, transiently.**
+After four consecutive green organic-push runs, one run
+(`31241780851`, the `docs(spec)` commit) failed with the exact same
+"recent account payments have failed or your spending limit needs to be
+increased" message — with the repo confirmed still public
+(`gh repo view --json isPrivate` → `false`) at the time. The very next
+push, 8 minutes later with no changes to repo settings, succeeded
+normally (`31242097451`). Read as a transient false-positive in GitHub's
+billing check itself, not a regression back to the private-repo state —
+worth knowing this can happen even on a public repo, not worth blocking
+on. If it recurs persistently (not just once), revisit.
+
 ## README follow-up: the `spec/` link for `upto` needs updating at Phase 6
 
 README's "What Periplo is (planned)" section links `upto`'s spec to
