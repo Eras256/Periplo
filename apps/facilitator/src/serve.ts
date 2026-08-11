@@ -9,6 +9,8 @@
  */
 
 import { serve } from "@hono/node-server";
+import { createServiceRoleClient, type Database } from "@periplo/bazaar";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createFacilitatorApp } from "./app.js";
 import { createFacilitatorCore, type FacilitatorCoreConfig } from "./core.js";
 
@@ -28,9 +30,26 @@ function loadSigners(): FacilitatorCoreConfig["signers"] {
   return signers;
 }
 
+/**
+ * `null` (not a boot-time error) when `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`
+ * aren't set — automatic cataloging (spec Phase 4) degrades to
+ * validate-without-persist rather than the whole facilitator refusing to
+ * boot over an optional feature. The service-role key bypasses RLS
+ * (spec §6) and must only ever come from an environment variable, never a
+ * committed file.
+ */
+function loadCatalogClient(): SupabaseClient<Database> | null {
+  const url = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceRoleKey) {
+    return null;
+  }
+  return createServiceRoleClient(url, serviceRoleKey);
+}
+
 async function main(): Promise<void> {
   const core = await createFacilitatorCore({ signers: loadSigners() });
-  const app = createFacilitatorApp(core);
+  const app = createFacilitatorApp(core, { catalogClient: loadCatalogClient() });
 
   // Explicit 0.0.0.0: @hono/node-server's default hostname isn't
   // guaranteed reachable from outside the container in every environment

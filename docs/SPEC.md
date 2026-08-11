@@ -253,7 +253,12 @@ Query filters: `type`, `payTo`, `network`, `extensions`, `limit`, `offset`.
 
 ### `GET /discovery/search`
 
-Natural-language `q`, cursor pagination, `partialResults` when matches were truncated.
+Natural-language `query` (not `q` — confirmed against the official
+`@x402/extensions/bazaar` client types and the x402 e2e test's own probe;
+this doc originally had `q`, corrected during Phase 4 while reading the
+primary source for something else, see `docs/INTEROP.md` §3), cursor
+pagination, `partialResults` when matches were truncated. `GET /discovery/*`
+itself is Phase 5 (search) work, not built yet.
 
 ```jsonc
 {

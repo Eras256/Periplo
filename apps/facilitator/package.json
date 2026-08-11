@@ -13,7 +13,10 @@
   },
   "dependencies": {
     "@hono/node-server": "2.1.0",
+    "@periplo/bazaar": "workspace:*",
+    "@supabase/supabase-js": "2.112.2",
     "@x402/core": "2.21.0",
+    "@x402/extensions": "2.21.0",
     "@x402/stellar": "2.21.0",
     "@stellar/stellar-sdk": "16.2.0",
     "hono": "4.13.0",

@@ -12,8 +12,9 @@ directly rather than read prose claiming conformance.
 
 The full build plan lives at [`docs/SPEC.md`](docs/SPEC.md) — read it before
 starting any phase. It is phased (0–10); each phase ends in a gate command
-that must exit 0 before the next phase starts. **Current status: Phase 3
-complete, Phase 4 starting** — see [`docs/DEFERRED.md`](docs/DEFERRED.md),
+that must exit 0 before the next phase starts. **Current status: Phase 4
+(automatic cataloging) complete, Phase 5 (search) next** — see
+[`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`conformance/RESULTS.md`](conformance/RESULTS.md),
 [`conformance/baseline/`](conformance/baseline),
 [`packages/bazaar`](packages/bazaar), [`supabase/`](supabase), and
@@ -101,8 +102,19 @@ pnpm lint:fix           # biome check --write .
 pnpm test               # vitest run, workspace-wide
 pnpm test:watch
 pnpm licence-check      # AGPL/copyleft gate — see constraints above
-pnpm ci                 # typecheck && lint && test && licence-check, in that order
+pnpm run ci             # typecheck && lint && test && licence-check, in that order
 ```
+
+**Use `pnpm run ci`, not bare `pnpm ci`.** `ci` is a reserved pnpm CLI
+command (alias for `clean-install` — `pnpm clean` + `pnpm install
+--frozen-lockfile`) that shadows a package.json script of the same name;
+bare `pnpm ci` silently reinstalls dependencies instead of running the
+gate, with no error pointing at the shadowing. `pnpm run ci` forces
+package.json script resolution. Found empirically running this exact
+command during Phase 4 (`pnpm help ci` confirms the alias) — every
+individual step (`typecheck`/`lint`/`test`/`licence-check`) was still run
+and verified separately throughout Phases 0–3, so this was a misleading
+shortcut, not a gap in what actually got checked.
 
 Run a single test file: `pnpm exec vitest run path/to/file.test.ts`.
 
@@ -138,10 +150,18 @@ never bundled into a deployed service.
 protocol-relative attacks, incl. percent-encoding and backslash variants —
 see the module doc in `route-template.ts` for the full reasoning) and
 `softDropFields` (a generic, schema-agnostic field-level soft-drop
-mechanism — Phase 4 supplies the actual discovery-payload schema, this
-package only supplies the mechanism). `routeTemplate` never goes through
-soft-drop: it's the catalog key, so an invalid one hard-rejects the whole
-listing rather than being softly dropped. Catalog storage must always key
+mechanism). In the event, Phase 4's actual discovery-payload schema
+validation goes through `@x402/extensions/bazaar`'s own Ajv-based
+`validateDiscoveryExtension` instead — atomic, not per-field: an invalid
+`info`/`schema` rejects the whole extension rather than softly dropping one
+bad field, because that's how the upstream package (and the wire spec it
+implements) actually validates it. `softDropFields` itself is still real
+and tested, just not wired into Phase 4's own path — see `docs/DEFERRED.md`
+for where it would actually apply (`resource.serviceName`/`tags`/`iconUrl`,
+which upstream soft-drop-sanitizes but Periplo's current Phase 2 schema has
+no columns for yet). `routeTemplate` never goes through soft-drop: it's the
+catalog key, so an invalid one hard-rejects the whole listing rather than
+being softly dropped. Catalog storage must always key
 on the client's **original** (un-decoded) `routeTemplate` string — decoding
 is for validation only, never for what gets stored.
 
@@ -189,12 +209,38 @@ where they'd bite:**
 `src/serve.ts` binds `@hono/node-server` (MIT, added outside spec §2's
 manifest — flagged per working rule 6, not silently added, when the
 project owner asked for the Fly deploy directly) to `0.0.0.0:$PORT`,
-reading fee-sponsor secrets from `STELLAR_FEE_SPONSOR_SECRET[_TESTNET|_PUBNET]`.
+reading fee-sponsor secrets from `STELLAR_FEE_SPONSOR_SECRET[_TESTNET|_PUBNET]`
+and (Phase 4) `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` for the catalog
+client — the latter pair is optional; the facilitator boots and serves
+fine without them, it just validates bazaar extensions without persisting.
 Tests still exercise the app via Hono's in-memory `app.request()` — no
 network needed for `pnpm test`. `GET /` returns a small JSON description
 of the service (no claims beyond what's real — no frontend exists, see
 `apps/hub` below); it existed only as a bare 404 before a live user check
 surfaced the gap.
+
+`src/discovery.ts` (Phase 4) is automatic cataloging: `processBazaarExtension`
+extracts and validates a payment payload's `extensions.bazaar` using the
+official `@x402/extensions/bazaar` package (`extractDiscoveryInfo`,
+`validateDiscoveryExtension`, `validateDiscoveryExtensionSpec` — same
+"don't reimplement the wire protocol" principle §1 applies to verify/settle,
+extended here; flagged as an outside-manifest addition per working rule 6),
+except `routeTemplate` itself, which is checked with `packages/bazaar`'s own
+`checkRouteTemplate` instead — upstream's equivalent is strictly weaker
+(single percent-decode pass vs. Periplo's bounded-repeated decode) and
+doesn't satisfy the Phase 4 gate's hard-reject requirement. Full comparison
+and a genuine upstream bug found via the live integration test (`mcp://`
+URLs resolve to a broken `null/...` catalog URL because `mcp:` isn't a
+WHATWG special scheme) are in [`docs/INTEROP.md`](docs/INTEROP.md). `app.ts`
+wires this into `/verify` and `/settle` — cataloging only runs after the
+underlying payment call itself succeeds (the facilitator is a trust
+boundary), and the outcome is reported via the `EXTENSION-RESPONSES` header
+regardless of whether a catalog client is configured. `packages/bazaar/src/db/catalog.ts`
+is the write path: reads the existing row (if any) by the
+`(url, route_template, tool_name)` key, merges the new payment option into
+`accepts` rather than duplicating rows, and upserts. Seller-facing docs
+(including per-parameter descriptions, the primary input to Phase 5's
+search ranking) are in [`docs/SELLERS.md`](docs/SELLERS.md).
 
 `conformance/baseline/` holds real, captured HTTP transcripts (not
 reconstructed from documentation) against the public reference facilitator

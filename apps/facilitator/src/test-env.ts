@@ -35,3 +35,23 @@ export function loadStellarTestEnv(): StellarTestEnv | null {
   }
   return { feeSponsorSecret, feeSponsorPublic };
 }
+
+/** Same shape as `packages/bazaar/src/db/test-env.ts`'s `SupabaseTestEnv` — duplicated rather
+ * than imported so this test-only helper doesn't need to be part of `@periplo/bazaar`'s public
+ * (production) API surface just to be reachable from this package's own integration tests. */
+export interface SupabaseTestEnv {
+  readonly url: string;
+  readonly serviceRoleKey: string;
+}
+
+export function loadSupabaseTestEnv(): SupabaseTestEnv | null {
+  tryLoadDotEnvOnce();
+
+  const url = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceRoleKey) {
+    return null;
+  }
+  return { url, serviceRoleKey };
+}

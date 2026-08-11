@@ -6,9 +6,13 @@
  * entirely — no HTTP hop needed when the caller is in the same process.
  */
 
+import type { Database } from "@periplo/bazaar";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
+import { BAZAAR } from "@x402/extensions/bazaar";
 import { Hono } from "hono";
 import type { FacilitatorCore } from "./core.js";
+import { processBazaarExtension } from "./discovery.js";
 import { type VerifyOrSettleRequestBody, verifyOrSettleRequestSchema } from "./schemas.js";
 
 /**
@@ -29,8 +33,34 @@ function toSdkTypes(body: VerifyOrSettleRequestBody): {
   };
 }
 
-export function createFacilitatorApp(core: FacilitatorCore): Hono {
+/**
+ * `EXTENSION-RESPONSES` header: base64-encoded JSON reporting the outcome
+ * of any declared protocol extension (spec §4), so a seller can tell
+ * whether a bazaar listing landed and why not. Matches `@x402/core`'s own
+ * `safeBase64Encode` (`Buffer.from(data, "utf8").toString("base64")`) so
+ * a stock `HTTPFacilitatorClient` decodes it without special-casing us.
+ */
+function encodeExtensionResponsesHeader(payload: Record<string, unknown>): string {
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64");
+}
+
+export interface CreateFacilitatorAppOptions {
+  /**
+   * Service-role Supabase client for automatic cataloging (spec Phase 4).
+   * `null`/omitted validates declared bazaar extensions and reports the
+   * outcome via `EXTENSION-RESPONSES` without persisting anything — the
+   * facilitator core has no hard dependency on a catalog database; only
+   * this HTTP layer's cataloging step does.
+   */
+  readonly catalogClient?: SupabaseClient<Database> | null;
+}
+
+export function createFacilitatorApp(
+  core: FacilitatorCore,
+  options: CreateFacilitatorAppOptions = {}
+): Hono {
   const app = new Hono();
+  const catalogClient = options.catalogClient ?? null;
 
   // No claim beyond what's true today: this is an API-only service
   // (apps/hub, the human-facing developer hub, is Phase 9 and doesn't
@@ -52,7 +82,19 @@ export function createFacilitatorApp(core: FacilitatorCore): Hono {
 
   app.get("/health", (c) => c.json({ status: "ok" }));
 
-  app.get("/supported", (c) => c.json(core.getSupported()));
+  // Always advertised: the extension mechanism (validate + report via
+  // EXTENSION-RESPONSES) works whether or not `catalogClient` is
+  // configured — see `CreateFacilitatorAppOptions`. `core.getSupported()`
+  // itself knows nothing about bazaar (spec §1: not reimplemented in
+  // core.ts, which stays pure Stellar-scheme wiring), so this is merged
+  // in at the HTTP layer, where the extension is actually processed.
+  app.get("/supported", (c) => {
+    const supported = core.getSupported();
+    return c.json({
+      ...supported,
+      extensions: [...new Set([...supported.extensions, BAZAAR.key])],
+    });
+  });
 
   app.post("/verify", async (c) => {
     let json: unknown;
@@ -74,6 +116,24 @@ export function createFacilitatorApp(core: FacilitatorCore): Hono {
     }
     const { paymentPayload, paymentRequirements } = toSdkTypes(parsed.data);
     const result = await core.verify(paymentPayload, paymentRequirements);
+
+    // Cataloging only runs against a payload that actually verified — the
+    // facilitator is a trust boundary (spec Phase 1); an unverified
+    // payload's echoed `resource`/extensions are not yet trustworthy.
+    if (result.isValid) {
+      const bazaarResult = await processBazaarExtension(
+        paymentPayload,
+        paymentRequirements,
+        catalogClient
+      );
+      if (bazaarResult) {
+        c.header(
+          "EXTENSION-RESPONSES",
+          encodeExtensionResponsesHeader({ [BAZAAR.key]: bazaarResult })
+        );
+      }
+    }
+
     return c.json(result);
   });
 
@@ -109,6 +169,23 @@ export function createFacilitatorApp(core: FacilitatorCore): Hono {
     }
     const { paymentPayload, paymentRequirements } = toSdkTypes(parsed.data);
     const result = await core.settle(paymentPayload, paymentRequirements);
+
+    // Same trust-boundary rule as /verify: only a settled payment's echoed
+    // extensions are cataloged.
+    if (result.success) {
+      const bazaarResult = await processBazaarExtension(
+        paymentPayload,
+        paymentRequirements,
+        catalogClient
+      );
+      if (bazaarResult) {
+        c.header(
+          "EXTENSION-RESPONSES",
+          encodeExtensionResponsesHeader({ [BAZAAR.key]: bazaarResult })
+        );
+      }
+    }
+
     return c.json(result);
   });
 

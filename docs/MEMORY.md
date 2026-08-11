@@ -304,3 +304,58 @@
   catching a wrong verification method and re-verifying properly is
   better evidence of discipline than getting it right by luck the first
   time.
+
+## 2026-08-10 — Phase 4 (automatic cataloging)
+
+- **Read the real upstream package before writing a line of extension code.**
+  `@x402/core`'s own extension registry (`registerExtension`/`FacilitatorExtension`)
+  turned out to be a thin capability-lookup shim, not a ready bazaar
+  implementation — but a sibling package, `@x402/extensions`, ships a
+  complete one (`@x402/extensions/bazaar@2.21.0`, same pin as `@x402/core`/
+  `@x402/stellar`, Apache-2.0), found only by walking the actual GitHub
+  repo tree (`e2e/extensions/bazaar.ts`, `typescript/packages/extensions/src/bazaar/`)
+  rather than trusting `docs/SPEC.md`'s prose description of the wire
+  contract. Built on it rather than reimplementing — same principle §1
+  applies to verify/settle, extended here on judgment, flagged (not
+  silently added) per working rule 6.
+- **Kept Periplo's own `checkRouteTemplate` over upstream's `isValidRouteTemplate`
+  anyway** — the one place "use the official package" was deliberately not
+  the whole story, because upstream's version doesn't satisfy the Phase 4
+  gate (single percent-decode pass vs. Periplo's bounded-repeated decode;
+  upstream silently drops an invalid template and keeps going instead of
+  rejecting the whole extension). Documented as an intentional divergence
+  in `docs/INTEROP.md`, not a defect to fix quietly.
+- **The real Supabase integration test caught a genuine upstream bug that
+  reading the source never would have**: `mcp://tool/{toolName}` URLs —
+  the exact convention `docs/SPEC.md` §4 documents — broke upstream's own
+  canonical-URL builder, because `mcp:` isn't a WHATWG special scheme and
+  `URL.origin` returns the literal string `"null"` for it. First test run
+  produced a row with `url: "null/toolname"`; fixed by reconstructing the
+  MCP catalog URL directly from `toolName` rather than trusting the
+  library's output for that one case. Worth remembering generally: type-
+  checking and unit tests with fakes would never have caught this — only
+  running the real write path against the real database did.
+- **Cataloging only runs after the underlying payment call itself
+  succeeds** (`result.isValid`/`result.success`), not on every request
+  carrying the extension — an unverified payload's echoed `resource`/
+  `extensions` aren't trustworthy yet (same trust-boundary reasoning as
+  Phase 1's `routeTemplate` work, applied to the gate that decides whether
+  to catalog at all, not just what's safe to store).
+- **`docs/SPEC.md` §4's search param name was wrong** (`q` vs. the real
+  wire's `query`), caught as a side effect of reading the primary source
+  for something else — corrected nowhere yet (Phase 5's job), but recorded
+  in `docs/INTEROP.md` now while the source was actually open, rather than
+  re-deriving it later.
+- **Two genuine upstream findings, not filed as issues** — an
+  outward-facing action on a repo this session doesn't own. Logged in
+  `docs/DEFERRED.md`/`docs/INTEROP.md` with enough detail to file directly;
+  the go/no-go on actually opening the GitHub issues is the project
+  owner's call, not assumed.
+- **Seller-side help shipped as documentation (`docs/SELLERS.md`), not a
+  new re-export package.** The upstream `declareDiscoveryExtension`/
+  `bazaarResourceServerExtension` already are the boilerplate-reduction
+  helper the spec asks for; a Periplo-specific wrapper around them would
+  have saved one import line and cost a second copy of an API surface to
+  keep in sync. The genuine gap upstream's own README doesn't fill is a
+  concrete Stellar + per-parameter-description example, which is what the
+  doc actually provides.

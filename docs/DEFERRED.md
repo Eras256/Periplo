@@ -487,3 +487,113 @@ copy. A duplicate invites drift (one copy updates, the other doesn't) and
 a fork of a spec that's actively being upstreamed reads oddly — the
 spec's place is upstream. The Soroban contract
 (`contracts/upto-settlement`) is still genuinely Phase 6, not started.
+
+## Phase 4 — environment divergences and real findings
+
+### Bare `pnpm ci` was never actually running the gate script
+
+`pnpm ci` is a reserved pnpm CLI command (`pnpm help ci` → alias for
+`clean-install`: `pnpm clean` + `pnpm install --frozen-lockfile`), which
+shadows the root `package.json` script of the same name — bare `pnpm ci`
+silently reinstalls dependencies instead of running
+`typecheck && lint && test && licence-check`, with nothing pointing at the
+shadowing. `pnpm run ci` (explicit `run`) forces package.json resolution
+and is the command that actually runs the gate. Caught running this exact
+command during Phase 4; low severity in practice — `.github/workflows/ci.yml`
+already invokes each step individually (`pnpm typecheck`, `pnpm lint`,
+`pnpm test`, `pnpm licence-check`), never the compound `pnpm ci`, and this
+session's own phase-gate verifications ran the individual commands too — so
+no phase's gate was actually unverified, just documented with a command
+that would have silently done the wrong thing if anyone (a reviewer
+reproducing the gate locally, most plausibly) had copy-pasted it verbatim.
+`CLAUDE.md`'s Commands section now says `pnpm run ci`.
+
+Full detail in `docs/INTEROP.md` (spec §5 Phase 4 requires recording
+divergences there specifically); summarized here for the running log.
+
+### Built on `@x402/extensions/bazaar@2.21.0`, not a from-scratch implementation
+
+Discovered mid-phase, before writing any extension-handling code: the
+official x402 project ships a complete facilitator-side and resource-server-
+side implementation of the bazaar discovery extension as a real published
+npm package (`@x402/extensions`, same `2.21.0` pin as `@x402/core`/
+`@x402/stellar`, Apache-2.0, confirmed clean by `pnpm licence-check`
+including its transitive deps). `apps/facilitator/src/discovery.ts` is built
+on `extractDiscoveryInfo`/`validateDiscoveryExtension`/
+`validateDiscoveryExtensionSpec` from that package rather than
+reimplementing the extension's JSON-Schema validation and info-extraction
+logic — same "don't reimplement the wire protocol" principle spec §1
+applies to verify/settle, extended here on the session's own judgment
+(the package wasn't in the original manifest, so this is flagged per
+working rule 6, not silently added).
+
+**Dependency-weight tradeoff, accepted not hidden:** `@x402/extensions`
+bundles several extensions in one package (`bazaar`, `builder-code`,
+`offer-receipt`, `sign-in-with-x`, `payment-identifier`), and its
+`package.json` declares dependencies for all of them — `viem`, `jose`,
+`@signinwithethereum/siwe`, `tweetnacl`, `@noble/curves` — even though
+`apps/facilitator` only imports the `./bazaar` subpath. pnpm installs the
+full declared dependency graph regardless of which subpath is actually
+imported, so these ship in `node_modules` (and the Docker image) unused.
+No tree-shaking boundary exists at the package-manager level to avoid
+this without vendoring or a bundler step, and every one of those
+transitive deps passed the license gate on inspection (predominantly MIT).
+Not revisited unless image size becomes an actual operational problem.
+
+### `checkRouteTemplate` (Phase 1) used instead of upstream's `isValidRouteTemplate`
+
+One deliberate divergence from "build on the official package": Periplo's
+own Phase 1 `routeTemplate` validator (bounded-repeated percent-decoding,
+backslash normalization) is used instead of the official package's
+single-decode-pass equivalent, because upstream's version doesn't satisfy
+spec Phase 4's gate (hard-reject a hostile `routeTemplate`, no catalog row —
+upstream instead silently drops the field and catalogs the unparameterized
+URL). Full comparison table in `docs/INTEROP.md` §1.
+
+**Two genuine upstream findings, not filed as GitHub issues yet** (an
+outward-facing action on a repo this project doesn't own — flagged per
+working rule 6, needs a go-ahead rather than being done unilaterally):
+
+1. The single-decode gap above is a real (if narrow) catalog-poisoning
+   surface for anyone calling `isValidRouteTemplate` directly.
+2. `extractDiscoveryInfo` breaks on the `mcp://tool/{toolName}` URL form
+   that `docs/SPEC.md` §4 (and the x402 e2e test itself) documents as the
+   *expected* MCP resource URL — `mcp:` isn't a WHATWG special scheme, so
+   `new URL(...).origin` returns the literal string `"null"`, and upstream's
+   canonical-URL logic (`${url.origin}${url.pathname}`) produces
+   `"null/toolName"`. Found empirically via the real Supabase integration
+   test (`discovery.integration.test.ts`), not by inspection — first run
+   against live Supabase surfaced a wrong catalog `url` value. Worked
+   around in `discovery.ts` by reconstructing the URL from `toolName`
+   directly, bypassing the broken helper's output for MCP resources only.
+   Full detail in `docs/INTEROP.md` §2.
+
+### `resource.serviceName`/`tags`/`iconUrl` are sanitized by upstream but have no catalog column yet
+
+`@x402/extensions/bazaar`'s `extractDiscoveryInfo` already soft-drop-sanitizes
+these three optional fields internally (`sanitizeResourceServiceMetadata`,
+`isValidServiceName`, `sanitizeTags`, `isValidIconUrl` — printable-ASCII,
+length caps, SSRF-defended URL checks) and returns them on the
+`DiscoveredResource` it hands back. Periplo's `resources` table
+(`supabase/migrations/20260807202307_resources.sql`, Phase 2, unchanged
+since before this phase read the upstream package) has no columns for any
+of the three, so `discovery.ts` currently reads but discards them rather
+than storing something a migration hasn't been gated for. Not silently
+dropped — the values are real and sanitized, there's just nowhere to put
+them yet. If added later, this is the concrete case `packages/bazaar`'s
+`softDropFields` mechanism (Phase 1, already built and tested, currently
+unused by Phase 4's own path) was built for: three independently-optional
+fields where one failing validation shouldn't reject the other two or the
+listing as a whole.
+
+### `docs/SPEC.md` §4's search param name (`q`) doesn't match the real wire (`query`)
+
+Found while reading the official client types (`SearchDiscoveryResourcesParams`)
+and the x402 e2e test's own probe — both use `query`. `docs/SPEC.md` was
+written from a wire-contract description before this phase actually opened
+the source, and Phase 0's own baseline probe against `x402.org` used `?q=`
+too, but that request 404'd regardless (no discovery endpoints exist there),
+so the wrong param name was never exercised against anything live. Not
+corrected in `docs/SPEC.md` yet — `GET /discovery/search` itself is Phase 5
+scope, not built in Phase 4. Recorded in `docs/INTEROP.md` §3 so Phase 5
+starts from the right name instead of re-deriving it.

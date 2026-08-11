@@ -4,7 +4,7 @@
 
 The discovery layer for x402-payable services on Stellar.
 
-**Status: Phase 3 (facilitator) complete, and live on `stellar:testnet`
+**Status: Phase 4 (automatic cataloging) complete, live on `stellar:testnet`
 at https://periplo-testnet.fly.dev** (deployed early; the rest of Phase
 10 is not done — see [`docs/DEFERRED.md`](docs/DEFERRED.md)). This README
 states only what is built, linked, tested, or hashed today. Everything
@@ -56,6 +56,24 @@ JSON API itself.
   `GET /supported` directly. `stellar:pubnet` is not configured (no
   mainnet key exists yet, deliberately). See
   [Deployment](#deployment-what-actually-runs) below for how it's run.
+- **Automatic cataloging** (`apps/facilitator/src/discovery.ts`): a
+  payment carrying the `bazaar` discovery extension is validated and
+  written to the catalog on `/verify` and `/settle` — no separate
+  registration step, no dashboard, no API key. Built on the official
+  [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)
+  package (same reasoning as not reimplementing verify/settle), with
+  `packages/bazaar`'s own stricter `routeTemplate` check kept in place of
+  the upstream equivalent — see [`docs/INTEROP.md`](docs/INTEROP.md) for
+  exactly where and why, including a real upstream bug (`mcp://` URLs)
+  found via the live integration test, not by inspection. Reports the
+  outcome via the `EXTENSION-RESPONSES` header —
+  `{"bazaar":{"status":"success"}}` or `{"status":"rejected","rejectedReason":"…"}`
+  — verified end to end against the real Supabase project (catalog row
+  appears for a valid HTTP or MCP listing; a crafted hostile
+  `routeTemplate` produces no row and a specific rejection reason).
+  [`docs/SELLERS.md`](docs/SELLERS.md) is the seller-facing how-to,
+  including per-parameter descriptions (what Phase 5's search ranking
+  will read).
 
 Nothing else — no search ranking, no contract, no hub —
 exists in this repository yet. Do not infer capability
@@ -83,10 +101,12 @@ being built against.
 
 ## Architecture
 
-Only the **Facilitator** node below is real and deployed (see "What's real
-right now" above and [Deployment](#deployment-what-actually-runs)).
-Bazaar, Search, the Hub, and the `upto` contract are planned — this
-diagram is the target shape, not a status report.
+The **Facilitator** is real and deployed, and the automatic-cataloging edge
+into **Bazaar** (the catalog itself — Supabase, not the node's full future
+scope) is real too (see "What's real right now" above and
+[Deployment](#deployment-what-actually-runs)). Search, the Hub, and the
+`upto` contract are planned — this diagram is the target shape, not a
+status report.
 
 ```mermaid
 flowchart LR
@@ -193,3 +213,8 @@ introduced into the codebase yet.
   built the way they were.
 - [`docs/ECOSYSTEM.md`](docs/ECOSYSTEM.md) — partial, dated snapshot of the
   competitive landscape (regenerate before relying on it).
+- [`docs/SELLERS.md`](docs/SELLERS.md) — how a resource server lists a
+  Stellar service on the Bazaar (Phase 4).
+- [`docs/INTEROP.md`](docs/INTEROP.md) — where Periplo's bazaar extension
+  handling diverges from the canonical `@x402/extensions/bazaar`
+  implementation, and why (Phase 4).
