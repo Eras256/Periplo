@@ -31,7 +31,9 @@ JSON API itself.
   `softDropFields` (a listing keeps every metadata field that validates,
   drops only the ones that don't — never rejected wholesale over one bad
   field). 45 unit tests exercise `checkRouteTemplate` alone (gate requires
-  ≥20) — 101 tests total across the whole repo as of Phase 3.
+  ≥20) — 132 tests total across the whole repo as of Phase 4, including the
+  live-Supabase integration suites (`pnpm run ci`, run just now to get this
+  number, not carried over from a prior phase).
 - [`conformance/baseline/`](conformance/baseline) — real, captured HTTP
   transcripts against the public `x402.org` reference facilitator: its
   `/supported` response for `stellar:testnet` (confirming
@@ -95,6 +97,15 @@ cannot express — the network spec is open upstream as a Draft PR at
 ([issue #3097](https://github.com/x402-foundation/x402/issues/3097)), with
 three on-chain assumptions marked open. The Soroban contract is Phase 6, not
 started.
+
+Separately, building Phase 4 surfaced a real bug in the official bazaar
+package itself, not a spec proposal: `extractDiscoveryInfo`
+(`@x402/extensions/bazaar`) builds a broken canonical URL for
+`mcp://tool/{toolName}` resources — the exact convention the Bazaar
+extension documents for MCP tools — because `mcp:` isn't a WHATWG special
+scheme. Found via the live Supabase integration test, not by inspection.
+Filed as [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121)
+with a minimal reproduction; full detail in [`docs/INTEROP.md`](docs/INTEROP.md).
 
 This is a response to the Stellar Community Fund RFP *"X402 Facilitator with
 Bazaar (discovery) support"* (SCF #45, Q3 2026). Full scope: see
