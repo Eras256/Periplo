@@ -1,8 +1,15 @@
 # syntax=docker/dockerfile:1
 # Builds apps/facilitator only. Run from the repo root (build context must
-# include the pnpm workspace root — apps/facilitator has no runtime
-# dependency on packages/bazaar or packages/licence-check, but pnpm
-# workspace resolution needs the root lockfile/manifest regardless).
+# include the pnpm workspace root). apps/facilitator has a real runtime
+# dependency on @periplo/bazaar as of Phase 4 (automatic cataloging) — pnpm
+# workspace resolution symlinks apps/facilitator/node_modules/@periplo/bazaar
+# to ../../../packages/bazaar, so packages/bazaar must be (1) built (`tsc -p`,
+# not `-b`, doesn't auto-build referenced projects — its dist/ has to exist
+# before @periplo/facilitator's own `tsc -p` can resolve the package's types)
+# and (2) present in the runtime stage too, or the symlink dangles.
+# packages/licence-check has no runtime dependency and is only here because
+# pnpm workspace resolution needs every workspace package.json present to
+# compute the lockfile-consistent install, even ones this image never runs.
 
 FROM node:22-slim AS base
 RUN corepack enable
@@ -20,11 +27,20 @@ COPY tsconfig.json tsconfig.base.json ./
 COPY packages/licence-check packages/licence-check
 COPY packages/bazaar packages/bazaar
 COPY apps/facilitator apps/facilitator
+RUN pnpm --filter @periplo/bazaar build
 RUN pnpm --filter @periplo/facilitator build
 
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/bazaar/dist ./packages/bazaar/dist
+COPY --from=build /app/packages/bazaar/package.json ./packages/bazaar/package.json
+# pnpm gives every workspace package its own node_modules/ of symlinks to
+# its own declared deps (here: @supabase/supabase-js), resolved from the
+# central store — missing this made the first Phase 4 deploy crash-loop on
+# ERR_MODULE_NOT_FOUND for a dependency that genuinely was installed, just
+# not copied into this stage.
+COPY --from=build /app/packages/bazaar/node_modules ./packages/bazaar/node_modules
 COPY --from=build /app/apps/facilitator/node_modules ./apps/facilitator/node_modules
 COPY --from=build /app/apps/facilitator/dist ./apps/facilitator/dist
 COPY --from=build /app/apps/facilitator/package.json ./apps/facilitator/package.json

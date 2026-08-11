@@ -490,6 +490,36 @@ spec's place is upstream. The Soroban contract
 
 ## Phase 4 — environment divergences and real findings
 
+### `Dockerfile.facilitator` didn't build or ship `@periplo/bazaar` — first Phase 4 deploy crash-looped
+
+Found live, immediately after pushing and redeploying: `apps/facilitator`
+never had a real runtime dependency on `packages/bazaar` before Phase 4, so
+`Dockerfile.facilitator` never built or copied it. Two failures, found and
+fixed in sequence against the real deployment, not caught by `pnpm typecheck`
+locally (which uses `tsc -b`, project-reference mode, and doesn't need
+`dist/` to exist):
+
+1. **Build stage:** `pnpm --filter @periplo/facilitator build` runs plain
+   `tsc -p tsconfig.json` (not `-b`), which does not auto-build referenced
+   projects — it resolves `@periplo/bazaar` via normal node-module
+   resolution against `packages/bazaar/package.json`'s `types` field
+   (`dist/index.d.ts`), which didn't exist because nothing had built
+   `packages/bazaar` in the image. Fixed: `RUN pnpm --filter @periplo/bazaar
+   build` before the facilitator build step.
+2. **Runtime stage:** even after the build succeeded, the deployed machine
+   crash-looped on `ERR_MODULE_NOT_FOUND: Cannot find package
+   '@supabase/supabase-js'` — pnpm gives every workspace package its own
+   `node_modules/` of symlinks to its own direct dependencies (resolved
+   from the shared store), and `packages/bazaar/node_modules` was never
+   copied into the runtime stage, only `dist/` and `package.json`. Fixed by
+   adding that copy too.
+
+Both fixes verified against the real deployment: `curl
+https://periplo-testnet.fly.dev/supported` returned `"extensions":["bazaar"]`
+only after the second deploy, not the first — the first one looked
+successful in `fly deploy`'s own output (image built, pushed) right up
+until the machine actually tried to boot the new code.
+
 ### Bare `pnpm ci` was never actually running the gate script
 
 `pnpm ci` is a reserved pnpm CLI command (`pnpm help ci` → alias for
