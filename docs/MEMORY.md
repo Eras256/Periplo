@@ -359,3 +359,31 @@
   keep in sync. The genuine gap upstream's own README doesn't fill is a
   concrete Stellar + per-parameter-description example, which is what the
   doc actually provides.
+
+## 2026-08-11 — Phase 4 follow-through: push, deploy, verify against public state
+
+- **The user checked the public repo and live deployment directly and
+  found a real gap**: the first Phase 4 report described a live
+  `/supported` claim before anything had been pushed. Right call, same
+  lesson as the earlier CI-verification pushback — a local commit is not
+  evidence. Pushed, then found the deploy itself was genuinely broken:
+  `Dockerfile.facilitator` never built or shipped `packages/bazaar`
+  (apps/facilitator had no runtime dependency on it before this phase),
+  so the first live deploy crash-looped. Two real bugs (build stage,
+  runtime stage), found and fixed against the actual deployment, not
+  caught by any local gate — verified the fix with `curl` against the
+  live URL, not just a green `fly deploy` exit code.
+- **Filed the `mcp://` bug upstream** as
+  [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121)
+  once explicitly authorized — a bug report, not a spec PR, per
+  `CONTRIBUTING.md`'s own scope for issues.
+- **README, then INTEROP.md/SELLERS.md, went through a prose-register
+  pass** (em dashes, negation-for-emphasis, bold overuse) at the user's
+  request, with a hard constraint: no fact or code block changes.
+  Verified by diffing code blocks against `git show HEAD:` rather than
+  trusting the rewrite, and by re-checking every number/link against the
+  live system before each commit. One real tension surfaced: a table
+  cell containing its own em dash conflicts with "never touch a table
+  cell" and "zero dashes remain" simultaneously — resolved by fixing
+  punctuation only, not content, and flagging the exception explicitly
+  rather than picking one rule silently over the other.

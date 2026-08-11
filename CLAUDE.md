@@ -240,7 +240,28 @@ is the write path: reads the existing row (if any) by the
 `(url, route_template, tool_name)` key, merges the new payment option into
 `accepts` rather than duplicating rows, and upserts. Seller-facing docs
 (including per-parameter descriptions, the primary input to Phase 5's
-search ranking) are in [`docs/SELLERS.md`](docs/SELLERS.md).
+search ranking) are in [`docs/SELLERS.md`](docs/SELLERS.md). The `mcp://`
+canonical-URL bug documented in `docs/INTEROP.md` §2 is filed upstream as
+[x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121)
+(bug report, not a spec PR — see `CONTRIBUTING.md`'s scope for issues).
+
+`Dockerfile.facilitator` builds and ships `@periplo/bazaar` alongside
+`@periplo/facilitator` — apps/facilitator had no runtime dependency on
+packages/bazaar before Phase 4, so this wasn't needed until now. Two
+things the image needs or the deploy crash-loops: `pnpm --filter
+@periplo/bazaar build` before the facilitator build step (`tsc -p`
+doesn't auto-build referenced projects), and copying
+`packages/bazaar/node_modules` into the runtime stage, not just `dist/`
+(pnpm gives every workspace package its own symlinks to its own deps).
+Found live against the real deployment on the first Phase 4 deploy — see
+`docs/DEFERRED.md`.
+
+`README.md`, `docs/INTEROP.md`, and `docs/SELLERS.md` went through a
+prose-register pass (em dashes, negation-for-emphasis, bold overuse
+removed; every fact and code block verified unchanged). `docs/DEFERRED.md`,
+`docs/SPEC.md`, and this file have not — still carry the heavier register,
+lowest priority since reviewers read them less than the README/INTEROP/SELLERS
+trio.
 
 `conformance/baseline/` holds real, captured HTTP transcripts (not
 reconstructed from documentation) against the public reference facilitator

@@ -44,6 +44,13 @@ specifically; it's what "trust reality over documentation" (spec §12 rule
 skills deliberately in Phase 5 or 6 to see whether it changes anything, so
 this isn't just a habit going unexamined.
 
+Phase 4 (automatic cataloging) kept the pattern: none of these skills were
+invoked. Instead, the session read `@x402/extensions/bazaar`'s real source
+directly off GitHub (found the package existed at all this way — it isn't
+in `docs/SPEC.md`'s manifest), and verified every claim against a real
+Supabase write, a real Fly deploy, and a real GitHub issue filed, not a
+skill's output.
+
 ## Explicitly not to be used during the build
 
 Per spec §0.1: `scf-submission-drafter`, `scf-prescreen-checker`,
