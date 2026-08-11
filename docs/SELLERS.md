@@ -1,18 +1,18 @@
 # Listing a Stellar service on the Bazaar
 
-Automatic cataloging (spec `docs/SPEC.md` §5 Phase 4): a resource server
-gets listed in Periplo's Bazaar the moment a buyer completes a payment that
-carries the `bazaar` discovery extension — **there is no separate
-registration step, no dashboard, no API key to request.** Declare the
+Automatic cataloging is spec `docs/SPEC.md` §5, Phase 4. A resource server
+gets listed in Periplo's Bazaar the moment a buyer completes a payment
+carrying the `bazaar` discovery extension. **There is no separate
+registration step, no dashboard, and no API key to request.** Declare the
 extension on your route, point your facilitator client at Periplo, and the
 first successful payment catalogs the resource.
 
 This is not a Periplo-specific mechanism. `bazaar` is a generic x402
 protocol extension shipped by the x402 project itself
-(`@x402/extensions/bazaar`) — the helper below is the official one, used
+(`@x402/extensions/bazaar`), and the helper below is the official one, used
 exactly as documented upstream. Periplo's own contribution is the
-facilitator that *understands* the extension (validates it and writes the
-catalog row), not a reimplementation of the extension mechanics. See
+facilitator that understands the extension: it validates it and writes the
+catalog row. It is not a reimplementation of the extension mechanics. See
 `apps/facilitator/src/discovery.ts` for that side.
 
 ## 1. Declare the extension on your route
@@ -73,10 +73,10 @@ const httpServer = new x402HTTPResourceServer(resourceServer, routes);
 ```
 
 For an MCP tool instead of an HTTP route, swap the `declareDiscoveryExtension`
-call for the `toolName` form — see the [upstream bazaar
+call for the `toolName` form. See the [upstream bazaar
 README](https://github.com/x402-foundation/x402/blob/main/typescript/packages/extensions/src/bazaar/README.md)
-for the full parameter reference (HTTP GET/POST/PUT/PATCH/DELETE, MCP tools,
-dynamic `:param` routes, `[param]` Next.js routes).
+for the full parameter reference: HTTP GET/POST/PUT/PATCH/DELETE, MCP
+tools, dynamic `:param` routes, and `[param]` Next.js routes.
 
 ## 2. Nothing else to do
 
@@ -84,8 +84,8 @@ The next time a buyer pays this route, your resource server's HTTP layer
 (via `bazaarResourceServerExtension`) fills in the concrete HTTP method and
 any dynamic path parameters, echoes the extension into the payment, and
 your facilitator client forwards it to Periplo's `/verify` and `/settle`.
-Periplo validates it and writes (or updates) the catalog row — same
-request, no extra round trip.
+Periplo validates it and writes, or updates, the catalog row in the same
+request. No extra round trip is needed.
 
 ## 3. Confirm the listing landed
 
@@ -98,29 +98,29 @@ header (base64-encoded JSON) reporting the outcome:
 ```
 
 `HTTPFacilitatorClient` (the official client) decodes and logs this header
-automatically — check your resource server's logs after a test payment, or
+automatically. Check your resource server's logs after a test payment, or
 decode it yourself:
 
 ```typescript
 const decoded = JSON.parse(Buffer.from(header, "base64").toString("utf8"));
 ```
 
-A `rejected` status always carries a specific `rejectedReason` — spec §1's
-"every rejection carries a non-null reason" applies here too. The most
-common causes: `inputSchema` doesn't match the shape of `input`/`example`
-(check `required` fields), or a dynamic route's `routeTemplate` failed
-Periplo's stricter path-traversal check (see `docs/INTEROP.md` for exactly
-where this diverges from upstream's own, more permissive check).
+A `rejected` status always carries a specific `rejectedReason`, per spec
+§1's rule that every rejection carries a non-null reason. The most common
+causes: `inputSchema` doesn't match the shape of `input`/`example` (check
+`required` fields), or a dynamic route's `routeTemplate` failed Periplo's
+stricter path-traversal check. See `docs/INTEROP.md` for exactly where
+this diverges from upstream's own, more permissive check.
 
 ## What Periplo does with your listing
 
-- Catalogs your resource with the **original**, un-decoded `routeTemplate`
-  as part of the catalog key — see `packages/bazaar/src/route-template.ts`.
+- Catalogs your resource with the original, un-decoded `routeTemplate` as
+  part of the catalog key. See `packages/bazaar/src/route-template.ts`.
 - Merges each new payment's payment option into the resource's `accepts`
   array rather than duplicating the row (`packages/bazaar/src/db/catalog.ts`).
-- Stores the declared JSON schema (with your parameter descriptions) in
-  `resources.parameters` — this is the raw material Phase 5's search
-  embeddings are built from, so richer descriptions genuinely improve
-  discoverability, not just documentation quality.
+- Stores the declared JSON schema, with your parameter descriptions, in
+  `resources.parameters`. This is the raw material Phase 5's search
+  embeddings are built from, so richer descriptions improve discoverability
+  as well as documentation quality.
 - Never requires you to run your own catalog database, register an API
   key, or call a separate "publish" endpoint.

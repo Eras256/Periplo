@@ -6,72 +6,73 @@ transcripts captured in Phase 0, diff your catalog entries against how the
 same resource appears in a multi-chain facilitator's index, and record any
 divergence."*
 
-**No live multi-chain facilitator has a queryable discovery index to diff
-against.** Phase 0's baseline probe against `x402.org` — the reference
-facilitator this whole project's conformance work is measured against —
+No live multi-chain facilitator has a queryable discovery index to diff
+against. Phase 0's baseline probe against `x402.org`, the reference
+facilitator this whole project's conformance work is measured against,
 confirmed a flat `404` on both `/discovery/resources` and
 `/discovery/search`, with no discovery endpoints deployed at all
-(`conformance/baseline/x402-org/discovery-404.md`). There is no other
-facilitator known to this build with a live, reachable Bazaar index either.
+(`conformance/baseline/x402-org/discovery-404.md`). No other facilitator
+known to this build has a live, reachable Bazaar index.
 
 So the diff below is against the next best thing, and arguably the more
-authoritative one: the **canonical wire spec** itself — `@x402/extensions/bazaar`
-(the official TypeScript implementation, pinned at the same `2.21.0` this
-repo already pins for `@x402/core`/`@x402/stellar`) and
-`e2e/extensions/bazaar.ts` (the x402 project's own conformance test for this
-exact extension). `docs/SPEC.md` §4 names this file directly as the
-authority ("these shapes are validated by `e2e/extensions/bazaar.ts`");
-reading it and the package it validates against *is* diffing against the
+authoritative one: the canonical wire spec itself. That means
+`@x402/extensions/bazaar` (the official TypeScript implementation, pinned
+at the same `2.21.0` this repo already pins for `@x402/core`/`@x402/stellar`)
+and `e2e/extensions/bazaar.ts` (the x402 project's own conformance test for
+this exact extension). `docs/SPEC.md` §4 names this file directly as the
+authority: "these shapes are validated by `e2e/extensions/bazaar.ts`."
+Reading it and the package it validates against is diffing against the
 multi-chain reference, just not through a live HTTP probe.
 
 ## 1. `routeTemplate` validation is intentionally stricter than upstream
 
 Both Periplo and `@x402/extensions/bazaar` treat `routeTemplate` as
-client-controlled and validate it at the facilitator (the trust-boundary
-principle both implementations share — upstream's own `isValidRouteTemplate`
-doc comment describes exactly the same catalog-poisoning concern
-`packages/bazaar/src/route-template.ts` was built against in Phase 1).
-Where they diverge:
+client-controlled and validate it at the facilitator. This is a
+trust-boundary principle both implementations share: upstream's own
+`isValidRouteTemplate` doc comment describes exactly the same
+catalog-poisoning concern `packages/bazaar/src/route-template.ts` was built
+against in Phase 1. Where they diverge:
 
 | | Periplo (`checkRouteTemplate`) | `@x402/extensions/bazaar` (`isValidRouteTemplate`) |
 | --- | --- | --- |
-| Percent-decoding | Repeated, bounded (8 passes) — catches double/triple encoding | Single pass — `%252e%252e` (double-encoded `..`) survives as a literal string and passes |
+| Percent-decoding | Repeated, bounded (8 passes), catches double/triple encoding | Single pass; `%252e%252e` (double-encoded `..`) survives as a literal string and passes |
 | Backslash normalization | `\` and `%5c` both normalized to `/` before the traversal check | Not normalized |
 | Null bytes / CR / LF | Rejected explicitly | Not checked |
-| On failure | The **whole extension is rejected** (`EXTENSION-RESPONSES: { status: "rejected", rejectedReason }`), no catalog row | `extractDiscoveryInfo` silently **omits** the invalid `routeTemplate` and continues cataloging under the unparameterized URL |
+| On failure | The whole extension is rejected (`EXTENSION-RESPONSES: { status: "rejected", rejectedReason }`), no catalog row | `extractDiscoveryInfo` silently omits the invalid `routeTemplate` and continues cataloging under the unparameterized URL |
 
-Periplo's behavior is the one spec Phase 4's gate explicitly requires ("a
-crafted hostile `routeTemplate` results in a **rejected header** ... and
-**no row**"), so `apps/facilitator/src/discovery.ts` calls
-`@periplo/bazaar`'s own `checkRouteTemplate` instead of upstream's
-`isValidRouteTemplate` for this one check — everything else in the request
-(schema validation, protocol-shape validation, info extraction) still goes
-through the official package unmodified. This is the one place in Phase 4
-where "build on the official SDK" was deliberately not the full story;
-documented here rather than silently diverging.
+Periplo's behavior is the one spec Phase 4's gate requires: a crafted
+hostile `routeTemplate` must produce a rejected header and no row. So
+`apps/facilitator/src/discovery.ts` calls `@periplo/bazaar`'s own
+`checkRouteTemplate` instead of upstream's `isValidRouteTemplate` for this
+one check. Everything else in the request, schema validation,
+protocol-shape validation, and info extraction, still goes through the
+official package unmodified. This is the one place in Phase 4 where "build
+on the official SDK" was not the full story, documented here rather than
+left as a silent divergence.
 
-**Worth filing upstream, not filed yet** (an outward-facing GitHub action —
-flagged per working rules, not done without confirmation): the single-decode
-gap is a real, if narrow, catalog-poisoning surface for anyone using
-`isValidRouteTemplate` directly. `%252e%252e%252f` decodes once to
-`%2e%2e%2f` (still passes the `..` check, since that check runs on the
-*once*-decoded string), and only fully resolves to `../` on a second
-decode — which never happens upstream.
+This gap is worth filing upstream; it has not been filed yet. Filing a
+GitHub issue on a repository this project does not own is an outward-facing
+action, flagged per working rules and held for confirmation rather than
+done unilaterally. The single-decode gap is a real, if narrow,
+catalog-poisoning surface for anyone using `isValidRouteTemplate` directly.
+`%252e%252e%252f` decodes once to `%2e%2e%2f`, which still passes the `..`
+check because that check runs on the once-decoded string, and only fully
+resolves to `../` on a second decode, which upstream never performs.
 
 ## 2. `mcp://tool/{toolName}` URLs break upstream's own canonical-URL logic
 
-Found empirically, via the real Supabase integration test
-(`apps/facilitator/src/discovery.integration.test.ts`), not by inspection —
-the first attempt at cataloging an MCP resource produced a row with
+We found this through the real Supabase integration test
+(`apps/facilitator/src/discovery.integration.test.ts`), not by reading the
+code. The first attempt at cataloging an MCP resource produced a row with
 `url: "null/financial_analysis_xyz"` instead of
 `"mcp://tool/financial_analysis_xyz"`.
 
 Root cause: `extractDiscoveryInfo` builds the catalog URL as
-`` `${url.origin}${url.pathname}` `` when no `routeTemplate` is present
-(the MCP path always takes this branch — MCP tools are never
-parameterized). `mcp:` is not a WHATWG **special scheme** (only
-`http`/`https`/`ws`/`wss`/`ftp`/`file` are), so per the URL spec, a
-`mcp://tool/x` URL gets an **opaque origin**, and `URL.prototype.origin`
+`` `${url.origin}${url.pathname}` `` when no `routeTemplate` is present.
+The MCP path always takes this branch, since MCP tools are never
+parameterized. `mcp:` is not a WHATWG special scheme (only
+`http`/`https`/`ws`/`wss`/`ftp`/`file` are). Per the URL spec, a
+`mcp://tool/x` URL gets an opaque origin, and `URL.prototype.origin`
 serializes an opaque origin as the literal string `"null"`:
 
 ```
@@ -80,51 +81,52 @@ serializes an opaque origin as the literal string `"null"`:
 ```
 
 `docs/SPEC.md` §4 documents `mcp://tool/{toolName}` as the *expected*
-resource URL form for MCP resources — the exact input that trips this. Every
-implementation that follows the documented convention and doesn't special-case
-non-special schemes will hit the same bug.
+resource URL form for MCP resources, the exact input that trips this. Every
+implementation that follows the documented convention without
+special-casing non-special schemes will hit the same bug.
 
-**Workaround in `apps/facilitator/src/discovery.ts`:** for MCP resources,
-the catalog URL is reconstructed directly as `` `mcp://tool/${toolName}` ``
-from the extension's own `toolName` field rather than trusting
-`discovered.resourceUrl`. `toolName` doesn't go through `URL` parsing at
-all, so it isn't affected by the origin bug.
+Workaround, in `apps/facilitator/src/discovery.ts`: for MCP resources, the
+catalog URL is reconstructed directly as `` `mcp://tool/${toolName}` `` from
+the extension's own `toolName` field, rather than trusting
+`discovered.resourceUrl`. `toolName` does not go through `URL` parsing, so
+the origin bug does not affect it.
 
 **Filed upstream:**
-[x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121)
-— minimal reproduction (both via `extractDiscoveryInfo` directly and via
-bare `new URL(...).origin`), environment, and a suggested fix (skip `URL`
-parsing for the MCP branch and build `` `mcp://tool/${toolName}` `` from
-the extension's own `toolName` directly, same as the workaround here).
-Filed as a bug report, not a spec PR — `CONTRIBUTING.md`'s "issue before
-spec" requirement is for spec changes; a bug report is lighter-weight and
-explicitly one of the two things GitHub issues are for in that doc.
+[x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121).
+The issue includes a minimal reproduction (both via `extractDiscoveryInfo`
+directly and via bare `new URL(...).origin`), the environment, and a
+suggested fix: skip `URL` parsing for the MCP branch and build
+`` `mcp://tool/${toolName}` `` from the extension's own `toolName`
+directly, the same as the workaround here. It is filed as a bug report,
+not a spec PR. `CONTRIBUTING.md`'s "issue before spec" requirement is for
+spec changes; a bug report is lighter-weight and is explicitly one of the
+two things GitHub issues are for in that document.
 
 ## 3. `docs/SPEC.md` §4's `GET /discovery/search` param name is wrong
 
-`docs/SPEC.md` §4 (written before this phase, from the wire-contract
-description rather than the source) says the search endpoint takes a
-`q` parameter. The real wire, per both the official client's
-`SearchDiscoveryResourcesParams` (`@x402/extensions/bazaar`'s
-`facilitatorClient.ts`) and the x402 e2e test's own probe
-(`e2e/extensions/bazaar.ts`'s `validateSearchEndpoint`, which builds
-`?query=<term>`), uses **`query`**, not `q`. Phase 0's own baseline probe
-against `x402.org` (`conformance/baseline/x402-org/discovery-404.md`) used
-`?q=weather` too — but that request 404'd regardless (no discovery
-endpoints exist there), so it never had a chance to surface this.
+`docs/SPEC.md` §4 was written before this phase, from a wire-contract
+description rather than the source, and says the search endpoint takes a
+`q` parameter. The real wire uses `query`. That is confirmed by both the
+official client's `SearchDiscoveryResourcesParams`
+(`@x402/extensions/bazaar`'s `facilitatorClient.ts`) and the x402 e2e
+test's own probe (`e2e/extensions/bazaar.ts`'s `validateSearchEndpoint`,
+which builds `?query=<term>`). Phase 0's own baseline probe against
+`x402.org` (`conformance/baseline/x402-org/discovery-404.md`) used
+`?q=weather` too, but that request 404'd regardless, since no discovery
+endpoints exist there, so it never had a chance to surface this.
 
 `ListDiscoveryResourcesParams` also documents a `scheme` filter (alongside
 `type`, `payTo`, `network`, `extensions`, `limit`, `offset`) that
 `docs/SPEC.md` §4's filter list omits.
 
-Not corrected in `docs/SPEC.md` yet — `GET /discovery/resources` and
-`GET /discovery/search` are Phase 5 (search) work, not built in Phase 4.
-Recorded here now, while the primary source was actually open, so Phase 5
-starts from the right param name instead of re-deriving it.
+This is not corrected in `docs/SPEC.md` yet. `GET /discovery/resources` and
+`GET /discovery/search` are Phase 5 (search) work, not built in Phase 4. It
+is recorded here now, while the primary source was open, so Phase 5 starts
+from the right param name instead of re-deriving it.
 
 ## Sources
 
-- `@x402/extensions/bazaar@2.21.0` — `facilitator.ts`, `facilitatorClient.ts`,
+- `@x402/extensions/bazaar@2.21.0`: `facilitator.ts`, `facilitatorClient.ts`,
   `http/types.ts`, `mcp/types.ts` (installed at
   `node_modules/@x402/extensions`, same pin as `@x402/core`/`@x402/stellar`).
 - `e2e/extensions/bazaar.ts`,
