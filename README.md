@@ -65,7 +65,9 @@ JSON API itself.
   `packages/bazaar`'s own stricter `routeTemplate` check kept in place of
   the upstream equivalent — see [`docs/INTEROP.md`](docs/INTEROP.md) for
   exactly where and why, including a real upstream bug (`mcp://` URLs)
-  found via the live integration test, not by inspection. Reports the
+  found via the live integration test, not by inspection, and filed as
+  [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121).
+  Reports the
   outcome via the `EXTENSION-RESPONSES` header —
   `{"bazaar":{"status":"success"}}` or `{"status":"rejected","rejectedReason":"…"}`
   — verified end to end against the real Supabase project (catalog row

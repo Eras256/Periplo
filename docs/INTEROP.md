@@ -90,9 +90,15 @@ from the extension's own `toolName` field rather than trusting
 `discovered.resourceUrl`. `toolName` doesn't go through `URL` parsing at
 all, so it isn't affected by the origin bug.
 
-**Also worth filing upstream, not filed yet:** same reasoning as above —
-this is a genuine bug in the official package's handling of its own
-documented URL convention, not a design disagreement.
+**Filed upstream:**
+[x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121)
+— minimal reproduction (both via `extractDiscoveryInfo` directly and via
+bare `new URL(...).origin`), environment, and a suggested fix (skip `URL`
+parsing for the MCP branch and build `` `mcp://tool/${toolName}` `` from
+the extension's own `toolName` directly, same as the workaround here).
+Filed as a bug report, not a spec PR — `CONTRIBUTING.md`'s "issue before
+spec" requirement is for spec changes; a bug report is lighter-weight and
+explicitly one of the two things GitHub issues are for in that doc.
 
 ## 3. `docs/SPEC.md` §4's `GET /discovery/search` param name is wrong
 

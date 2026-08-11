@@ -580,12 +580,12 @@ spec Phase 4's gate (hard-reject a hostile `routeTemplate`, no catalog row —
 upstream instead silently drops the field and catalogs the unparameterized
 URL). Full comparison table in `docs/INTEROP.md` §1.
 
-**Two genuine upstream findings, not filed as GitHub issues yet** (an
-outward-facing action on a repo this project doesn't own — flagged per
-working rule 6, needs a go-ahead rather than being done unilaterally):
+**Two genuine upstream findings.** The `mcp://` one is filed; the
+single-decode one is not yet, pending the project owner's go-ahead
+(flagged per working rule 6, not done unilaterally):
 
 1. The single-decode gap above is a real (if narrow) catalog-poisoning
-   surface for anyone calling `isValidRouteTemplate` directly.
+   surface for anyone calling `isValidRouteTemplate` directly. Not filed.
 2. `extractDiscoveryInfo` breaks on the `mcp://tool/{toolName}` URL form
    that `docs/SPEC.md` §4 (and the x402 e2e test itself) documents as the
    *expected* MCP resource URL — `mcp:` isn't a WHATWG special scheme, so
@@ -596,6 +596,7 @@ working rule 6, needs a go-ahead rather than being done unilaterally):
    against live Supabase surfaced a wrong catalog `url` value. Worked
    around in `discovery.ts` by reconstructing the URL from `toolName`
    directly, bypassing the broken helper's output for MCP resources only.
+   **Filed:** [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121).
    Full detail in `docs/INTEROP.md` §2.
 
 ### `resource.serviceName`/`tags`/`iconUrl` are sanitized by upstream but have no catalog column yet
