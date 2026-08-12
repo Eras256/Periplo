@@ -174,7 +174,7 @@ today; dashed borders and edges mark what does not.
 ```mermaid
 flowchart LR
     subgraph Agent["Buyer / agent runtime"]
-        MCP["MCP client\n(packages/mcp)"]
+        MCP["MCP client\n(any MCP host, e.g. Claude Desktop)"]
         Client["x402 client\n(@x402/fetch)"]
     end
 
@@ -182,6 +182,7 @@ flowchart LR
         Facilitator["Facilitator\napps/facilitator\nverify / settle / supported"]
         Bazaar["Bazaar catalog\npackages/bazaar"]
         Search["Search\npackages/search\nlexical + semantic + RRF"]
+        MCPServer["MCP discovery server\npackages/mcp\nsearch_services / call_paid_service"]
         Hub["Developer hub\napps/hub"]
     end
 
@@ -196,7 +197,9 @@ flowchart LR
 
     Client -->|"402 Payment Required"| Seller
     Client -->|verify / settle| Facilitator
-    MCP -->|search_services / call_paid_service| Search
+    MCP -.->|search_services / call_paid_service| MCPServer
+    MCPServer -.-> Search
+    MCPServer -.-> Facilitator
     Search --> DB
     Bazaar --> DB
     Facilitator -->|"automatic cataloging\n(PaymentPayload + discovery extension)"| Bazaar
@@ -207,6 +210,7 @@ flowchart LR
 
     classDef planned stroke-dasharray: 5 5
     class Hub planned
+    class MCPServer planned
 ```
 
 ## Verify it yourself
