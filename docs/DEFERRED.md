@@ -628,3 +628,141 @@ so the wrong param name was never exercised against anything live. Not
 corrected in `docs/SPEC.md` yet — `GET /discovery/search` itself is Phase 5
 scope, not built in Phase 4. Recorded in `docs/INTEROP.md` §3 so Phase 5
 starts from the right name instead of re-deriving it.
+
+## Phase 5 — environment divergences and real findings
+
+### Embedding model: no provider was pinned; picked and verified this phase
+
+`docs/SPEC.md` §5 specifies pgvector/HNSW/RRF exactly but never names an
+embedding model or provider — a real gap, not an oversight to defer.
+Resolved with the project owner (not decided unilaterally): a local model,
+no API key, no per-call cost, no new CI secret. Landed on `fastembed`'s
+`BGESmallENV15` (384-dim, MIT), not `@huggingface/transformers`:
+
+- `@huggingface/transformers` hard-depends on `sharp` for vision-model
+  utilities this project never uses. `sharp`'s prebuilt `libvips` binary
+  (`@img/sharp-libvips-linux-x64`) is LGPL-3.0-or-later — a hard `deny`
+  under `packages/licence-check`'s own `DENIED_PATTERNS` (spec §1: no
+  copyleft anywhere in the *shipped* dependency path), confirmed by
+  actually adding the package and running `license-checker` against it,
+  not assumed from the package's own top-level `Apache-2.0` claim.
+- Considered hand-rolling with `onnxruntime-node` + `@huggingface/
+  tokenizers` directly (both clean-licensed) to avoid `sharp` entirely.
+  Abandoned: `@huggingface/tokenizers`'s own `Tokenizer` constructor takes
+  pre-parsed `(tokenizer, config)` objects, not a `tokenizer.json` file
+  path — the file-loading/config-splitting logic lives inside
+  `@huggingface/transformers` itself, unexported. Reimplementing HF's own
+  tokenizer-config parser from scratch risked a silent correctness bug
+  (subtly wrong tokenization degrading search quality with no error
+  thrown) for a phase whose entire gate is *measured* quality — a worse
+  trade than the alternative below.
+- `fastembed` (MIT throughout, verified with `license-checker` before
+  adopting it) carries an unpatched, no-non-major-bump-available critical
+  `tar@^6.2.0` advisory (path traversal / arbitrary write on archive
+  extraction — `npm audit`, `fixAvailable: {isSemVerMajor: true}` to
+  `tar@>7.5.20`, which `fastembed@2.1.0`'s own dependency range can't
+  reach). Accepted: the archive `tar` extracts is the model file this
+  code itself requests from a name it pins
+  (`EmbeddingModel.BGESmallENV15`), not attacker-supplied input — the same
+  trust boundary every ONNX-model-downloading library in this space has,
+  `@huggingface/transformers` included. Documented in
+  `packages/search/src/embed.ts`'s own module doc, not hidden.
+
+### `resources.embedding` dimension corrected: 512 (Phase 2 placeholder) → 384
+
+Phase 2 pinned `vector(512)` before any embedding model was chosen.
+Migrated in place (`supabase/migrations/20260812080000_search.sql`) since
+the column was all-NULL — Phase 4 never wrote embeddings — so there was no
+data to lose. HNSW indexes can't survive an `ALTER COLUMN TYPE` on the
+underlying vector column; the migration drops and recreates
+`resources_embedding_idx` around the `ALTER`, verified by querying
+`pg_indexes`/`pg_attribute` against the real project afterward, not
+assumed from the migration succeeding silently.
+
+### `onnxruntime-node`'s postinstall downloads a ~340MB CUDA binary by default on Linux/x64 — skipped
+
+Found by inspecting `du -sh` on the installed package after a plain
+`pnpm install`: `libonnxruntime_providers_cuda.so` alone was 342MB, on a
+CPU-only sandbox and a CPU-only Fly deployment (`shared-cpu-1x`, no GPU).
+`onnxruntime-node`'s own install script supports
+`ONNXRUNTIME_NODE_INSTALL_CUDA=skip` to avoid this; set as an env var
+around `pnpm install` in `Dockerfile.facilitator` and
+`.github/workflows/ci.yml`. One real gotcha while fixing this locally:
+pnpm's content-addressable store caches a package's postinstall *output*,
+not just its manifest — re-running `pnpm install` with the env var newly
+set did not re-trigger the download-skip until the store's cached copy of
+`onnxruntime-node` was invalidated (`pnpm install --side-effects-cache=false`
+after deleting `node_modules`). A fresh Docker build or CI runner has no
+such pre-existing cache, so this only mattered for verifying the fix
+locally, not for correctness of the actual fix.
+
+Not addressed: the remaining ~208MB still bundles prebuilt binaries for
+every platform (darwin, win32, linux/arm64) that this Linux/x64-only
+deployment never uses — `Dockerfile.facilitator` copies the whole
+`node_modules` tree regardless. A real, smaller follow-up (platform-scoped
+pruning) if image size becomes an actual operational problem; not blocking
+Phase 5's own gate.
+
+### `fastembed`'s embedding output is a `Float32Array`, not the `number[]` its own `.d.ts` declares
+
+Found against the real Supabase integration test, not from reading the
+types: the first live write failed with `invalid input syntax for type
+vector`, carrying a payload shaped like `{"0":v0,"1":v1,...}` instead of
+`[v0,v1,...]`. Root cause: `JSON.stringify` serializes a `Float32Array` as
+a plain object keyed by index, not as a JSON array — and `passageEmbed`/
+`queryEmbed` both return `Float32Array` at runtime despite the package's
+own type declarations saying `number[]`. Fixed with `Array.from(...)` in
+`packages/search/src/embed.ts` before the vector ever reaches
+`upsertCatalogResource`; documented inline so it survives a future
+refactor. Verified against the live project afterward (insert, then a real
+`periplo_hybrid_search` call, then delete) — the fix, not just the absence
+of a thrown error, is what got checked.
+
+### The eval harness's synthetic catalog is hand-authored, not sampled from real cataloged resources
+
+`eval/fixtures.ts`'s resources and `eval/golden.jsonl`'s queries are
+written by hand, not harvested from `resources` table rows a real payment
+cataloged. The live catalog doesn't yet have enough diverse, real
+listings to build a meaningful graded set from (most rows so far are
+Phase 3/4 test/demo artifacts, not a real marketplace). Each fixture is
+still seeded through the real write path (`@periplo/bazaar`'s
+`upsertCatalogResource`, the same function a real payment calls) and
+embedded through the real model — only the *content* of what's being
+cataloged is synthetic, not the mechanism cataloging it. Revisit once the
+catalog has organic, diverse listings to sample from instead.
+
+### The first eval set (20 resources, 40 queries) was too easy — a review caught it before it became the committed baseline
+
+The original design put every resource in an unrelated domain (weather,
+translate, currency, ...), so every query had exactly one plausible
+candidate out of twenty wildly different options. That scored nDCG@10
+0.9908, MRR 0.9875 — a near-perfect result on a small, self-authored
+golden set, which is a classic overfitting signal, not evidence the
+ranker actually discriminates between similar options. Caught by review
+before committing it as the baseline, not after.
+
+Fixed by adding ~15 clusters of 2-5 genuine near-duplicate resources each
+on top of the original 20 (`geocode` vs. `reverse-geocode`; `weather` vs.
+`weather-forecast` vs. `air-quality` vs. `uv-index` vs. `weather-alerts`;
+`send-email` vs. `send-sms` vs. `send-push`; and eleven more), and writing
+queries designed to force real discrimination: paraphrases that share no
+vocabulary with the *wrong* sibling resource, deliberately ambiguous
+"convert"/"check"/"look up" queries tested against multiple plausible
+candidates, and multi-relevant judgments (grade 3 for the best match,
+grade 1 for a plausible-but-wrong sibling) instead of a single correct
+answer per query. Final set: 55 resources, 300 graded queries.
+
+The real, unmodified result: **nDCG@10 0.9346, MRR 0.9226** — a genuine
+drop from 0.9908, reported as-is rather than tuned back toward the old
+number (the person who flagged the overfitting risk explicitly said the
+score dropping was an acceptable, expected outcome). A worst-query
+breakdown (run once, not committed as a script) showed 231/300 queries
+still scoring a perfect nDCG@10, 0/300 scoring zero (the ranker never
+completely misses — some relevant result always appears, just not always
+ranked first), and every one of the 69 imperfect queries was a genuine
+near-duplicate confusion the clusters were built to surface, e.g.
+`reverse-geocode` queries occasionally ranking plain `geocode` first, or
+`weather` queries occasionally ranking `uv-index` first. That distribution
+(mostly right, sometimes confuses close near-duplicates, never totally
+lost) reads as a believable result for a real hybrid retrieval system,
+which the original 0.99 did not.

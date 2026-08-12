@@ -41,6 +41,15 @@ export interface CatalogResourceInput {
   readonly parameters: Record<string, unknown>;
   readonly accept: CatalogAcceptsEntry;
   readonly extensionKeys: readonly string[];
+  /**
+   * Semantic embedding (spec Phase 5, `packages/search`) over the
+   * discovery text — `null` when the caller has no embedding pipeline
+   * configured, or when generating one failed. Cataloging never depends on
+   * this: a resource with `embedding: null` is still fully cataloged and
+   * findable by lexical search, just not by semantic search until a later
+   * write supplies one.
+   */
+  readonly embedding?: readonly number[] | null;
 }
 
 function dedupeKey(entry: CatalogAcceptsEntry): string {
@@ -116,6 +125,11 @@ export async function upsertCatalogResource(
     parameters: input.parameters,
     accepts,
     extensions: input.extensionKeys,
+    // Omitted entirely (not sent as null) when the caller didn't supply
+    // one: PostgREST's upsert only SETs columns present in the payload, so
+    // an absent key leaves an existing embedding from a prior payment
+    // untouched rather than clobbering it with null on every repeat write.
+    ...(input.embedding !== undefined ? { embedding: input.embedding } : {}),
   };
 
   const { error: writeError } = await client

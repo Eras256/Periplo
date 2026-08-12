@@ -8,6 +8,7 @@ export {
   createAnonClient,
   createServiceRoleClient,
   type Database,
+  type HybridSearchRow,
   type ResourceInsert,
   type ResourceRow,
 } from "./db/client.js";

@@ -4,11 +4,11 @@
 
 The discovery layer for x402-payable services on Stellar.
 
-**Status: Phase 4, automatic cataloging, is complete.** The facilitator is
-live on `stellar:testnet` at https://periplo-testnet.fly.dev. The rest of
-Phase 10 is not done; see [`docs/DEFERRED.md`](docs/DEFERRED.md). This
-README states what is built, linked, tested, or hashed today. Everything
-else is marked as planned.
+**Status: Phase 5, search, is complete.** The facilitator is live on
+`stellar:testnet` at https://periplo-testnet.fly.dev. The rest of Phase
+10 is not done; see [`docs/DEFERRED.md`](docs/DEFERRED.md). This README
+states what is built, linked, tested, or hashed today. Everything else is
+marked as planned.
 
 **There is no frontend yet.** The developer hub (`apps/hub`) is Phase 9
 and has not started. `/browse`, `/playground`, `/status` and the rest of
@@ -34,9 +34,8 @@ user-facing surface right now.
   every metadata field that validates and drops only the ones that fail,
   so one bad field never rejects the whole listing. 45 unit tests
   exercise `checkRouteTemplate` alone; the gate requires ≥20. The whole
-  repo has 132 tests as of Phase 4, including the live-Supabase
-  integration suites, counted with a fresh `pnpm run ci` run for this
-  rewrite.
+  repo has 156 tests as of Phase 5, including the live-Supabase
+  integration suites, counted with a fresh `pnpm run ci` run.
 - [`conformance/baseline/`](conformance/baseline) holds real, captured
   HTTP transcripts against the public `x402.org` reference facilitator:
   its `/supported` response for `stellar:testnet`, confirming
@@ -86,17 +85,32 @@ user-facing surface right now.
   catalog row appears for a valid HTTP or MCP listing, and a crafted
   hostile `routeTemplate` produces no row and a specific rejection
   reason. [`docs/SELLERS.md`](docs/SELLERS.md) is the seller-facing
-  how-to, including per-parameter descriptions, which Phase 5's search
-  ranking will read.
+  how-to, including per-parameter descriptions, which search ranking now
+  reads.
+- [`packages/search`](packages/search) is hybrid retrieval: Postgres
+  `tsvector`/GIN for lexical matching, pgvector/HNSW for semantic
+  matching, fused with Reciprocal Rank Fusion. Embeddings come from
+  `fastembed`'s `BGESmallENV15` model, running locally with no API key
+  and no per-call cost. Every payment that catalogs a resource embeds it
+  automatically, in the same write path Phase 4 already uses.
+  [`eval/`](eval) is the honest measurement the spec asks for: 55 fixed
+  resources, including deliberate near-duplicate clusters (`geocode` vs.
+  `reverse-geocode`, `weather` vs. `weather-forecast` vs. `air-quality`,
+  and more), and 300 graded queries, run with `pnpm eval` against the real
+  Supabase project. Current numbers: **nDCG@10 0.9346, MRR 0.9226**,
+  checked into [`eval/baseline.json`](eval/baseline.json), with CI failing
+  the build if nDCG@10 regresses more than 5%. An earlier, smaller set (20
+  resources, 40 queries, all in unrelated domains) scored 0.99, which
+  turned out to be an overfitting signal rather than evidence of good
+  ranking; the harder set above replaced it.
 
 ## What Periplo is (planned)
 
 The target is an x402 facilitator for Stellar: `verify`, `settle`, and
 `supported`, for both `stellar:testnet` and `stellar:pubnet`, built on
 `@x402/stellar`. It pairs with a **Bazaar**: an automatically-populated
-catalog of x402-payable HTTP and MCP services, with hybrid lexical and
-semantic search, so an agent can find and pay for a service without a
-human wiring up an integration first.
+catalog of x402-payable HTTP and MCP services, so an agent can find and
+pay for a service without a human wiring up an integration first.
 
 It also carries `upto`, a metered payment scheme for Stellar that a
 plain SEP-41 allowance cannot express. The network spec is open upstream
@@ -113,12 +127,13 @@ this repository is built against.
 
 ## Architecture
 
-The **Facilitator** is real and deployed. The automatic-cataloging edge
-into **Bazaar** is real too. Bazaar here means the catalog itself,
-backed by Supabase, not the node's full future scope. See "What's real
-right now" above and [Deployment](#deployment-what-actually-runs).
-Search, the Hub, and the `upto` contract are planned. Solid borders
-below mark what runs today; dashed borders mark what does not.
+The **Facilitator**, the automatic-cataloging edge into **Bazaar**, and
+**Search** are all real and deployed. Bazaar here means the catalog
+itself, backed by Supabase, not the node's full future scope. See
+"What's real right now" above and
+[Deployment](#deployment-what-actually-runs). The Hub and the `upto`
+contract are still planned. Solid borders below mark what runs today;
+dashed borders mark what does not.
 
 ```mermaid
 flowchart LR
@@ -155,7 +170,7 @@ flowchart LR
     Hub --> Facilitator
 
     classDef planned stroke-dasharray: 5 5
-    class Search,Hub,Upto planned
+    class Hub,Upto planned
 ```
 
 ## Verify it yourself

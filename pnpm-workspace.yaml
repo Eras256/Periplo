@@ -1,9 +1,20 @@
 packages:
   - "apps/*"
   - "packages/*"
+  # Not apps/* or packages/* — the eval harness (spec §5 Phase 5 gate)
+  # lives at the repo root per docs/SPEC.md's own layout (`eval/golden.jsonl`,
+  # not `packages/eval/src/golden.jsonl`), but still needs @periplo/bazaar
+  # and @periplo/search as real workspace dependencies to seed and query
+  # the catalog, so it needs an explicit entry here.
+  - "eval"
 allowBuilds:
   # esbuild's install script only fetches its own platform-specific binary
   # (no arbitrary code beyond that) and is required for tsx/vitest to work.
   esbuild: true
+  # Same reasoning as esbuild: its install script fetches its own
+  # platform-specific prebuilt binary (the ONNX Runtime native addon) and
+  # is required for fastembed's local embedding pipeline (packages/search,
+  # Phase 5) to run at all.
+  onnxruntime-node: true
 minimumReleaseAgeExclude:
   - tsx@4.23.9

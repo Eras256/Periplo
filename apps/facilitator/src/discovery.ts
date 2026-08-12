@@ -22,6 +22,7 @@ import {
   type Database,
   upsertCatalogResource,
 } from "@periplo/bazaar";
+import { buildDiscoveryText, embedDocument } from "@periplo/search";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 import {
@@ -212,15 +213,35 @@ export async function processBazaarExtension(
           catalogUrl: discovered.resourceUrl,
         };
 
+  const description = discovered.description ?? null;
+  const parameters = extractParameters(rawExtRecord);
+
+  // Semantic embedding (spec Phase 5). Never blocks cataloging: a model
+  // load/inference failure here should not stop a payment from being
+  // cataloged. Left `undefined` (not `null`) on failure so a transient
+  // error on a *repeat* payment doesn't clobber an embedding a prior,
+  // successful write already stored — `CatalogResourceInput.embedding`'s
+  // doc comment in `packages/bazaar/src/db/catalog.ts` covers why the
+  // undefined/null distinction matters at the upsert layer.
+  let embedding: number[] | undefined;
+  try {
+    embedding = await embedDocument(buildDiscoveryText({ description, parameters }));
+  } catch (error) {
+    console.warn(
+      `[bazaar] failed to embed discovery text for ${catalogUrl}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
   await upsertCatalogResource(catalogClient, {
     url: catalogUrl,
     routeTemplate: catalogRouteTemplate,
     toolName,
     type,
-    description: discovered.description ?? null,
-    parameters: extractParameters(rawExtRecord),
+    description,
+    parameters,
     accept: toCatalogAccept(paymentRequirements),
     extensionKeys: Object.keys(rawExtensions),
+    ...(embedding !== undefined ? { embedding } : {}),
   });
 
   return { status: "success" };

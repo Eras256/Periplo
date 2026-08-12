@@ -1,0 +1,13 @@
+{
+  "name": "@periplo/eval",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Search relevance evaluation harness (spec §5 Phase 5 gate): nDCG@10 and MRR over the golden query set.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@periplo/bazaar": "workspace:*",
+    "@periplo/search": "workspace:*",
+    "@supabase/supabase-js": "2.112.2"
+  }
+}

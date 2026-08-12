@@ -1,0 +1,300 @@
+{"query": "weather in tokyo", "relevant": [{"id": "weather", "grade": 3}]}
+{"query": "what's it like outside right now", "relevant": [{"id": "weather", "grade": 3}]}
+{"query": "translate this sentence into spanish", "relevant": [{"id": "translate", "grade": 3}]}
+{"query": "convert english text to french", "relevant": [{"id": "translate", "grade": 3}]}
+{"query": "how much is 100 dollars in pesos", "relevant": [{"id": "currency", "grade": 3}]}
+{"query": "exchange rate calculator", "relevant": [{"id": "currency", "grade": 3}]}
+{"query": "current price of AAPL stock", "relevant": [{"id": "stock-quote", "grade": 3}]}
+{"query": "how much is apple stock worth right now", "relevant": [{"id": "stock-quote", "grade": 3}]}
+{"query": "generate an image of a cat", "relevant": [{"id": "image-generation", "grade": 3}]}
+{"query": "create ai art from a prompt", "relevant": [{"id": "image-generation", "grade": 3}]}
+{"query": "search the internet for something", "relevant": [{"id": "web-search", "grade": 3}]}
+{"query": "find results on the web", "relevant": [{"id": "web-search", "grade": 3}]}
+{"query": "convert an address to gps coordinates", "relevant": [{"id": "geocode", "grade": 3}]}
+{"query": "find latitude and longitude of a place", "relevant": [{"id": "geocode", "grade": 3}]}
+{"query": "is this review positive or negative", "relevant": [{"id": "sentiment", "grade": 3}]}
+{"query": "detect the emotional tone of a message", "relevant": [{"id": "sentiment", "grade": 3}]}
+{"query": "shorten a long article into a few sentences", "relevant": [{"id": "summarize", "grade": 3}]}
+{"query": "condense a document", "relevant": [{"id": "summarize", "grade": 3}]}
+{"query": "generate a qr code for my website", "relevant": [{"id": "qr-code", "grade": 3}]}
+{"query": "make a scannable code for a link", "relevant": [{"id": "qr-code", "grade": 3}]}
+{"query": "shorten this long link", "relevant": [{"id": "url-shortener", "grade": 3}]}
+{"query": "make a compact redirect url", "relevant": [{"id": "url-shortener", "grade": 3}]}
+{"query": "send an email to a customer", "relevant": [{"id": "send-email", "grade": 3}]}
+{"query": "email someone a message", "relevant": [{"id": "send-email", "grade": 3}]}
+{"query": "convert html to a pdf file", "relevant": [{"id": "pdf-generate", "grade": 3}]}
+{"query": "render a webpage as a downloadable document", "relevant": [{"id": "pdf-generate", "grade": 3}]}
+{"query": "live nba scores", "relevant": [{"id": "sports-scores", "grade": 3}]}
+{"query": "what's the score of the game right now", "relevant": [{"id": "sports-scores", "grade": 3}]}
+{"query": "latest technology news", "relevant": [{"id": "news-headlines", "grade": 3}]}
+{"query": "recent headlines about business", "relevant": [{"id": "news-headlines", "grade": 3}]}
+{"query": "upload a file and get a link", "relevant": [{"id": "file-storage", "grade": 3}]}
+{"query": "store a document online", "relevant": [{"id": "file-storage", "grade": 3}]}
+{"query": "driving directions from home to work", "relevant": [{"id": "route-directions", "grade": 3}]}
+{"query": "how long does it take to drive somewhere", "relevant": [{"id": "route-directions", "grade": 3}]}
+{"query": "evaluate a math expression", "relevant": [{"id": "mcp-calculator", "grade": 3}]}
+{"query": "calculate two plus two", "relevant": [{"id": "mcp-calculator", "grade": 3}]}
+{"query": "schedule a meeting with my team", "relevant": [{"id": "mcp-calendar", "grade": 3}]}
+{"query": "book a calendar invite for tomorrow", "relevant": [{"id": "mcp-calendar", "grade": 3}]}
+{"query": "analyze stock fundamentals for a ticker", "relevant": [{"id": "mcp-financial-analysis", "grade": 3}, {"id": "stock-quote", "grade": 1}]}
+{"query": "get a financial recommendation for a company", "relevant": [{"id": "mcp-financial-analysis", "grade": 3}, {"id": "stock-quote", "grade": 1}]}
+{"query": "current temperature in miami right now", "relevant": [{"id": "weather", "grade": 3}, {"id": "weather-forecast", "grade": 1}]}
+{"query": "will it rain in seattle this week", "relevant": [{"id": "weather-forecast", "grade": 3}, {"id": "weather", "grade": 1}]}
+{"query": "5 day outlook for chicago", "relevant": [{"id": "weather-forecast", "grade": 3}]}
+{"query": "is a storm coming this weekend", "relevant": [{"id": "weather-forecast", "grade": 3}, {"id": "weather-alerts", "grade": 1}]}
+{"query": "is the air safe to breathe outside today", "relevant": [{"id": "air-quality", "grade": 3}]}
+{"query": "pollution levels near me", "relevant": [{"id": "air-quality", "grade": 3}]}
+{"query": "smog index downtown", "relevant": [{"id": "air-quality", "grade": 3}]}
+{"query": "is it bad for asthma to go outside today", "relevant": [{"id": "air-quality", "grade": 3}]}
+{"query": "how strong is the sun today", "relevant": [{"id": "uv-index", "grade": 3}]}
+{"query": "do I need sunscreen right now", "relevant": [{"id": "uv-index", "grade": 3}]}
+{"query": "sun exposure risk this afternoon", "relevant": [{"id": "uv-index", "grade": 3}]}
+{"query": "tornado warning for my county", "relevant": [{"id": "weather-alerts", "grade": 3}]}
+{"query": "any severe weather warnings right now", "relevant": [{"id": "weather-alerts", "grade": 3}]}
+{"query": "hurricane watch for the coast", "relevant": [{"id": "weather-alerts", "grade": 3}]}
+{"query": "humidity level outside right now", "relevant": [{"id": "weather", "grade": 3}]}
+{"query": "what's the weather forecast for the weekend", "relevant": [{"id": "weather-forecast", "grade": 3}]}
+{"query": "current price of bitcoin", "relevant": [{"id": "crypto-price", "grade": 3}]}
+{"query": "how much is ethereum worth right now", "relevant": [{"id": "crypto-price", "grade": 3}]}
+{"query": "live value of a cryptocurrency", "relevant": [{"id": "crypto-price", "grade": 3}]}
+{"query": "what was the dollar to peso exchange rate last january", "relevant": [{"id": "historical-fx-rates", "grade": 3}, {"id": "currency", "grade": 1}]}
+{"query": "exchange rate history between two currencies", "relevant": [{"id": "historical-fx-rates", "grade": 3}]}
+{"query": "what was gbp worth against usd a year ago", "relevant": [{"id": "historical-fx-rates", "grade": 3}]}
+{"query": "convert 50 dollars to yen right now", "relevant": [{"id": "currency", "grade": 3}]}
+{"query": "current exchange rate between two currencies", "relevant": [{"id": "currency", "grade": 3}, {"id": "historical-fx-rates", "grade": 1}]}
+{"query": "what language is this sentence written in", "relevant": [{"id": "language-detect", "grade": 3}]}
+{"query": "identify the language of a text", "relevant": [{"id": "language-detect", "grade": 3}]}
+{"query": "figure out what language a document is in", "relevant": [{"id": "language-detect", "grade": 3}]}
+{"query": "convert russian text into latin letters", "relevant": [{"id": "transliterate", "grade": 3}]}
+{"query": "romanize japanese text", "relevant": [{"id": "transliterate", "grade": 3}]}
+{"query": "write cyrillic text using the latin alphabet", "relevant": [{"id": "transliterate", "grade": 3}, {"id": "translate", "grade": 1}]}
+{"query": "fix the grammar in my essay", "relevant": [{"id": "grammar-check", "grade": 3}]}
+{"query": "correct spelling and grammar mistakes", "relevant": [{"id": "grammar-check", "grade": 3}]}
+{"query": "proofread this paragraph for errors", "relevant": [{"id": "grammar-check", "grade": 3}]}
+{"query": "make this blurry photo higher resolution", "relevant": [{"id": "image-upscale", "grade": 3}]}
+{"query": "enhance the quality of an old photo", "relevant": [{"id": "image-upscale", "grade": 3}, {"id": "image-generation", "grade": 1}]}
+{"query": "increase the resolution of a picture", "relevant": [{"id": "image-upscale", "grade": 3}]}
+{"query": "remove the background from my photo", "relevant": [{"id": "remove-background", "grade": 3}]}
+{"query": "cut out the subject from an image", "relevant": [{"id": "remove-background", "grade": 3}]}
+{"query": "isolate a person from the background in a picture", "relevant": [{"id": "remove-background", "grade": 3}]}
+{"query": "describe what's happening in this picture", "relevant": [{"id": "caption-image", "grade": 3}]}
+{"query": "generate alt text for an image", "relevant": [{"id": "caption-image", "grade": 3}]}
+{"query": "what is shown in this photo", "relevant": [{"id": "caption-image", "grade": 3}]}
+{"query": "create a picture of a sunset over mountains", "relevant": [{"id": "image-generation", "grade": 3}]}
+{"query": "find scholarly articles on climate change", "relevant": [{"id": "academic-search", "grade": 3}]}
+{"query": "search peer reviewed research papers", "relevant": [{"id": "academic-search", "grade": 3}]}
+{"query": "look up published studies on a topic", "relevant": [{"id": "academic-search", "grade": 3}, {"id": "web-search", "grade": 1}]}
+{"query": "search recent news stories about an election", "relevant": [{"id": "news-search", "grade": 3}, {"id": "news-headlines", "grade": 1}]}
+{"query": "find news coverage of a company", "relevant": [{"id": "news-search", "grade": 3}]}
+{"query": "search articles written by journalists on a topic", "relevant": [{"id": "news-search", "grade": 3}]}
+{"query": "look something up on the internet", "relevant": [{"id": "web-search", "grade": 3}]}
+{"query": "general web search for anything", "relevant": [{"id": "web-search", "grade": 3}]}
+{"query": "what address is at these coordinates", "relevant": [{"id": "reverse-geocode", "grade": 3}]}
+{"query": "convert gps coordinates into a street address", "relevant": [{"id": "reverse-geocode", "grade": 3}, {"id": "geocode", "grade": 1}]}
+{"query": "find out what's located at a latitude and longitude", "relevant": [{"id": "reverse-geocode", "grade": 3}]}
+{"query": "find gps coordinates for a street address", "relevant": [{"id": "geocode", "grade": 3}]}
+{"query": "what timezone is tokyo in", "relevant": [{"id": "timezone-lookup", "grade": 3}]}
+{"query": "which time zone does a city observe", "relevant": [{"id": "timezone-lookup", "grade": 3}]}
+{"query": "straight line distance between two cities in miles", "relevant": [{"id": "distance-calc", "grade": 3}, {"id": "route-directions", "grade": 1}]}
+{"query": "how far apart are two addresses as the crow flies", "relevant": [{"id": "distance-calc", "grade": 3}]}
+{"query": "driving directions to the airport", "relevant": [{"id": "route-directions", "grade": 3}]}
+{"query": "turn by turn navigation between two addresses", "relevant": [{"id": "route-directions", "grade": 3}, {"id": "distance-calc", "grade": 1}]}
+{"query": "pull out the main topics from an article", "relevant": [{"id": "keyword-extract", "grade": 3}]}
+{"query": "extract keywords from a document", "relevant": [{"id": "keyword-extract", "grade": 3}]}
+{"query": "what are the important terms in this text", "relevant": [{"id": "keyword-extract", "grade": 3}, {"id": "summarize", "grade": 1}]}
+{"query": "check if a message contains offensive language", "relevant": [{"id": "profanity-filter", "grade": 3}]}
+{"query": "is this comment toxic", "relevant": [{"id": "profanity-filter", "grade": 3}]}
+{"query": "detect abusive language in user submitted text", "relevant": [{"id": "profanity-filter", "grade": 3}]}
+{"query": "condense a long document into a few sentences", "relevant": [{"id": "summarize", "grade": 3}]}
+{"query": "is this product review positive or negative", "relevant": [{"id": "sentiment", "grade": 3}]}
+{"query": "text a customer a short message", "relevant": [{"id": "send-sms", "grade": 3}, {"id": "send-email", "grade": 1}]}
+{"query": "send an sms reminder to a phone number", "relevant": [{"id": "send-sms", "grade": 3}]}
+{"query": "send a push notification to app users", "relevant": [{"id": "send-push", "grade": 3}]}
+{"query": "notify mobile users of an update", "relevant": [{"id": "send-push", "grade": 3}, {"id": "send-sms", "grade": 1}]}
+{"query": "verify someone's phone number with a code", "relevant": [{"id": "verify-phone", "grade": 3}]}
+{"query": "send a one time password to confirm a phone", "relevant": [{"id": "verify-phone", "grade": 3}]}
+{"query": "send an email to a customer about their order", "relevant": [{"id": "send-email", "grade": 3}]}
+{"query": "extract the text content from a pdf", "relevant": [{"id": "pdf-extract-text", "grade": 3}]}
+{"query": "get plain text out of a scanned document", "relevant": [{"id": "pdf-extract-text", "grade": 3}]}
+{"query": "pull readable text out of a pdf file", "relevant": [{"id": "pdf-extract-text", "grade": 3}]}
+{"query": "combine several photos into one pdf document", "relevant": [{"id": "image-to-pdf", "grade": 3}]}
+{"query": "turn a bunch of images into a single pdf", "relevant": [{"id": "image-to-pdf", "grade": 3}]}
+{"query": "turn this webpage into a downloadable pdf", "relevant": [{"id": "pdf-generate", "grade": 3}]}
+{"query": "upload a file and get a permanent link", "relevant": [{"id": "file-storage", "grade": 3}]}
+{"query": "generate a barcode for a product", "relevant": [{"id": "barcode-generate", "grade": 3}]}
+{"query": "create a upc code for an item", "relevant": [{"id": "barcode-generate", "grade": 3}]}
+{"query": "make a scannable code for a product package", "relevant": [{"id": "barcode-generate", "grade": 3}, {"id": "qr-code", "grade": 1}]}
+{"query": "make a qr code linking to my website", "relevant": [{"id": "qr-code", "grade": 3}]}
+{"query": "create a strong random password", "relevant": [{"id": "password-generate", "grade": 3}]}
+{"query": "generate a secure passphrase", "relevant": [{"id": "password-generate", "grade": 3}]}
+{"query": "shorten this long url for sharing", "relevant": [{"id": "url-shortener", "grade": 3}]}
+{"query": "latest news about the stock market", "relevant": [{"id": "stock-market-news", "grade": 3}, {"id": "news-headlines", "grade": 1}]}
+{"query": "financial news for a specific ticker", "relevant": [{"id": "stock-market-news", "grade": 3}]}
+{"query": "top business headlines today", "relevant": [{"id": "news-headlines", "grade": 3}, {"id": "stock-market-news", "grade": 1}]}
+{"query": "general news headlines about technology", "relevant": [{"id": "news-headlines", "grade": 3}]}
+{"query": "final score of last night's basketball game", "relevant": [{"id": "sports-scores", "grade": 3}]}
+{"query": "remind me to call someone in an hour", "relevant": [{"id": "mcp-reminder", "grade": 3}, {"id": "mcp-calendar", "grade": 1}]}
+{"query": "set a one time alert for later today", "relevant": [{"id": "mcp-reminder", "grade": 3}]}
+{"query": "schedule a meeting invite with my team next week", "relevant": [{"id": "mcp-calendar", "grade": 3}]}
+{"query": "book a calendar event with multiple attendees", "relevant": [{"id": "mcp-calendar", "grade": 3}]}
+{"query": "convert 3pm eastern time to tokyo time", "relevant": [{"id": "mcp-timezone-convert", "grade": 3}, {"id": "timezone-lookup", "grade": 1}]}
+{"query": "what time is it in another timezone if it's noon here", "relevant": [{"id": "mcp-timezone-convert", "grade": 3}]}
+{"query": "convert miles to kilometers", "relevant": [{"id": "mcp-unit-convert", "grade": 3}]}
+{"query": "convert pounds to kilograms", "relevant": [{"id": "mcp-unit-convert", "grade": 3}]}
+{"query": "how much should I tip on a $50 restaurant bill", "relevant": [{"id": "mcp-tip-calc", "grade": 3}]}
+{"query": "calculate a 20 percent tip", "relevant": [{"id": "mcp-tip-calc", "grade": 3}, {"id": "mcp-calculator", "grade": 1}]}
+{"query": "evaluate a math expression like 3 times 4 plus 2", "relevant": [{"id": "mcp-calculator", "grade": 3}]}
+{"query": "analyze my bitcoin holdings", "relevant": [{"id": "mcp-crypto-analysis", "grade": 3}, {"id": "mcp-financial-analysis", "grade": 1}]}
+{"query": "on-chain metrics for a cryptocurrency", "relevant": [{"id": "mcp-crypto-analysis", "grade": 3}]}
+{"query": "give a summary of my investment portfolio", "relevant": [{"id": "mcp-portfolio", "grade": 3}]}
+{"query": "how is my overall portfolio performing across all my holdings", "relevant": [{"id": "mcp-portfolio", "grade": 3}, {"id": "mcp-financial-analysis", "grade": 1}]}
+{"query": "fundamental analysis of a stock ticker", "relevant": [{"id": "mcp-financial-analysis", "grade": 3}]}
+{"query": "find flights from LA to Chicago", "relevant": [{"id": "flight-search", "grade": 3}]}
+{"query": "search for cheap flights next month", "relevant": [{"id": "flight-search", "grade": 3}]}
+{"query": "book a plane ticket between two cities", "relevant": [{"id": "flight-search", "grade": 3}]}
+{"query": "how do I get somewhere by bus or train", "relevant": [{"id": "transit-directions", "grade": 3}]}
+{"query": "subway directions across town", "relevant": [{"id": "transit-directions", "grade": 3}, {"id": "route-directions", "grade": 1}]}
+{"query": "public transportation route between two addresses", "relevant": [{"id": "transit-directions", "grade": 3}]}
+{"query": "convert something from one form to another currency", "relevant": [{"id": "currency", "grade": 3}, {"id": "mcp-unit-convert", "grade": 1}]}
+{"query": "convert a measurement unit to another system", "relevant": [{"id": "mcp-unit-convert", "grade": 3}, {"id": "currency", "grade": 1}]}
+{"query": "convert this text into another language entirely", "relevant": [{"id": "translate", "grade": 3}, {"id": "transliterate", "grade": 1}]}
+{"query": "convert a photo into a different file format", "relevant": [{"id": "image-to-pdf", "grade": 2}]}
+{"query": "check the weather versus check air quality outside", "relevant": [{"id": "weather", "grade": 2}, {"id": "air-quality", "grade": 2}]}
+{"query": "check my account balance across investments", "relevant": [{"id": "mcp-portfolio", "grade": 3}]}
+{"query": "check if a phone number is valid and verified", "relevant": [{"id": "verify-phone", "grade": 3}]}
+{"query": "look up information about a place", "relevant": [{"id": "web-search", "grade": 2}, {"id": "geocode", "grade": 1}]}
+{"query": "look up a scholarly source versus a general search", "relevant": [{"id": "academic-search", "grade": 3}, {"id": "web-search", "grade": 1}]}
+{"query": "analyze a piece of financial data", "relevant": [{"id": "mcp-financial-analysis", "grade": 2}, {"id": "mcp-crypto-analysis", "grade": 1}]}
+{"query": "analyze the tone of a customer message", "relevant": [{"id": "sentiment", "grade": 3}, {"id": "profanity-filter", "grade": 1}]}
+{"query": "generate something scannable for a package", "relevant": [{"id": "barcode-generate", "grade": 2}, {"id": "qr-code", "grade": 2}]}
+{"query": "generate a document from content", "relevant": [{"id": "pdf-generate", "grade": 2}, {"id": "image-to-pdf", "grade": 2}]}
+{"query": "send a notification to a customer", "relevant": [{"id": "send-push", "grade": 2}, {"id": "send-sms", "grade": 2}, {"id": "send-email", "grade": 2}]}
+{"query": "get the current conditions outside right now", "relevant": [{"id": "weather", "grade": 3}, {"id": "air-quality", "grade": 1}, {"id": "uv-index", "grade": 1}]}
+{"query": "chance of rain tomorrow", "relevant": [{"id": "weather-forecast", "grade": 3}]}
+{"query": "next week's temperature outlook", "relevant": [{"id": "weather-forecast", "grade": 3}]}
+{"query": "is it sunny outside right now", "relevant": [{"id": "weather", "grade": 3}]}
+{"query": "wind speed at the moment", "relevant": [{"id": "weather", "grade": 3}]}
+{"query": "particulate matter levels in the city", "relevant": [{"id": "air-quality", "grade": 3}]}
+{"query": "ozone levels this afternoon", "relevant": [{"id": "air-quality", "grade": 3}]}
+{"query": "risk of sunburn today", "relevant": [{"id": "uv-index", "grade": 3}]}
+{"query": "flash flood warning in effect", "relevant": [{"id": "weather-alerts", "grade": 3}]}
+{"query": "winter storm advisory for my area", "relevant": [{"id": "weather-alerts", "grade": 3}]}
+{"query": "value of dogecoin in dollars", "relevant": [{"id": "crypto-price", "grade": 3}]}
+{"query": "how much is solana trading at", "relevant": [{"id": "crypto-price", "grade": 3}]}
+{"query": "yen to dollar rate on a specific past date", "relevant": [{"id": "historical-fx-rates", "grade": 3}]}
+{"query": "compare today's exchange rate to last month's", "relevant": [{"id": "historical-fx-rates", "grade": 3}, {"id": "currency", "grade": 1}]}
+{"query": "how many pesos is 20 us dollars", "relevant": [{"id": "currency", "grade": 3}]}
+{"query": "detect if a paragraph is in french or german", "relevant": [{"id": "language-detect", "grade": 3}]}
+{"query": "translate a menu into english", "relevant": [{"id": "translate", "grade": 3}]}
+{"query": "spell check a cover letter", "relevant": [{"id": "grammar-check", "grade": 3}]}
+{"query": "write korean words in the roman alphabet", "relevant": [{"id": "transliterate", "grade": 3}]}
+{"query": "sharpen a low resolution photo", "relevant": [{"id": "image-upscale", "grade": 3}]}
+{"query": "make a small image bigger without losing quality", "relevant": [{"id": "image-upscale", "grade": 3}]}
+{"query": "erase the backdrop behind a product photo", "relevant": [{"id": "remove-background", "grade": 3}]}
+{"query": "get a transparent background product image", "relevant": [{"id": "remove-background", "grade": 3}]}
+{"query": "write a caption describing an uploaded image", "relevant": [{"id": "caption-image", "grade": 3}]}
+{"query": "produce artwork from a written description", "relevant": [{"id": "image-generation", "grade": 3}]}
+{"query": "search academic journals for a citation", "relevant": [{"id": "academic-search", "grade": 3}]}
+{"query": "find breaking news about a natural disaster", "relevant": [{"id": "news-search", "grade": 3}]}
+{"query": "search results for a recipe", "relevant": [{"id": "web-search", "grade": 3}]}
+{"query": "find the street address for a coordinate pair", "relevant": [{"id": "reverse-geocode", "grade": 3}]}
+{"query": "look up coordinates for a business location", "relevant": [{"id": "geocode", "grade": 3}]}
+{"query": "does a country observe daylight saving time", "relevant": [{"id": "timezone-lookup", "grade": 2}]}
+{"query": "miles between two zip codes as the crow flies", "relevant": [{"id": "distance-calc", "grade": 3}]}
+{"query": "estimated drive time to a destination", "relevant": [{"id": "route-directions", "grade": 3}]}
+{"query": "most frequently mentioned topics in a transcript", "relevant": [{"id": "keyword-extract", "grade": 3}]}
+{"query": "flag hate speech in a comment section", "relevant": [{"id": "profanity-filter", "grade": 3}]}
+{"query": "shrink a long report into a paragraph", "relevant": [{"id": "summarize", "grade": 3}]}
+{"query": "gauge how customers feel about a product from reviews", "relevant": [{"id": "sentiment", "grade": 3}]}
+{"query": "text message a delivery update to a customer", "relevant": [{"id": "send-sms", "grade": 3}]}
+{"query": "alert app users about a new feature", "relevant": [{"id": "send-push", "grade": 3}]}
+{"query": "confirm a user's phone number ownership", "relevant": [{"id": "verify-phone", "grade": 3}]}
+{"query": "email a receipt to a buyer", "relevant": [{"id": "send-email", "grade": 3}]}
+{"query": "pull the words out of a scanned invoice", "relevant": [{"id": "pdf-extract-text", "grade": 3}]}
+{"query": "merge several jpgs into a pdf booklet", "relevant": [{"id": "image-to-pdf", "grade": 3}]}
+{"query": "download a report as a pdf file", "relevant": [{"id": "pdf-generate", "grade": 3}]}
+{"query": "back up a file to the cloud and share a link", "relevant": [{"id": "file-storage", "grade": 3}]}
+{"query": "create an ean barcode for a product listing", "relevant": [{"id": "barcode-generate", "grade": 3}]}
+{"query": "make a throwaway password for a temporary account", "relevant": [{"id": "password-generate", "grade": 3}]}
+{"query": "compress a long web address into a short one", "relevant": [{"id": "url-shortener", "grade": 3}]}
+{"query": "how a company's shares moved in the market today", "relevant": [{"id": "stock-market-news", "grade": 3}]}
+{"query": "top world news stories right now", "relevant": [{"id": "news-headlines", "grade": 3}]}
+{"query": "current standings for a football league", "relevant": [{"id": "sports-scores", "grade": 3}]}
+{"query": "wake me up with a one time alert tonight", "relevant": [{"id": "mcp-reminder", "grade": 3}]}
+{"query": "invite three people to a video call next tuesday", "relevant": [{"id": "mcp-calendar", "grade": 3}]}
+{"query": "what's 9am pacific in central european time", "relevant": [{"id": "mcp-timezone-convert", "grade": 3}]}
+{"query": "convert celsius to fahrenheit", "relevant": [{"id": "mcp-unit-convert", "grade": 3}]}
+{"query": "figure out an 18 percent gratuity on a bill", "relevant": [{"id": "mcp-tip-calc", "grade": 3}]}
+{"query": "compute the square root of a number", "relevant": [{"id": "mcp-calculator", "grade": 3}]}
+{"query": "wallet activity and holdings for a crypto address", "relevant": [{"id": "mcp-crypto-analysis", "grade": 3}]}
+{"query": "overall return across all my investment accounts", "relevant": [{"id": "mcp-portfolio", "grade": 3}]}
+{"query": "buy or sell recommendation for a company's stock", "relevant": [{"id": "mcp-financial-analysis", "grade": 3}]}
+{"query": "one way ticket availability between two airports", "relevant": [{"id": "flight-search", "grade": 3}]}
+{"query": "bus schedule between two neighborhoods", "relevant": [{"id": "transit-directions", "grade": 3}]}
+{"query": "convert text into speech audio", "relevant": [{"id": "translate", "grade": 1}]}
+{"query": "check if it's going to be cold tomorrow morning", "relevant": [{"id": "weather-forecast", "grade": 3}, {"id": "weather", "grade": 1}]}
+{"query": "check crypto market prices", "relevant": [{"id": "crypto-price", "grade": 3}]}
+{"query": "check a company's latest quarterly numbers", "relevant": [{"id": "mcp-financial-analysis", "grade": 3}]}
+{"query": "verify the grammar and tone of a cover letter", "relevant": [{"id": "grammar-check", "grade": 3}, {"id": "sentiment", "grade": 1}]}
+{"query": "look up business hours for a location", "relevant": [{"id": "web-search", "grade": 2}]}
+{"query": "look up the nearest timezone boundary", "relevant": [{"id": "timezone-lookup", "grade": 3}]}
+{"query": "analyze customer feedback sentiment at scale", "relevant": [{"id": "sentiment", "grade": 3}]}
+{"query": "analyze a scanned document's contents", "relevant": [{"id": "pdf-extract-text", "grade": 2}]}
+{"query": "generate a document summary versus full text extraction", "relevant": [{"id": "summarize", "grade": 2}, {"id": "pdf-extract-text", "grade": 1}]}
+{"query": "generate a random secure passphrase for an account", "relevant": [{"id": "password-generate", "grade": 3}]}
+{"query": "send something to notify a user of an event", "relevant": [{"id": "send-push", "grade": 2}, {"id": "send-email", "grade": 2}, {"id": "send-sms", "grade": 2}]}
+{"query": "get details about current outdoor conditions and safety", "relevant": [{"id": "weather", "grade": 2}, {"id": "air-quality", "grade": 2}, {"id": "uv-index", "grade": 2}, {"id": "weather-alerts", "grade": 1}]}
+{"query": "get travel logistics from one city to another", "relevant": [{"id": "route-directions", "grade": 2}, {"id": "flight-search", "grade": 2}, {"id": "transit-directions", "grade": 2}]}
+{"query": "weather", "relevant": [{"id": "weather", "grade": 3}, {"id": "weather-forecast", "grade": 1}]}
+{"query": "translate", "relevant": [{"id": "translate", "grade": 3}]}
+{"query": "forecast", "relevant": [{"id": "weather-forecast", "grade": 3}]}
+{"query": "air quality", "relevant": [{"id": "air-quality", "grade": 3}]}
+{"query": "uv index", "relevant": [{"id": "uv-index", "grade": 3}]}
+{"query": "bitcoin price", "relevant": [{"id": "crypto-price", "grade": 3}]}
+{"query": "stock price", "relevant": [{"id": "stock-quote", "grade": 3}]}
+{"query": "language detection", "relevant": [{"id": "language-detect", "grade": 3}]}
+{"query": "background removal", "relevant": [{"id": "remove-background", "grade": 3}]}
+{"query": "image captioning", "relevant": [{"id": "caption-image", "grade": 3}]}
+{"query": "geocoding", "relevant": [{"id": "geocode", "grade": 3}]}
+{"query": "reverse geocoding", "relevant": [{"id": "reverse-geocode", "grade": 3}]}
+{"query": "timezone", "relevant": [{"id": "timezone-lookup", "grade": 3}]}
+{"query": "keyword extraction", "relevant": [{"id": "keyword-extract", "grade": 3}]}
+{"query": "profanity filter", "relevant": [{"id": "profanity-filter", "grade": 3}]}
+{"query": "sms", "relevant": [{"id": "send-sms", "grade": 3}]}
+{"query": "push notification", "relevant": [{"id": "send-push", "grade": 3}]}
+{"query": "phone verification", "relevant": [{"id": "verify-phone", "grade": 3}]}
+{"query": "pdf to text", "relevant": [{"id": "pdf-extract-text", "grade": 3}]}
+{"query": "barcode", "relevant": [{"id": "barcode-generate", "grade": 3}]}
+{"query": "password generator", "relevant": [{"id": "password-generate", "grade": 3}]}
+{"query": "tip calculator", "relevant": [{"id": "mcp-tip-calc", "grade": 3}]}
+{"query": "unit converter", "relevant": [{"id": "mcp-unit-convert", "grade": 3}]}
+{"query": "flight search", "relevant": [{"id": "flight-search", "grade": 3}]}
+{"query": "public transit", "relevant": [{"id": "transit-directions", "grade": 3}]}
+{"query": "crypto portfolio analysis", "relevant": [{"id": "mcp-crypto-analysis", "grade": 3}, {"id": "mcp-portfolio", "grade": 1}]}
+{"query": "will my flight from new york to miami be affected by weather", "relevant": [{"id": "flight-search", "grade": 2}, {"id": "weather-alerts", "grade": 1}]}
+{"query": "email me the weather forecast every morning", "relevant": [{"id": "weather-forecast", "grade": 2}, {"id": "send-email", "grade": 1}]}
+{"query": "text a verification code and confirm it", "relevant": [{"id": "verify-phone", "grade": 3}, {"id": "send-sms", "grade": 1}]}
+{"query": "translate a customer review and analyze how they feel about it", "relevant": [{"id": "translate", "grade": 2}, {"id": "sentiment", "grade": 2}]}
+{"query": "summarize an article and pull out its keywords", "relevant": [{"id": "summarize", "grade": 2}, {"id": "keyword-extract", "grade": 2}]}
+{"query": "resize and remove the background of a product photo", "relevant": [{"id": "remove-background", "grade": 2}, {"id": "image-upscale", "grade": 2}]}
+{"query": "get directions and estimate the straight line distance too", "relevant": [{"id": "route-directions", "grade": 2}, {"id": "distance-calc", "grade": 2}]}
+{"query": "convert a foreign currency amount and check the historical trend", "relevant": [{"id": "currency", "grade": 2}, {"id": "historical-fx-rates", "grade": 2}]}
+{"query": "search for a research paper and then summarize its findings", "relevant": [{"id": "academic-search", "grade": 2}, {"id": "summarize", "grade": 2}]}
+{"query": "book a flight and get the driving directions to the airport", "relevant": [{"id": "flight-search", "grade": 2}, {"id": "route-directions", "grade": 2}]}
+{"query": "detect the language then translate it to english", "relevant": [{"id": "language-detect", "grade": 2}, {"id": "translate", "grade": 2}]}
+{"query": "check the exchange rate and convert an amount right now", "relevant": [{"id": "currency", "grade": 3}]}
+{"query": "find out if a stock's price moved due to market news", "relevant": [{"id": "stock-quote", "grade": 2}, {"id": "stock-market-news", "grade": 2}]}
+{"query": "notify a team member and put it on the calendar", "relevant": [{"id": "mcp-calendar", "grade": 2}, {"id": "send-push", "grade": 1}]}
+{"query": "print a photo and turn it into a document", "relevant": [{"id": "image-to-pdf", "grade": 3}]}
+{"query": "reduce a long legal document to key points", "relevant": [{"id": "summarize", "grade": 3}, {"id": "keyword-extract", "grade": 1}]}
+{"query": "moderate user comments for toxicity before publishing", "relevant": [{"id": "profanity-filter", "grade": 3}]}
+{"query": "double check a translation is grammatically correct", "relevant": [{"id": "translate", "grade": 2}, {"id": "grammar-check", "grade": 2}]}
+{"query": "how many kilometers from paris to berlin", "relevant": [{"id": "distance-calc", "grade": 3}, {"id": "route-directions", "grade": 1}]}
+{"query": "is severe weather going to affect a flight route", "relevant": [{"id": "weather-alerts", "grade": 2}, {"id": "flight-search", "grade": 1}]}
+{"query": "recover text from an old scanned contract", "relevant": [{"id": "pdf-extract-text", "grade": 3}]}
+{"query": "look up a crypto wallet's recent transactions and value", "relevant": [{"id": "mcp-crypto-analysis", "grade": 3}]}
+{"query": "shrink a url and track how many people click it", "relevant": [{"id": "url-shortener", "grade": 3}]}
+{"query": "make a scannable label for shipping", "relevant": [{"id": "barcode-generate", "grade": 2}, {"id": "qr-code", "grade": 2}]}
+{"query": "find a hotel room for a trip", "relevant": [{"id": "flight-search", "grade": 1}, {"id": "route-directions", "grade": 1}]}
+{"query": "check what's the capital of a country", "relevant": [{"id": "web-search", "grade": 2}]}
+{"query": "what is my current internet speed", "relevant": [{"id": "web-search", "grade": 1}]}

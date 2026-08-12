@@ -10,6 +10,7 @@
 
 import { serve } from "@hono/node-server";
 import { createServiceRoleClient, type Database } from "@periplo/bazaar";
+import { embedDocument } from "@periplo/search";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createFacilitatorApp } from "./app.js";
 import { createFacilitatorCore, type FacilitatorCoreConfig } from "./core.js";
@@ -57,6 +58,18 @@ async function main(): Promise<void> {
   // reason to rely on a default here).
   serve({ fetch: app.fetch, port: PORT, hostname: "0.0.0.0" }, (info) => {
     console.log(`Periplo facilitator listening on ${info.address}:${info.port}`);
+  });
+
+  // Pre-warm the local embedding model (spec Phase 5) so the *first* real
+  // payment carrying a bazaar extension isn't the request that pays for
+  // downloading/loading it — fire-and-forget, not awaited: a slow or
+  // failed warm-up must never delay accepting connections, and
+  // `embedDocument`'s lazy singleton means a real request already in
+  // flight just reuses this same load instead of starting a second one.
+  embedDocument("warm-up").catch((error) => {
+    console.warn(
+      `[search] embedding model warm-up failed (will retry on first real use): ${error instanceof Error ? error.message : String(error)}`
+    );
   });
 }
 

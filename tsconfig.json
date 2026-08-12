@@ -3,6 +3,8 @@
   "references": [
     { "path": "packages/licence-check" },
     { "path": "packages/bazaar" },
-    { "path": "apps/facilitator" }
+    { "path": "packages/search" },
+    { "path": "apps/facilitator" },
+    { "path": "eval" }
   ]
 }

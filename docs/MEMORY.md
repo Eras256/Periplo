@@ -387,3 +387,96 @@
   cell" and "zero dashes remain" simultaneously — resolved by fixing
   punctuation only, not content, and flagging the exception explicitly
   rather than picking one rule silently over the other.
+
+## 2026-08-12 — Phase 5 (search)
+
+- **Asked before picking an embedding provider, instead of guessing.**
+  `docs/SPEC.md` §5 specifies the retrieval architecture precisely
+  (tsvector/GIN, HNSW, RRF with `k=50`) but names no embedding model — a
+  real gap, and one where the wrong unilateral call (an API-based
+  provider with no key provisioned) would have silently blocked the whole
+  phase. Asked one tight question with a recommended default; got "local
+  model, no API key" back and built to that.
+- **The recommended path itself needed two real course-corrections before
+  it worked, both found empirically, not from documentation:**
+  1. The obvious library (`@huggingface/transformers`) turned out to hard
+     depend on `sharp`, whose prebuilt `libvips` binary is LGPL-3.0 — a
+     hard deny under this project's own `packages/licence-check` policy.
+     Found by actually adding the dependency and running the real gate
+     against it, not by reading `@huggingface/transformers`'s own
+     top-level `Apache-2.0` license field and stopping there.
+  2. The clean-licensed fallback (`fastembed`) returns `Float32Array` at
+     runtime despite its own `.d.ts` declaring `number[]` — caught only
+     when the real Supabase write failed with a Postgres vector-syntax
+     error, not by any type check, since the type itself was wrong.
+     `JSON.stringify(Float32Array)` silently produces a same-shaped-but-
+     wrong JSON object instead of throwing, which is exactly the kind of
+     bug that survives to production if the only check is "did it type-
+     check and did the call not throw."
+- **Spent real effort exploring a third option (hand-rolling ONNX
+  inference directly) and correctly abandoned it** once it became clear
+  the tokenizer-config-loading logic wasn't actually exported by the
+  low-level packages — reimplementing HF's own file-parsing logic from
+  scratch would have traded a known, documented risk (an unpatched but
+  low-exploitability `tar` CVE in a controlled download path) for an
+  unknown, hard-to-verify one (silently wrong tokenization degrading
+  search quality with no error thrown) — a worse trade for a phase whose
+  entire gate is *measured* quality. Worth remembering as a general
+  pattern: "avoid the flagged risk" and "avoid the unverifiable risk"
+  aren't always the same recommendation, and the second one should win
+  when the alternative can't be checked.
+- **The eval harness's catalog is synthetic (hand-authored fixtures), not
+  sampled from real production listings** — flagged explicitly in
+  `docs/DEFERRED.md` rather than presented as if it were organic data,
+  because the live catalog doesn't yet have enough diverse real listings
+  to build a meaningful graded set from. Still seeded through the real
+  `upsertCatalogResource` write path and the real embedding model, not a
+  mocked shortcut — only the *content* being cataloged is synthetic.
+- **Ran the regression gate's failure path on purpose before trusting
+  it**: temporarily inflated the committed baseline, confirmed `pnpm eval`
+  actually exits 1 and reports the right percentage, then restored the
+  real baseline — the same discipline as Phase 4's routeTemplate
+  rejection test, applied to a gate that's easy to write so it always
+  passes by construction without ever proving it can fail.
+- **`onnxruntime-node`'s postinstall silently downloaded a ~340MB CUDA
+  binary** on this CPU-only sandbox before anyone asked it to — caught by
+  actually running `du -sh` on the installed package rather than trusting
+  a quiet, successful `pnpm install`. Skipped via `ONNXRUNTIME_NODE_INSTALL_CUDA=skip`,
+  wired into both `Dockerfile.facilitator` and CI so the fix isn't just
+  local.
+
+## 2026-08-12 — Phase 5 review: the first eval set was too easy, plus two infrastructure gaps
+
+- **A near-perfect score was correctly read as a red flag, not a result to
+  be proud of.** The first eval set (20 resources, one per unrelated
+  domain, 40 queries) scored nDCG@10 0.9908 — and the right response to
+  that number was suspicion, not a victory lap. Every query in that set
+  had exactly one plausible candidate among twenty unrelated options,
+  which makes near-perfect trivial to achieve regardless of whether the
+  ranker can actually tell two similar things apart. Rebuilt around ~15
+  clusters of genuine near-duplicate resources instead (`geocode` vs.
+  `reverse-geocode`, five separate weather-adjacent tools, etc.), grew to
+  55 resources and 300 queries, and the real score dropped to 0.9346 —
+  reported as the new baseline without any attempt to tune it back up.
+  Worth internalizing as a standing checklist item for any future
+  evaluation harness in this project: a suspiciously good number on a
+  small, self-authored test set is itself a finding, not a result to
+  ship.
+- **Two more things this session should have caught before being asked
+  about, not after:**
+  1. `packages/search/src/embed.ts`'s `cacheDir` fix (pinning it outside
+     the repo) was correct but incomplete — it didn't account for CI
+     runners starting with zero persistent disk, meaning the blocking
+     eval gate would silently depend on huggingface.co being reachable
+     and fast on *every single push*, with no fallback. Added
+     `actions/cache@v4` keyed on the exact fastembed version + model name.
+  2. `pnpm licence-check` passing for fastembed was treated as sufficient
+     evidence without personally walking the transitive tree the way
+     `@huggingface/transformers`'s rejection was investigated — asked to
+     redo it explicitly: pulled the full 54-package closure via `pnpm
+     list --filter @periplo/search --depth Infinity --json` and
+     cross-referenced every one against `pnpm licenses list`, not just
+     trusted the gate's summary line a second time. Both gaps are the
+     same underlying lesson: passing a gate and personally verifying the
+     thing the gate is supposed to catch are not interchangeable, even
+     when the gate is one this project wrote and trusts.

@@ -50,6 +50,15 @@ type ResourceRequiredInsertFields = "url" | "type" | "network" | "pay_to" | "ass
 export type ResourceInsert = Pick<ResourceRow, ResourceRequiredInsertFields> &
   Partial<Omit<ResourceRow, ResourceRequiredInsertFields>>;
 
+/**
+ * Row shape `periplo_hybrid_search` returns (spec Phase 5,
+ * `supabase/migrations/20260812080000_search.sql`) — everything from
+ * `ResourceRow` except `id` (still a string, just not re-declared) and
+ * `embedding` (never returned by the search function), plus the fused
+ * RRF `score`.
+ */
+export type HybridSearchRow = Omit<ResourceRow, "embedding">;
+
 // Also a `type`, not an `interface` — see the note on ResourceRow above;
 // keeping the whole schema declared the same way avoids relearning this
 // the hard way if another nested type gets added later.
@@ -69,7 +78,22 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      periplo_hybrid_search: {
+        Args: {
+          search_query: string;
+          // pgvector accepts a JSON-array string ("[0.1,0.2,...]") over
+          // PostgREST — there's no native array-of-float wire type for it.
+          query_embedding: string;
+          match_count?: number;
+          match_offset?: number;
+          full_text_weight?: number;
+          semantic_weight?: number;
+          rrf_k?: number;
+        };
+        Returns: (HybridSearchRow & { score: number })[];
+      };
+    };
   };
 };
 

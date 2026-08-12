@@ -12,12 +12,13 @@ directly rather than read prose claiming conformance.
 
 The full build plan lives at [`docs/SPEC.md`](docs/SPEC.md) — read it before
 starting any phase. It is phased (0–10); each phase ends in a gate command
-that must exit 0 before the next phase starts. **Current status: Phase 4
-(automatic cataloging) complete, Phase 5 (search) next** — see
+that must exit 0 before the next phase starts. **Current status: Phase 5
+(search) complete, Phase 6 (`upto` on Stellar) next** — see
 [`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`conformance/RESULTS.md`](conformance/RESULTS.md),
 [`conformance/baseline/`](conformance/baseline),
-[`packages/bazaar`](packages/bazaar), [`supabase/`](supabase), and
+[`packages/bazaar`](packages/bazaar), [`packages/search`](packages/search),
+[`eval/`](eval), [`supabase/`](supabase), and
 [`apps/facilitator`](apps/facilitator) for what exists concretely. Do not
 start a phase whose predecessor hasn't cleared its gate.
 
@@ -127,12 +128,13 @@ each package's `tsconfig.json`, which extends `tsconfig.base.json`.
 `{ "path": "packages/<name>" }` entry added to root `tsconfig.json`'s
 `references` array, or `tsc -b` silently skips it.**
 
-Only `packages/licence-check`, `packages/bazaar`, and `apps/facilitator`
-exist so far (Phases 0–3). Everything else in the target layout (`apps/hub`,
-`packages/search`, `packages/mcp`, `packages/helpers`, `contracts/`,
-`spec/`, `conformance/` runner, `examples/`) is **planned, not built** — see
-`docs/SPEC.md` §3 for what belongs where. Don't create empty placeholder
-directories for phases that haven't started (spec §12: no invented scope).
+`packages/licence-check`, `packages/bazaar`, `packages/search`,
+`apps/facilitator`, and `eval/` exist so far (Phases 0–5). Everything else
+in the target layout (`apps/hub`, `packages/mcp`, `packages/helpers`,
+`contracts/`, `spec/`, `conformance/` runner, `examples/`) is **planned,
+not built** — see `docs/SPEC.md` §3 for what belongs where. Don't create
+empty placeholder directories for phases that haven't started (spec §12:
+no invented scope).
 
 `packages/licence-check` is the pattern for any future CI-gate package:
 pure classification logic in one file (`classify.ts`, fully unit tested),
@@ -245,16 +247,73 @@ canonical-URL bug documented in `docs/INTEROP.md` §2 is filed upstream as
 [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121)
 (bug report, not a spec PR — see `CONTRIBUTING.md`'s scope for issues).
 
-`Dockerfile.facilitator` builds and ships `@periplo/bazaar` alongside
-`@periplo/facilitator` — apps/facilitator had no runtime dependency on
-packages/bazaar before Phase 4, so this wasn't needed until now. Two
-things the image needs or the deploy crash-loops: `pnpm --filter
-@periplo/bazaar build` before the facilitator build step (`tsc -p`
-doesn't auto-build referenced projects), and copying
-`packages/bazaar/node_modules` into the runtime stage, not just `dist/`
-(pnpm gives every workspace package its own symlinks to its own deps).
-Found live against the real deployment on the first Phase 4 deploy — see
-`docs/DEFERRED.md`.
+`packages/search` (Phase 5) is hybrid retrieval — lexical (`fts`/GIN, from
+Phase 2) fused with semantic (`embedding`/HNSW) via Reciprocal Rank Fusion.
+`src/embed.ts` wraps `fastembed`'s `BGESmallENV15` (384-dim, local, no API
+key — chosen over `@huggingface/transformers` because that package's
+`sharp` dependency pulls in an LGPL-3.0 binary that
+`packages/licence-check` hard-denies; full reasoning, including why
+hand-rolling ONNX inference directly was tried and abandoned, in
+`docs/DEFERRED.md`). **`Array.from(...)` on fastembed's output is
+load-bearing, not styling**: the package's own `.d.ts` says `number[]`,
+but it returns `Float32Array` at runtime, and `JSON.stringify` on a
+`Float32Array` serializes as `{"0":v,...}` instead of `[v,...]` — Postgres
+rejects that for a `vector` column outright. Found against the real
+Supabase integration test, not from the types. `src/discovery-text.ts`
+builds the embeddable string from a resource's description and parameter
+schema (recursing for `description` keys and property names, so it
+doesn't need to special-case HTTP vs. MCP shapes). `src/hybrid-search.ts`
+calls `periplo_hybrid_search`, the RRF SQL function in
+`supabase/migrations/20260812080000_search.sql` — that migration also
+corrects `resources.embedding` from Phase 2's placeholder `vector(512)`
+to `vector(384)` (matching the chosen model; safe in place, the column
+was all-NULL). `apps/facilitator/src/discovery.ts` calls
+`buildDiscoveryText` + `embedDocument` right before
+`upsertCatalogResource`, so every payment that catalogs a resource embeds
+it automatically — failures there never block cataloging itself
+(`embedding` stays `undefined`, not `null`, on failure, so a transient
+error on a *repeat* payment can't clobber an embedding a prior write
+already stored; see `packages/bazaar/src/db/catalog.ts`'s
+`CatalogResourceInput.embedding` doc comment). `src/serve.ts` fires an
+unawaited warm-up call at boot so the first real payment isn't the request
+that pays for downloading the model.
+
+`eval/` is the Phase 5 gate: `pnpm eval` seeds `fixtures.ts` through the
+*real* `upsertCatalogResource` path, runs every query in `golden.jsonl`
+through the real `hybridSearch`, computes nDCG@10/MRR (`metrics.ts`, pure
+and unit-tested), and fails if nDCG@10 regresses more than 5% against the
+committed `baseline.json`. **The fixture/query set is deliberately two-tier,
+not just "diverse":** 20 resources in unrelated domains (weather vs.
+translate vs. currency, one plausible answer per query) plus ~15 clusters
+of 2-5 near-duplicate resources each (`geocode` vs. `reverse-geocode`;
+`weather` vs. `weather-forecast` vs. `air-quality` vs. `uv-index` vs.
+`weather-alerts`; and more) — the first, easier tier alone scored nDCG@10
+0.99, which a review correctly flagged as an overfitting signal rather
+than evidence of good ranking, since every query only ever had one
+plausible candidate. Expanding to the harder tier (55 resources, 300
+graded queries total) dropped the real score to nDCG@10 0.9346, MRR
+0.9226 — reported as-is, not tuned back toward the old number. Full
+reasoning in `docs/DEFERRED.md`. Not an `apps/*` or `packages/*` glob
+match, so it needs its own explicit `pnpm-workspace.yaml` entry to resolve
+`@periplo/bazaar`/`@periplo/search` as real workspace dependencies.
+`.github/workflows/ci.yml` runs it as its own step (secrets-gated via a
+job-level `env:` + `if: env.SUPABASE_URL != ''`, not `if: secrets.X` —
+GitHub Actions' schema doesn't allow `secrets` directly inside `if:`,
+caught by the editor's validator before it shipped, not assumed).
+
+`Dockerfile.facilitator` builds and ships `@periplo/bazaar` and
+`@periplo/search` alongside `@periplo/facilitator`. Three things the image
+needs or the deploy crash-loops: `pnpm --filter @periplo/bazaar build`
+(and `@periplo/search`) before the facilitator build step (`tsc -p`
+doesn't auto-build referenced projects), copying each package's
+`node_modules` into the runtime stage, not just `dist/` (pnpm gives every
+workspace package its own symlinks to its own deps — found live against
+the real deployment on the first Phase 4 deploy), and setting
+`ONNXRUNTIME_NODE_INSTALL_CUDA=skip` before `pnpm install` (fastembed's
+`onnxruntime-node` dependency otherwise downloads a ~340MB CUDA binary on
+Linux/x64 that this CPU-only deployment never uses — found by inspecting
+`du -sh` on the installed package, not assumed from the install succeeding
+quietly).
 
 `README.md`, `docs/INTEROP.md`, and `docs/SELLERS.md` went through a
 prose-register pass (em dashes, negation-for-emphasis, bold overuse
