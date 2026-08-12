@@ -106,7 +106,9 @@ user-facing surface right now.
   the build if nDCG@10 regresses more than 5%. An earlier, smaller set (20
   resources, 40 queries, all in unrelated domains) scored 0.99, which
   turned out to be an overfitting signal rather than evidence of good
-  ranking; the harder set above replaced it.
+  ranking; the harder set above replaced it. The eval set is planned to
+  grow further, toward 500 graded queries, and the search endpoint has
+  not yet been hardened for production load.
 - [`contracts/upto-settlement`](contracts/upto-settlement) is
   `UptoSettlement`, the Soroban contract behind `upto`'s `contract`
   profile: `require_auth_for_args` restricted to `(authorization,)` keeps
