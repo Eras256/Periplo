@@ -1,32 +1,32 @@
-# Memory — repo-level decision log
+# Memory: repo-level decision log
 
 > This is a **committed, human-readable** log of decisions and context for
-> this repository — distinct from Claude's own out-of-repo persistent
+> this repository, distinct from Claude's own out-of-repo persistent
 > memory (`~/.claude/projects/-home-vaiosvaios-Periplo/memory/` on the
 > machine these sessions run on, indexed by its own `MEMORY.md`, not part
 > of this git history). That system-level memory is where Claude keeps
 > facts like "this user prefers X" across unrelated sessions; this file is
 > where *this project's* non-obvious decisions live so anyone (human or a
-> future Claude session) reading the repo — not just the one machine with
-> that memory directory — has them. If the two ever disagree, this file is
+> future Claude session) reading the repo, not just the one machine with
+> that memory directory, has them. If the two ever disagree, this file is
 > the one that travels with the code and wins.
 >
-> Append entries chronologically; don't rewrite history here — if a
+> Append entries chronologically; don't rewrite history here. If a
 > decision was later reversed, add a new entry saying so rather than
 > editing the old one out. `docs/DEFERRED.md` is the companion file for
 > *what wasn't built and why*; this one is for *why things were built the
 > way they were*.
 
-## 2026-08-06/07 — Phase 0
+## 2026-08-06/07: Phase 0
 
 - **Governing spec persisted to `docs/SPEC.md`.** It previously existed
   only in the chat session that kicked off the build. Committing it was a
-  precondition for any of this being resumable from a fresh session —
+  precondition for any of this being resumable from a fresh session:
   `CLAUDE.md` points to it, but a pointer to nothing is useless.
 - **`packages/licence-check` scopes its hard gate to the production
   dependency graph (`pnpm licenses list --prod`), not the full graph.**
   First real run caught `vitest@4.1.10 → vite@8.2.0 → lightningcss`
-  (MPL-2.0, a hard, non-optional dependency of vite — confirmed by reading
+  (MPL-2.0, a hard, non-optional dependency of vite, confirmed by reading
   vite's own `package.json`, not assumed). Rather than weakening the
   classifier to pass, or hard-failing over a devDependency-only tool that
   spec §1's own goal (no copyleft obligation reaching an *operated*
@@ -34,41 +34,41 @@
   as the blocking gate, full graph as a non-blocking warning. Full
   reasoning in `packages/licence-check/src/cli.ts` and `docs/DEFERRED.md`.
 - **Node 20→22 fixed at the toolchain, not worked around in code.**
-  `pnpm@11.20.0` (spec-pinned) hard-requires Node ≥22.13 — it imports
+  `pnpm@11.20.0` (spec-pinned) hard-requires Node ≥22.13: it imports
   `node:sqlite`, so it doesn't just warn on Node 20, it crashes. `nvm` was
   already present on the machine (unaliased); installed Node 22.23.2 via
   `nvm install 22`, set `nvm alias default 22`, added `.nvmrc`. Considered
-  downgrading the pnpm pin instead — rejected, since the spec's pin was
+  downgrading the pnpm pin instead, rejected, since the spec's pin was
   already verified live against the npm registry and matching it is the
   point.
 - **Raven MCP connected but not authenticated.** Added via
   `claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"`
   (command sourced from the `standards` skill). Reports "Needs
-  authentication" — an interactive sign-in this non-interactive session
+  authentication," an interactive sign-in this non-interactive session
   can't complete. Substituted direct `WebFetch`/registry/live-endpoint
   checks for Phase 0's fact-verification needs; whoever runs the next
   *interactive* session should complete the sign-in.
 - **GitHub remote (`Eras256/Periplo`) was already configured before this
   session touched anything**, and `gh` was already authenticated. Verified
   it was genuinely empty (`gh repo view --json isEmpty` → `true`,
-  `git ls-remote origin` → nothing) before treating a push as safe — did
+  `git ls-remote origin` → nothing) before treating a push as safe; did
   not assume emptiness from the fact that the local working tree was
   empty at session start.
 - **CLAUDE.md / SKILLS.md / ECOSYSTEM.md / this file were added in a
   follow-up housekeeping pass**, not as part of the master spec's own
   Phase 0 deliverable list (`docs/SPEC.md` §11 doesn't name any of them).
   Added because they're what make the rest of the build resumable and
-  auditable across sessions, not because the spec required them — noted
+  auditable across sessions, not because the spec required them, noted
   here rather than silently expanding "Phase 0 scope" in `docs/SPEC.md`
   itself, per the "no invented scope, but log what's added and why" spirit
   of spec §12 rule 5.
 - **`docs/ECOSYSTEM.md` is a partial, truncated snapshot** (the LumenLoop
   catalogue paste that started the session cut off mid-list at 50,000
   characters). Committed as-is rather than fabricating the missing
-  entries — flagged inline as needing regeneration before it's relied on
+  entries, flagged inline as needing regeneration before it's relied on
   for the actual SCF submission's differentiation section.
 
-## 2026-08-07 — Phase 1
+## 2026-08-07: Phase 1
 
 - **`checkRouteTemplate` decodes with a bounded loop (8 iterations) and
   treats non-stabilisation as a rejection in its own right**, not just a
@@ -84,13 +84,13 @@
   Phase 1's text explicitly enumerates (traversal / absolute / protocol-
   relative / backslash / null byte / malformed encoding). Justified by
   spec §6's broader injection-via-metadata concern (header/log injection if
-  a template is ever reflected unescaped) — a small, cheap addition, not
+  a template is ever reflected unescaped), a small, cheap addition, not
   scope creep into something spec §12 rule 5 would need a deferral note
   for, since it's strictly a hardening of the same function, not new
   surface area.
 - **`softDropFields` was built schema-agnostic on purpose.** Phase 1's
   text says "soft-drop extraction" without defining the discovery-payload
-  schema — that's explicitly Phase 4's job ("validate `info` against the
+  schema, that's explicitly Phase 4's job ("validate `info` against the
   supplied schema"). Building `softDropFields` as a generic
   `(raw, rules) -> {kept, dropped}` mechanism now, with field rules
   supplied by the caller, means Phase 4 wires in the real schema later
@@ -106,20 +106,20 @@
   70 tests total, 45 covering `checkRouteTemplate` alone (gate requires
   ≥20). Committed and pushed.
 
-## 2026-08-07 — Phase 2
+## 2026-08-07: Phase 2
 
 - **Real Supabase project provisioned mid-session** (user supplied
   credentials directly). Handling and the rotation note are in
-  `docs/DEFERRED.md`, not repeated here — this section is about the schema
+  `docs/DEFERRED.md`, not repeated here, this section is about the schema
   design decisions.
 - **Migrations went through the pooler (port 6543), not the direct
-  connection (port 5432)** — the direct host is IPv6-only and this sandbox
+  connection (port 5432).** The direct host is IPv6-only and this sandbox
   has no IPv6 egress. Verified with a plain `curl -6` test before
   concluding it was an environment limit rather than a Supabase network
   restriction. See `docs/DEFERRED.md` for the full finding.
 - **Two proactive deviations from the spec's literal SQL**, both applied
   *before* attempting the migration rather than discovered by a failed
-  push — reasoned about known PostgreSQL behavior first, then verified
+  push, reasoned about known PostgreSQL behavior first, then verified
   empirically that the fix worked: (1) `to_tsvector('english', text)` is
   STABLE not IMMUTABLE, so the `fts` generated column wraps it in a
   project-local IMMUTABLE SQL function (`periplo_fts`); (2) plain
@@ -127,7 +127,7 @@
   the last two columns is NULL (standard SQL: NULL ≠ NULL), so the
   constraint uses `unique nulls not distinct` (PG15+) instead. Both are
   documented inline in the migration SQL itself, not just here.
-- **RLS policy alone wasn't enough — needed explicit grants too.**
+- **RLS policy alone wasn't enough: needed explicit grants too.**
   Supabase's current default doesn't auto-expose new tables to the
   `anon`/`authenticated` Data API roles; without `grant select on
   resources to anon, authenticated`, the RLS policy would have been
@@ -140,7 +140,7 @@
   writing the TypeScript test suite, then again as an automated,
   repeatable `vitest` integration suite
   (`packages/bazaar/src/db/resources.integration.test.ts`) that runs for
-  real against the live project — gated on `SUPABASE_URL` /
+  real against the live project, gated on `SUPABASE_URL` /
   `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` being present (via
   Node's built-in `process.loadEnvFile()`, no `dotenv` dependency added)
   so it skips cleanly rather than failing on a fork or a secrets-less
@@ -149,20 +149,20 @@
 - **A real TypeScript/postgrest-js gotcha cost the most time this phase**:
   declaring the Supabase `Database`/`ResourceRow` types as `interface`
   instead of `type` silently collapsed every query's inferred type to
-  `never` (not a type error — a silent wrong-type resolution). Diagnosed
+  `never` (not a type error, a silent wrong-type resolution). Diagnosed
   with an isolated, disposable repro file using hand-written conditional
   types mirroring postgrest-js's internals, deleted once the cause was
   confirmed, not left in the codebase. Full explanation in
-  `docs/DEFERRED.md` and inline in `client.ts` — worth remembering before
+  `docs/DEFERRED.md` and inline in `client.ts`, worth remembering before
   writing any future generated-types file for this project.
 - Gate: `pnpm install && pnpm typecheck && pnpm lint && pnpm test` exits 0
   against the real Supabase project; 78 tests total (70 after Phase 1, 8
-  new — 7 RLS integration tests plus 1 always-on gating-visibility test).
+  new, 7 RLS integration tests plus 1 always-on gating-visibility test).
   GitHub Actions secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`,
   `SUPABASE_SERVICE_ROLE_KEY`) set on the repo so CI runs the same
   integration suite for real, not just locally.
 
-## 2026-08-07 — Phase 3
+## 2026-08-07: Phase 3
 
 - **Facilitator core built as a thin wrapper around `@x402/core`'s
   `x402Facilitator` + `@x402/stellar`'s `ExactStellarScheme`, deliberately
@@ -186,16 +186,16 @@
   with the failure reason always populated. This repo's own Hono routes
   replicate that: `zod` validates the outer envelope only (returning `400`
   for a genuinely broken request), and anything that fails inside the
-  actual payment logic comes back as `200` with `isValid`/`success: false`
-  — matching observed behavior, not guessed from the types alone.
+  actual payment logic comes back as `200` with `isValid`/`success: false`,
+  matching observed behavior, not guessed from the types alone.
 - **Getting one real settled transaction took more debugging than
   everything else in this phase combined**, and every step of it was a
   real, verified finding rather than a guess:
-  - Circle's testnet USDC faucet needs a browser/CAPTCHA, no API — so
+  - Circle's testnet USDC faucet needs a browser/CAPTCHA, no API, so
     this project issued its own test SEP-41 token (`PTEST`, a classic
     asset wrapped via `stellar contract asset deploy`, no custom contract
     code) rather than block the whole gate on a human doing a CAPTCHA.
-  - First attempt paid the token's own issuer — classic Stellar redeems
+  - First attempt paid the token's own issuer. Classic Stellar redeems
     (burns) an asset sent back to its issuer, so the SAC bridge correctly
     emitted a `burn` event, and `@x402/stellar` correctly rejected it as
     not a `transfer`. Diagnosed by decoding the raw simulation diagnostic
@@ -215,10 +215,10 @@
   different subpath (`@x402/stellar/exact/facilitator`). Importing the
   wrong one produces a confusing type error that doesn't point at the
   real cause. Also: the client throws unless
-  `paymentRequirements.extra.areFeesSponsored` is `true` — undocumented
+  `paymentRequirements.extra.areFeesSponsored` is `true`, undocumented
   anywhere obvious, found by reading the actual thrown error.
 - **Did not add `@hono/node-server`** even though `apps/facilitator`
-  can't yet run as an actual listening service without it — it's a
+  can't yet run as an actual listening service without it: it's a
   dependency outside spec §2's manifest, and per working rule 6 that's a
   flag-and-ask, not a quiet addition, even under time pressure to finish
   the phase. Tests use Hono's own in-memory `app.request()` instead,
@@ -228,67 +228,67 @@
   on `stellar:testnet`, recorded in `conformance/RESULTS.md` with the
   Horizon verification, not just the hash.
 
-## 2026-08-07 — Fly.io deployment (Phase 10 pulled forward, at request)
+## 2026-08-07: Fly.io deployment (Phase 10 pulled forward, at request)
 
 - **Deployed `apps/facilitator` to Fly.io (`periplo-testnet`) before the
   rest of Phase 10 exists**, because the project owner asked directly
   rather than waiting for phase sequence. Documented as a partial pull,
-  not "Phase 10 done" — see `docs/DEFERRED.md` for exactly what's still
+  not "Phase 10 done," see `docs/DEFERRED.md` for exactly what's still
   missing (mainnet app, runbook, telemetry, examples, hardening, comms
   channels).
-- **`@hono/node-server` added** to actually bind a port — this was the
+- **`@hono/node-server` added** to actually bind a port. This was the
   exact gap Phase 3's own memory entry flagged and deliberately left
   unresolved ("ask, don't sneak in"). The ask arrived in the form of "go
   deploy it," which is as much of an answer as a dependency addition
   needs.
 - **Verified the live deployment the same way the local build was
   verified**: `curl` against the real `https://periplo-testnet.fly.dev`
-  for `/health`, `/supported`, and a malformed `/verify` call — all three
+  for `/health`, `/supported`, and a malformed `/verify` call, all three
   matched local behavior and the reference facilitator's captured shape
   exactly. Not just "the deploy command exited 0."
 - **Fly API token pasted in chat handled the same way as every other
   credential this session**: local `.env`, never committed. Turned out
   unnecessary for the actual deploy (the `fly` CLI was already
-  authenticated on this machine from the user's own terminal session) —
+  authenticated on this machine from the user's own terminal session),
   kept for a possible future CI deploy workflow rather than discarded.
 - **Did not create `periplo-mainnet`.** "Deploy it" was read as "deploy
   what exists and is real" (a funded testnet key), not as license to
-  fabricate a mainnet app with no backing key — that's a distinct decision
+  fabricate a mainnet app with no backing key, that's a distinct decision
   for whenever a real mainnet fee-sponsor key exists.
 
-## 2026-08-07 — Live-testing follow-up (user checked the deployment directly)
+## 2026-08-07: Live-testing follow-up (user checked the deployment directly)
 
 - **The user checking the live URL themselves surfaced two real gaps a
   local gate never would have**: the bare root 404ing with no explanation,
-  and — far more important — that CI had been silently broken since
+  and, far more important, that CI had been silently broken since
   Phase 1. Neither showed up in any local `pnpm ci` run, because neither
   is something `pnpm ci` checks. Worth remembering generally: "the local
   gate is green" and "the deployed/CI thing actually works end to end"
   are different claims, and only one of them was being verified after
   each phase.
 - **Checked `gh run list` directly rather than continuing to assume CI
-  mirrored local results** — found every run since Phase 1 failing in
+  mirrored local results.** Found every run since Phase 1 failing in
   ~0s with zero jobs scheduled (a malformed reusable-workflow reference
   broke the whole workflow file's parsing, not just that one job). Fixed
   by removing the broken job rather than attempting a second guess at its
-  syntax under time pressure — a working `osv-scan` job is worth getting
+  syntax under time pressure, a working `osv-scan` job is worth getting
   right deliberately, not worth risking breaking `build` again to add
   back quickly.
-- **Real USDC hit the exact same trustline requirement `PTEST` did** —
-  confirms that finding wasn't an artifact of the self-issued test asset.
+- **Real USDC hit the exact same trustline requirement `PTEST` did.**
+  Confirms that finding wasn't an artifact of the self-issued test asset.
   Fixed directly (the buyer's key was already available) rather than
   telling the user to resend blind and hoping it would work the second
   time.
 - Scaled the Fly app 2→1 machines after actually looking at
   `fly scale show` and `fly machines list` instead of trusting the
   default `fly deploy` chose.
-- **CI is now genuinely confirmed green** — the user correctly diagnosed
+- **CI is now genuinely confirmed green.** The user correctly diagnosed
   the remaining billing block as a private-repo Actions-minutes limit and
   made the repo public; verified by re-running the exact failing workflow
   (`gh run rerun`) rather than assuming the visibility change fixed it.
   `build` passed in 24s. Two real, stacked bugs, two real fixes, one
-  empirical confirmation at the end — no step of this was assumed.
-- **The user then pushed back on that verification itself** — right to:
+  empirical confirmation at the end, no step of this was assumed.
+- **The user then pushed back on that verification itself, right to:**
   a manual rerun isn't proof the *normal* trigger path works, and a
   published causal claim ("osv-scan broke the file") needed to survive
   scrutiny, not just sound plausible. Re-checked both halves properly
@@ -298,55 +298,55 @@
   from a billing-blocked-but-scheduled job) to confirm the two-cause story
   was real, and separately confirmed the fix holds under an organic
   `push` trigger, not just a manual rerun. Both checks came back
-  supporting the original diagnosis — which is a materially stronger
+  supporting the original diagnosis, which is a materially stronger
   claim than the first pass, because now there's API evidence attached,
   not just "it worked when I tried it." Matches the user's own framing:
   catching a wrong verification method and re-verifying properly is
   better evidence of discipline than getting it right by luck the first
   time.
 
-## 2026-08-10 — Phase 4 (automatic cataloging)
+## 2026-08-10: Phase 4 (automatic cataloging)
 
 - **Read the real upstream package before writing a line of extension code.**
   `@x402/core`'s own extension registry (`registerExtension`/`FacilitatorExtension`)
   turned out to be a thin capability-lookup shim, not a ready bazaar
-  implementation — but a sibling package, `@x402/extensions`, ships a
+  implementation, but a sibling package, `@x402/extensions`, ships a
   complete one (`@x402/extensions/bazaar@2.21.0`, same pin as `@x402/core`/
   `@x402/stellar`, Apache-2.0), found only by walking the actual GitHub
   repo tree (`e2e/extensions/bazaar.ts`, `typescript/packages/extensions/src/bazaar/`)
   rather than trusting `docs/SPEC.md`'s prose description of the wire
-  contract. Built on it rather than reimplementing — same principle §1
+  contract. Built on it rather than reimplementing, same principle §1
   applies to verify/settle, extended here on judgment, flagged (not
   silently added) per working rule 6.
 - **Kept Periplo's own `checkRouteTemplate` over upstream's `isValidRouteTemplate`
-  anyway** — the one place "use the official package" was deliberately not
+  anyway.** The one place "use the official package" was deliberately not
   the whole story, because upstream's version doesn't satisfy the Phase 4
   gate (single percent-decode pass vs. Periplo's bounded-repeated decode;
   upstream silently drops an invalid template and keeps going instead of
   rejecting the whole extension). Documented as an intentional divergence
   in `docs/INTEROP.md`, not a defect to fix quietly.
 - **The real Supabase integration test caught a genuine upstream bug that
-  reading the source never would have**: `mcp://tool/{toolName}` URLs —
-  the exact convention `docs/SPEC.md` §4 documents — broke upstream's own
+  reading the source never would have**: `mcp://tool/{toolName}` URLs,
+  the exact convention `docs/SPEC.md` §4 documents, broke upstream's own
   canonical-URL builder, because `mcp:` isn't a WHATWG special scheme and
   `URL.origin` returns the literal string `"null"` for it. First test run
   produced a row with `url: "null/toolname"`; fixed by reconstructing the
   MCP catalog URL directly from `toolName` rather than trusting the
   library's output for that one case. Worth remembering generally: type-
-  checking and unit tests with fakes would never have caught this — only
+  checking and unit tests with fakes would never have caught this, only
   running the real write path against the real database did.
 - **Cataloging only runs after the underlying payment call itself
   succeeds** (`result.isValid`/`result.success`), not on every request
-  carrying the extension — an unverified payload's echoed `resource`/
+  carrying the extension, an unverified payload's echoed `resource`/
   `extensions` aren't trustworthy yet (same trust-boundary reasoning as
   Phase 1's `routeTemplate` work, applied to the gate that decides whether
   to catalog at all, not just what's safe to store).
 - **`docs/SPEC.md` §4's search param name was wrong** (`q` vs. the real
   wire's `query`), caught as a side effect of reading the primary source
-  for something else — corrected nowhere yet (Phase 5's job), but recorded
+  for something else, corrected nowhere yet (Phase 5's job), but recorded
   in `docs/INTEROP.md` now while the source was actually open, rather than
   re-deriving it later.
-- **Two genuine upstream findings, not filed as issues** — an
+- **Two genuine upstream findings, not filed as issues.** An
   outward-facing action on a repo this session doesn't own. Logged in
   `docs/DEFERRED.md`/`docs/INTEROP.md` with enough detail to file directly;
   the go/no-go on actually opening the GitHub issues is the project
@@ -360,22 +360,22 @@
   concrete Stellar + per-parameter-description example, which is what the
   doc actually provides.
 
-## 2026-08-11 — Phase 4 follow-through: push, deploy, verify against public state
+## 2026-08-11: Phase 4 follow-through: push, deploy, verify against public state
 
 - **The user checked the public repo and live deployment directly and
   found a real gap**: the first Phase 4 report described a live
   `/supported` claim before anything had been pushed. Right call, same
-  lesson as the earlier CI-verification pushback — a local commit is not
+  lesson as the earlier CI-verification pushback, a local commit is not
   evidence. Pushed, then found the deploy itself was genuinely broken:
   `Dockerfile.facilitator` never built or shipped `packages/bazaar`
   (apps/facilitator had no runtime dependency on it before this phase),
   so the first live deploy crash-looped. Two real bugs (build stage,
   runtime stage), found and fixed against the actual deployment, not
-  caught by any local gate — verified the fix with `curl` against the
+  caught by any local gate, verified the fix with `curl` against the
   live URL, not just a green `fly deploy` exit code.
 - **Filed the `mcp://` bug upstream** as
   [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121)
-  once explicitly authorized — a bug report, not a spec PR, per
+  once explicitly authorized, a bug report, not a spec PR, per
   `CONTRIBUTING.md`'s own scope for issues.
 - **README, then INTEROP.md/SELLERS.md, went through a prose-register
   pass** (em dashes, negation-for-emphasis, bold overuse) at the user's
@@ -384,15 +384,15 @@
   trusting the rewrite, and by re-checking every number/link against the
   live system before each commit. One real tension surfaced: a table
   cell containing its own em dash conflicts with "never touch a table
-  cell" and "zero dashes remain" simultaneously — resolved by fixing
+  cell" and "zero dashes remain" simultaneously, resolved by fixing
   punctuation only, not content, and flagging the exception explicitly
   rather than picking one rule silently over the other.
 
-## 2026-08-12 — Phase 5 (search)
+## 2026-08-12: Phase 5 (search)
 
 - **Asked before picking an embedding provider, instead of guessing.**
   `docs/SPEC.md` §5 specifies the retrieval architecture precisely
-  (tsvector/GIN, HNSW, RRF with `k=50`) but names no embedding model — a
+  (tsvector/GIN, HNSW, RRF with `k=50`) but names no embedding model, a
   real gap, and one where the wrong unilateral call (an API-based
   provider with no key provisioned) would have silently blocked the whole
   phase. Asked one tight question with a recommended default; got "local
@@ -400,13 +400,13 @@
 - **The recommended path itself needed two real course-corrections before
   it worked, both found empirically, not from documentation:**
   1. The obvious library (`@huggingface/transformers`) turned out to hard
-     depend on `sharp`, whose prebuilt `libvips` binary is LGPL-3.0 — a
+     depend on `sharp`, whose prebuilt `libvips` binary is LGPL-3.0, a
      hard deny under this project's own `packages/licence-check` policy.
      Found by actually adding the dependency and running the real gate
      against it, not by reading `@huggingface/transformers`'s own
      top-level `Apache-2.0` license field and stopping there.
   2. The clean-licensed fallback (`fastembed`) returns `Float32Array` at
-     runtime despite its own `.d.ts` declaring `number[]` — caught only
+     runtime despite its own `.d.ts` declaring `number[]`, caught only
      when the real Supabase write failed with a Postgres vector-syntax
      error, not by any type check, since the type itself was wrong.
      `JSON.stringify(Float32Array)` silently produces a same-shaped-but-
@@ -416,47 +416,47 @@
 - **Spent real effort exploring a third option (hand-rolling ONNX
   inference directly) and correctly abandoned it** once it became clear
   the tokenizer-config-loading logic wasn't actually exported by the
-  low-level packages — reimplementing HF's own file-parsing logic from
+  low-level packages, reimplementing HF's own file-parsing logic from
   scratch would have traded a known, documented risk (an unpatched but
   low-exploitability `tar` CVE in a controlled download path) for an
   unknown, hard-to-verify one (silently wrong tokenization degrading
-  search quality with no error thrown) — a worse trade for a phase whose
+  search quality with no error thrown), a worse trade for a phase whose
   entire gate is *measured* quality. Worth remembering as a general
   pattern: "avoid the flagged risk" and "avoid the unverifiable risk"
   aren't always the same recommendation, and the second one should win
   when the alternative can't be checked.
 - **The eval harness's catalog is synthetic (hand-authored fixtures), not
-  sampled from real production listings** — flagged explicitly in
+  sampled from real production listings.** Flagged explicitly in
   `docs/DEFERRED.md` rather than presented as if it were organic data,
   because the live catalog doesn't yet have enough diverse real listings
   to build a meaningful graded set from. Still seeded through the real
   `upsertCatalogResource` write path and the real embedding model, not a
-  mocked shortcut — only the *content* being cataloged is synthetic.
+  mocked shortcut, only the *content* being cataloged is synthetic.
 - **Ran the regression gate's failure path on purpose before trusting
   it**: temporarily inflated the committed baseline, confirmed `pnpm eval`
   actually exits 1 and reports the right percentage, then restored the
-  real baseline — the same discipline as Phase 4's routeTemplate
+  real baseline, the same discipline as Phase 4's routeTemplate
   rejection test, applied to a gate that's easy to write so it always
   passes by construction without ever proving it can fail.
 - **`onnxruntime-node`'s postinstall silently downloaded a ~340MB CUDA
-  binary** on this CPU-only sandbox before anyone asked it to — caught by
+  binary** on this CPU-only sandbox before anyone asked it to, caught by
   actually running `du -sh` on the installed package rather than trusting
   a quiet, successful `pnpm install`. Skipped via `ONNXRUNTIME_NODE_INSTALL_CUDA=skip`,
   wired into both `Dockerfile.facilitator` and CI so the fix isn't just
   local.
 
-## 2026-08-12 — Phase 5 review: the first eval set was too easy, plus two infrastructure gaps
+## 2026-08-12: Phase 5 review: the first eval set was too easy, plus two infrastructure gaps
 
 - **A near-perfect score was correctly read as a red flag, not a result to
   be proud of.** The first eval set (20 resources, one per unrelated
-  domain, 40 queries) scored nDCG@10 0.9908 — and the right response to
+  domain, 40 queries) scored nDCG@10 0.9908, and the right response to
   that number was suspicion, not a victory lap. Every query in that set
   had exactly one plausible candidate among twenty unrelated options,
   which makes near-perfect trivial to achieve regardless of whether the
   ranker can actually tell two similar things apart. Rebuilt around ~15
   clusters of genuine near-duplicate resources instead (`geocode` vs.
   `reverse-geocode`, five separate weather-adjacent tools, etc.), grew to
-  55 resources and 300 queries, and the real score dropped to 0.9346 —
+  55 resources and 300 queries, and the real score dropped to 0.9346,
   reported as the new baseline without any attempt to tune it back up.
   Worth internalizing as a standing checklist item for any future
   evaluation harness in this project: a suspiciously good number on a
@@ -465,14 +465,14 @@
 - **Two more things this session should have caught before being asked
   about, not after:**
   1. `packages/search/src/embed.ts`'s `cacheDir` fix (pinning it outside
-     the repo) was correct but incomplete — it didn't account for CI
+     the repo) was correct but incomplete, it didn't account for CI
      runners starting with zero persistent disk, meaning the blocking
      eval gate would silently depend on huggingface.co being reachable
      and fast on *every single push*, with no fallback. Added
      `actions/cache@v4` keyed on the exact fastembed version + model name.
   2. `pnpm licence-check` passing for fastembed was treated as sufficient
      evidence without personally walking the transitive tree the way
-     `@huggingface/transformers`'s rejection was investigated — asked to
+     `@huggingface/transformers`'s rejection was investigated, asked to
      redo it explicitly: pulled the full 54-package closure via `pnpm
      list --filter @periplo/search --depth Infinity --json` and
      cross-referenced every one against `pnpm licenses list`, not just
@@ -481,7 +481,7 @@
      thing the gate is supposed to catch are not interchangeable, even
      when the gate is one this project wrote and trusts.
 
-## 2026-08-12 — Phase 6 (`upto` Soroban contract): no rush, real rigor
+## 2026-08-12: Phase 6 (`upto` Soroban contract): no rush, real rigor
 
 Explicit instruction this time was different from every prior phase:
 "today or tomorrow, no fixed deadline... report back when genuinely
@@ -496,18 +496,18 @@ explained away.
   real simulation: the buyer's signed root call has `argCount=1`, one
   sub-invocation (`transfer(from, contract, max_amount)`). All three
   on-chain assumptions the spec PR (x402-foundation/x402#3098) marks
-  open closed with real data in one session — resource usage
+  open closed with real data in one session: resource usage
   (2M instructions of a 400M ceiling), TTL coverage (nonce entry
   outlives `deadline_ledger`), and the auth-entry shape above.
-- **The fuzzer found two real bugs — both in the harness, not the
-  contract — and the difference mattered enough to isolate each one
+- **The fuzzer found two real bugs, both in the harness, not the
+  contract, and the difference mattered enough to isolate each one
   before writing it down as a finding.** First: a fixed buyer-supply
   constant that was smaller than a fuzzed `max_amount`, surfacing the
   *token's* insufficient-balance error rather than one of the contract's
-  own typed errors — fixed by funding proportionally to the fuzzed
+  own typed errors, fixed by funding proportionally to the fuzzed
   amount instead of a flat constant. Second, more interesting: an
   unclamped `u32` ledger-sequence input near 4.29 billion panicked
-  `env.register()` itself, before any contract code ran at all —
+  `env.register()` itself, before any contract code ran at all,
   reproduced with a standalone test containing zero `UptoSettlement`
   code to confirm it was `soroban-sdk`'s own test-contract registration
   running out of internal TTL headroom at that height, not this
@@ -516,27 +516,27 @@ explained away.
   range, not by suppressing or explaining away the crash.
 - **Caught real bloat before it became a commit, not after.** Property
   tests were writing a `test_snapshots/*.json` file per randomized
-  case — 1,557 files, 24MB, entirely disposable — because `proptest`
+  case, 1,557 files, 24MB, entirely disposable, because `proptest`
   runs each property ~256 times and `soroban-sdk`'s test harness
   snapshots by default. Noticed while staging files for the security
   review (`git diff --stat` on the untracked tree was pages of
-  `*.1.json` through `*.256.json`), not from a deliberate audit step —
+  `*.1.json` through `*.256.json`), not from a deliberate audit step,
   worth remembering that routine housekeeping commands surface real
   problems opportunistically, and it's worth reading their output rather
   than skimming past it.
 - **`cargo-fuzz` didn't actually need the `clang` toolchain the
   smart-contracts skill assumes.** This machine has neither `clang` nor
   passwordless `sudo`. Rather than treating that as a hard blocker
-  requiring the user's intervention, tried the install anyway —
+  requiring the user's intervention, tried the install anyway,
   `libfuzzer-sys` bundles its own libFuzzer runtime and built cleanly
   against the system `gcc`. 47,630 fuzz executions, zero crashes once
   the two harness bugs above were fixed. Worth the ten minutes it took
   to check before asking.
 - **A security review found nothing new to fix, and that's a real
-  result, not a non-event — but it's an internal review, not an audit,
+  result, not a non-event, but it's an internal review, not an audit,
   and the write-up needs to say so every place it appears, not just
   once.** Ran `security-review` deliberately before calling the contract
-  done — `docs/SKILLS.md` had flagged it as overdue since Phase 3,
+  done. `docs/SKILLS.md` had flagged it as overdue since Phase 3,
   specifically for "the `upto` contract, real money-adjacent." Manually
   walked every class in the skill's own checklist (missing auth, auth
   replay through middleware, reentrancy, integer overflow,
@@ -546,13 +546,13 @@ explained away.
   nonce-then-transfer ordering, the platform's own reentrancy guarantee
   ruling out a hostile-token callback). Nothing above a false positive
   survived scrutiny. **First pass at reporting this left the audit
-  disclaimer implicit** — present in how I'd describe it if asked, but
+  disclaimer implicit**: present in how I'd describe it if asked, but
   not written down anywhere in the repo itself; `docs/DEFERRED.md`'s
   Phase 6 section didn't mention the review at all, and this file's own
   bullet (before this edit) read like a clean bill of health without
   qualification. A same-agent, no-second-reviewer, no-formal-verification
   pass finding nothing is real evidence but weaker evidence than an
-  external audit finding nothing — flagged directly, not after being
+  external audit finding nothing, flagged directly, not after being
   asked, once the gap was noticed: added an explicit "this is not a
   substitute for Audit Bank" section to `docs/DEFERRED.md`. Standing
   rule going forward: a self-run security review gets the disclaimer
@@ -566,7 +566,7 @@ explained away.
   passes, testnet deploy, settled tx hash, three assumptions closed)
   doesn't require it. Built a real, working verification script
   (`upto-settle-demo.ts`) that proves the contract and the wire-level
-  mechanism both work end to end — deliberately not dressed up as the
+  mechanism both work end to end, deliberately not dressed up as the
   full facilitator integration it isn't.
 
 ## 2026-08-12, continued: upto spec convergence, the #3121 fix, and a commit-signing gap found the hard way
