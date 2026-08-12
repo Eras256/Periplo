@@ -1,4 +1,4 @@
-# `x402.org` — discovery endpoints (Bazaar extension probe)
+# `x402.org`: discovery endpoints (Bazaar extension probe)
 
 - **Captured:** 2026-08-07T05:23:50Z
 - **Commands:**
@@ -7,7 +7,7 @@
 - **Result:** `404 Not Found` on both, served as a generic Next.js/Vercel 404
   page (`text/html`), not a JSON error body.
 
-## `GET /facilitator/discovery/resources` — response headers (verbatim)
+## `GET /facilitator/discovery/resources`: response headers (verbatim)
 
 ```
 HTTP/2 404
@@ -28,7 +28,7 @@ vary: accept-encoding
 x-matched-path: /404
 ```
 
-Body: generic Next.js 404 HTML page (not reproduced here — no informational
+Body: generic Next.js 404 HTML page (not reproduced here, no informational
 content beyond the status code). `GET /facilitator/discovery/search?q=weather`
 returns the identical shape (`404`, same `x-matched-path: /404`).
 
@@ -38,11 +38,11 @@ Master spec §5 Phase 0: *"Do the same against other multi-chain facilitators
 claiming Stellar support. Advertised support and reachable support are not the
 same thing, and any gap you document is evidence of conformance discipline."*
 
-This isn't a gap in Stellar support specifically — it's confirmation that the
+This isn't a gap in Stellar support specifically: it's confirmation that the
 **Bazaar discovery surface itself doesn't exist yet** on the public reference
 facilitator, for any chain. Cross-checked against `supported.md` in this same
 directory: `extensions` there lists `builder-code`, `eip2612GasSponsoring`,
-`erc20ApprovalGasSponsoring` — no `bazaar`. The two facts agree: no advertised
+`erc20ApprovalGasSponsoring`, no `bazaar`. The two facts agree: no advertised
 extension, no reachable endpoint.
 
 This is the empirical basis for master spec §0's framing that discovery is
