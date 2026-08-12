@@ -568,3 +568,86 @@ explained away.
   (`upto-settle-demo.ts`) that proves the contract and the wire-level
   mechanism both work end to end — deliberately not dressed up as the
   full facilitator integration it isn't.
+
+## 2026-08-12, continued: upto spec convergence, the #3121 fix, and a commit-signing gap found the hard way
+
+Continuation of the same day as the Phase 6 entry above, closing out the
+loose ends from shipping `contracts/upto-settlement`.
+
+- **A second team proposed a different `upto` design against the same
+  spec file, and the instruction was explicit: analyze it honestly, do
+  not default to defending my own design.** Wrote a four-question
+  technical memo comparing this project's pull-and-refund `contract`
+  profile against `#3134`'s stateless, facilitator-agnostic alternative,
+  before drafting anything public. Found genuine strengths on both
+  sides, not a one-sided case for either. `stateless` removes an entire
+  implementation-bug class (no author-sized TTL to get wrong) and
+  settles measurably cheaper, verified with real `fee_charged` numbers
+  pulled from both projects' own settled transactions, not estimated.
+  This project's `contract` design closes a real gap `stateless` leaves
+  open: a leaked authorization is settleable by anyone holding it, not
+  just the intended facilitator, which matters more in the
+  federated-discovery model both projects are actually building toward.
+  Also flagged, while comparing the two contracts closely, a genuine
+  `autoRevoke = false` allowance-overwrite behavior neither team's own
+  docs mentioned, raised generously in the PR comment as a finding, not
+  a gotcha.
+- **Verified another team's cited evidence to the same bar as my own,
+  before repeating it as fact.** Before citing `#3134`'s two testnet
+  transactions in a spec change, decoded the `settle` call's own I128
+  arguments straight from each operation's raw XDR, not Horizon's
+  summary or the PR's own description, confirming one really is a
+  partial settlement and the other really is a maximum settlement,
+  exactly as labeled. Caught nothing wrong, but the check was real, not
+  a formality.
+- **Merged both designs into one spec rather than let the maintainers
+  arbitrate two competing PRs.** Updated `#3098` to document `stateless`
+  as a second, credited profile (Iam0TI, `0d1026/Rialto`, `#3134` by
+  name, not folded in as if it originated here) alongside the existing
+  `contract` profile, added the C-account/smart-wallet spec language
+  `#3098`'s prose was missing entirely, and named the pure
+  self-enforcement design (buyer's own account, no shared contract at
+  all) as a real but unbuilt third option rather than silently dropping
+  it when the old placeholder `smartAccount` section got replaced.
+  Posted a comment to `#3134` crediting the specific strengths found and
+  proposing the merged outcome, which is what the `#3134` author had
+  already asked for.
+- **A GitHub bot check caught something a full local gate could not:
+  every commit signed, but not verified.** `#3098`'s commit-signing
+  check flagged a pushed commit as unsigned, with a one-week auto-close
+  clock running. Nothing in this environment had ever configured commit
+  signing, checked directly rather than assumed. Registering a new
+  signing key against the GitHub account needed an OAuth scope the
+  local `gh` token did not have, and getting it needed an interactive
+  browser flow with no way to complete it from here, the same class of
+  blocker already logged for Raven MCP. Generated a dedicated,
+  passphrase-less SSH signing key locally, had the user add its public
+  half through GitHub's web UI directly (no elevated token scope needed
+  for that path), and verified it was actually registered through
+  GitHub's own public API before trusting it, not the screenshot alone.
+  Confirmed `Verified` on GitHub's own commit-verification API for
+  every commit this produced, on both `#3098`'s branch and the new
+  `#3138` branch, polling the bot's own check to actual completion
+  rather than assuming green.
+- **Implemented `#3121`'s fix to the shape a reviewer proposed, not the
+  shape the original issue suggested.** The issue's own suggested fix
+  was an `mcp://`-specific branch. A comment from whawk46 argued for a
+  scheme-agnostic version instead (detect the opaque-origin sentinel,
+  not a scheme allowlist) plus a regression test pinned with a second,
+  unrelated made-up scheme, not just re-testing `mcp://`. Implemented
+  whawk46's shape exactly, credited by name in the PR body rather than
+  "per feedback," confirmed the new tests actually fail against the
+  pre-fix code (not just pass with it) before opening
+  [x402-foundation/x402#3138](https://github.com/x402-foundation/x402/pull/3138).
+  Checked Periplo's own local workaround for the same bug and found it
+  did not need the same fix: it branches on discovery type, not URL
+  scheme, and never parsed the `mcp://` string through `new URL()` at
+  all, so it was never exposed to the bug in the first place. Left a
+  comment noting when it becomes safe to remove instead of touching the
+  logic.
+- **A consolidation check caught a commit that was reported as pending
+  but had actually never landed.** Asked to confirm a documentation
+  commit had "landed cleanly," and it had not. It was still sitting
+  uncommitted in the working tree from earlier in the session. Fixed by
+  actually running the commit and confirming with
+  `git log -1 -- <path>` this time, not by re-describing the intent.

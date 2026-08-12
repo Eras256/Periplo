@@ -599,7 +599,12 @@ single-decode one is not yet, pending the project owner's go-ahead
    around in `discovery.ts` by reconstructing the URL from `toolName`
    directly, bypassing the broken helper's output for MCP resources only.
    **Filed:** [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121).
-   Full detail in `docs/INTEROP.md` §2.
+   **Fix open:** [x402-foundation/x402#3138](https://github.com/x402-foundation/x402/pull/3138),
+   built to the scheme-agnostic shape a reviewer (whawk46) suggested in the
+   issue thread rather than an `mcp://`-specific patch, with a second
+   regression test on an unrelated made-up scheme so the fix cannot
+   regress the same way for the next undocumented scheme. Full detail in
+   `docs/INTEROP.md` §2.
 
 ### `resource.serviceName`/`tags`/`iconUrl` are sanitized by upstream but have no catalog column yet
 
@@ -896,3 +901,96 @@ requests over HTTP, not just a one-off verification script — is separate,
 larger, not-yet-started work. `apps/facilitator/scripts/upto-settle-demo.ts`
 proves the contract and the wire-level auth mechanism both work for real;
 it is not that package.
+
+### `upto` spec convergence with a competing PR: #3098 now documents two profiles
+
+A second PR against the same spec file,
+[x402-foundation/x402#3134](https://github.com/x402-foundation/x402/pull/3134)
+by [Iam0TI](https://github.com/Iam0TI) with a reference implementation at
+[`0d1026/Rialto`](https://github.com/0d1026/Rialto), proposed a different
+`upto` mechanism: a stateless settlement contract using SEP-41
+`approve`/`transfer_from` instead of this project's pull-and-refund
+design, relying on Soroban's own per-entry auth nonce instead of an
+app-managed `temporary()`-storage nonce, and settling without binding to
+one named facilitator. Both PRs touched the exact same file, which the
+`#3134` author's own PR description flagged as something worth
+converging on rather than leaving for maintainers to arbitrate between.
+
+Before drafting anything public, ran an honest technical comparison of
+the two designs, not advocacy for either, covering: whether the native
+Soroban nonce actually gives equivalent replay protection, what the
+`stateless` design's facilitator-agnostic tradeoff means concretely, what
+pull-and-refund buys against a straight `transfer_from`, and whether
+either design changes for a C-account payer. Found real strengths on
+both sides. `stateless` genuinely removes an entire implementation-bug
+class, since there is no author-sized TTL to get wrong, replay
+protection is the protocol's own guarantee, and it settles measurably
+cheaper: pulled real `fee_charged` numbers from both projects' own
+settled testnet transactions, roughly 25 to 30 percent lower. This
+project's `contract` design closes a real gap `stateless` leaves open. A
+leaked or multiply-forwarded authorization can be settled by anyone
+holding it, for up to the full signed ceiling, not just the facilitator
+the resource server intended.
+
+Also found, while comparing the two contracts closely: `stateless`'s
+`autoRevoke = false` option lets a **later, unrelated** authorization
+silently overwrite a deliberately preserved leftover allowance, since
+SEP-41 `approve` replaces rather than adds. Raised generously as a
+finding worth documenting, not a defect, in the PR comment.
+
+Both of `#3134`'s cited testnet transactions were independently verified
+before being cited as fact in a spec change, not taken on trust. Decoded
+the `settle` call's own I128 arguments straight from each operation's
+raw XDR, confirming one is a genuine partial settlement (`300,000` of a
+`1,000,000` signed ceiling) and the other a genuine maximum settlement
+(`500,000` of `500,000`), matching the same bar this project holds its
+own numbers to.
+
+**Outcome:** `#3098` now documents both profiles, `contract`, this
+project's design, still the default, and `stateless`, credited to
+Iam0TI, `0d1026/Rialto`, and `#3134` by name, plus the C-account/smart-wallet
+spec language `#3098`'s prose was missing entirely (it was written in
+G-account terms only, even though the contract mechanism already worked
+for C-accounts). A comment was posted to `#3134` crediting the specific
+strengths found, raising the `autoRevoke` finding, and proposing the
+merged-spec outcome the author had already asked for. `#3098` was marked
+ready for review once this landed.
+
+### x402-foundation/x402 requires signed commits. Nothing was configured for it in this environment
+
+Found when `#3098`'s bot check flagged a pushed commit as unsigned, with
+a one-week auto-close clock attached. `commit.gpgsign`, `user.signingkey`,
+and `gpg.format` were all unset in this environment, no SSH keypair
+existed under `~/.ssh` beyond `known_hosts`, and the local GPG keyring
+was empty. Confirmed rather than assumed, checked each setting directly
+before concluding nothing existed.
+
+Registering a new SSH signing key against a GitHub account through the
+API needs the `admin:ssh_signing_key` OAuth scope, which the `gh` token
+in this environment did not have. Requesting it triggers an interactive
+browser device-code flow
+(`gh auth refresh -h github.com -s admin:ssh_signing_key`) with no way to
+complete it non-interactively, the same class of blocker already
+recorded for the Raven MCP sign-in. Generated a dedicated,
+passphrase-less ed25519 signing-only key locally instead
+(`~/.ssh/id_ed25519_signing`, no push or login authority), and had the
+user add its public half through GitHub's own web UI as a Signing Key, a
+thirty-second manual action that needed no elevated token scope at all.
+Verified the key was actually registered via the public, unauthenticated
+`GET /users/{username}/ssh_signing_keys` endpoint before trusting it, not
+just the screenshot the user pasted back.
+
+One thing this surfaced: the account already had a signing key
+registered from a different machine (titled to reference an Eras256
+laptop, added 2026-08-08), absent from this environment entirely,
+confirming key material genuinely does not travel between environments
+even for the same account.
+
+Configured `gpg.format=ssh`, `user.signingkey`, `commit.gpgsign=true`,
+and a local `gpg.ssh.allowedSignersFile` scoped per repository clone, not
+globally, since the actual requirement, `x402-foundation/x402`'s own
+contribution policy, is specific to that one upstream project, not a
+Periplo-wide or portfolio-wide default. Applied identically to both
+`#3098`'s branch and `#3138`'s branch, and confirmed `Verified` on
+GitHub's own API (`verified: true`, `reason: valid`) for every commit on
+both, not just checked locally.

@@ -77,6 +77,10 @@ user-facing surface right now.
   documents for MCP tools. We found it through the live integration
   test, not by reading the code, and filed it as
   [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121).
+  A fix is now open against it as
+  [x402-foundation/x402#3138](https://github.com/x402-foundation/x402/pull/3138),
+  built scheme-agnostic per a reviewer's suggested shape rather than an
+  `mcp://`-specific patch.
 
   The facilitator reports the outcome through the `EXTENSION-RESPONSES`
   header: `{"bazaar":{"status":"success"}}`, or
@@ -129,12 +133,17 @@ pay for a service without a human wiring up an integration first.
 It also carries `upto`, a metered payment scheme for Stellar that a
 plain SEP-41 allowance cannot express — it fails recipient binding
 (`transfer_from` lets the spender choose any destination) and single-use
-(an allowance is a standing balance). The network spec is open upstream
-as a Draft PR at
+(an allowance is a standing balance). The network spec is open upstream at
 [x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098)
-([issue #3097](https://github.com/x402-foundation/x402/issues/3097)). The
-Soroban contract, `contracts/upto-settlement`, is built, tested, and
-deployed to `stellar:testnet`
+([issue #3097](https://github.com/x402-foundation/x402/issues/3097)), marked
+ready for review. It documents two conformant profiles: `contract`, this
+project's design, described below, and `stateless`, an alternative
+contributed by [Iam0TI](https://github.com/Iam0TI) via
+[0d1026/Rialto](https://github.com/0d1026/Rialto) and
+[x402-foundation/x402#3134](https://github.com/x402-foundation/x402/pull/3134),
+credited and merged into the same spec rather than left as a second,
+competing PR. The Soroban contract, `contracts/upto-settlement`, is
+built, tested, and deployed to `stellar:testnet`
 (`CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`), with a real
 settled transaction recorded in
 [`conformance/RESULTS.md`](conformance/RESULTS.md) closing all three
