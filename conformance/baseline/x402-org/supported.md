@@ -1,4 +1,4 @@
-# `x402.org` — `GET /facilitator/supported`
+# `x402.org`: `GET /facilitator/supported`
 
 - **Captured:** 2026-08-07T05:23:50Z
 - **Command:** `curl -sS -D - -o - https://x402.org/facilitator/supported`
@@ -22,7 +22,7 @@ x-matched-path: /facilitator/supported
 x-vercel-cache: MISS
 ```
 
-## Response body (verbatim, pretty-printed for readability — no fields added/removed)
+## Response body (verbatim, pretty-printed for readability, no fields added/removed)
 
 ```json
 {
@@ -100,18 +100,18 @@ x-vercel-cache: MISS
 
 ## Reading this as a conformance spec
 
-- **`network` id form**: CAIP-2 (`stellar:testnet`, `eip155:84532`, ...) — matches
+- **`network` id form**: CAIP-2 (`stellar:testnet`, `eip155:84532`, ...), matches
   master spec §2 exactly.
 - **Stellar `extra` block**: `{ "areFeesSponsored": true }`. Confirms §2's
-  "advertise `extra.areFeesSponsored: true`" is literal, not paraphrased —
+  "advertise `extra.areFeesSponsored: true`" is literal, not paraphrased,
   reproduce this exact key.
 - **Stellar coverage**: `stellar:testnet` only. No `stellar:pubnet` kind is
   advertised by this facilitator today. Periplo committing to both (§2, §13)
   is a superset of the reference, not a deviation from it.
 - **Stellar `upto` / `batch-settlement`**: neither scheme is advertised for
   Stellar here (only `exact`). Consistent with master spec §0.1/§6: `upto` on
-  Stellar doesn't exist yet anywhere — that's Periplo's Phase 6 contribution.
-- **Stellar signers**: two G-accounts listed under `stellar:*` — the
+  Stellar doesn't exist yet anywhere, that's Periplo's Phase 6 contribution.
+- **Stellar signers**: two G-accounts listed under `stellar:*`, the
   facilitator's fee-sponsoring signer(s), not a spending key (consistent with
   "sponsors network fees only," §2).
 - **`extensions`**: no `bazaar` entry. See `discovery-404.md` in this
