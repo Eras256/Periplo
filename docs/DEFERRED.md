@@ -1,21 +1,21 @@
-# Deferred — everything deliberately not built (yet), and why
+# Deferred: everything deliberately not built (yet), and why
 
 Per master spec §12 rule 5: "When blocked, write the blocker here and continue
 with everything that does not depend on it." This file is a running log, not
-a one-time snapshot — update it every phase.
+a one-time snapshot. Update it every phase.
 
-## Phase 0 — environment divergences from the spec's assumptions
+## Phase 0: environment divergences from the spec's assumptions
 
 The spec was written assuming a specific machine setup. This session's actual
 environment differs in a few concrete ways. None of these blocked Phase 0;
 they're recorded here because later phases depend on closing them.
 
-### Raven MCP — added, not yet authenticated
+### Raven MCP: added, not yet authenticated
 `stellar-raven` was not connected at session start. It has now been added
 (`claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"`),
 but `claude mcp list` reports `! Needs authentication`, and this session is
-non-interactive (no browser available to complete an OAuth-style sign-in — see
-the harness's own note on `claude.ai` connectors, which applies here too).
+non-interactive: no browser is available to complete an OAuth-style sign-in.
+The harness's own note on `claude.ai` connectors covers the same limitation.
 **Substitute used for Phase 0:** direct `WebFetch`/`curl` against the npm
 registry, crates.io-equivalent checks, and live endpoints (x402.org
 facilitator, developers.stellar.org), plus the `standards` skill's bundled
@@ -25,12 +25,12 @@ call would be. **Action needed:** whoever runs the next session should
 complete the Raven sign-in interactively so later phases (especially 3, 6,
 where live protocol/RPC semantics matter) can use it directly.
 
-### The 45-skill `stellar-build` pack — present, just not where expected
+### The 45-skill `stellar-build` pack: present, just not where expected
 `ls ~/.claude/skills/` only shows 13 symlinked skills. The fuller pack named
 in the spec (`standards`, `agentic-payments`, `assets`, `dapp`,
 `smart-contracts`, `tyler-architect`, `deploy-stellar-mainnet`,
 `review-edge-case-hunter`, etc.) turned out to be real and available via the
-`Skill` tool regardless — confirmed by invoking `standards` directly. Initial
+`Skill` tool regardless, confirmed by invoking `standards` directly. Initial
 assessment based on the symlink directory alone was wrong; noted here so the
 correction is on record rather than silently discarded.
 
@@ -39,7 +39,7 @@ The spec pins Node ≥22 and `pnpm@11.20.0` (§2). This machine's preinstalled
 toolchain is Node v20.19.6 and pnpm 10.30.3, with no `nvm`/`volta`/`fnm`
 available to switch versions locally. Both pinned versions were confirmed to
 exist on the npm registry (verified live, 2026-08-07), so the pins themselves
-are correct — the gap is local-only.
+are correct. The gap is local-only.
 **Handling:** `.github/workflows/ci.yml` pins Node 22 + pnpm 11.20.0 via
 `actions/setup-node` and `pnpm/action-setup`, so the real gate (CI) runs on
 the correct toolchain. `.npmrc` sets `engine-strict=false` so the *local* dev
@@ -48,11 +48,11 @@ installing `nvm` (or similar) and running `nvm install 22` before Phase 3
 onward, where runtime behaviour differences between Node 20 and 22 become
 more likely to matter (native fetch/undici versions, etc.).
 
-### §2 manifest — verification status
+### §2 manifest: verification status
 Only the packages actually wired into Phase 0 tooling were checked live
 against the npm registry so far, all confirmed present at the pinned version
 on 2026-08-07: `typescript@7.0.2`, `vitest@4.1.10`, `@biomejs/biome@2.5.7`,
-`tsx@4.23.9` (registry `latest` has since moved to 4.23.10 — the pin is still
+`tsx@4.23.9` (registry `latest` has since moved to 4.23.10, the pin is still
 valid, just not `latest` anymore), `@types/node@26.1.2`, `pnpm@11.20.0`,
 `hono@4.13.0`, `@stellar/stellar-sdk@16.2.0`, `@x402/stellar` (publishing
 `latest: 2.21.0`, author field: Coinbase Inc.), `@modelcontextprotocol/sdk@1.30.0`.
@@ -62,7 +62,7 @@ Not yet checked: `zod`, `@playwright/test`, `@x402/core`, `@x402/hono`,
 is actually introduced in its phase (2, 3, 6, 7, 9), and a full re-verification
 pass is required before submission per spec §11.
 
-### GitHub Actions osv-scanner job — unverified call signature
+### GitHub Actions osv-scanner job: unverified call signature
 `.github/workflows/ci.yml` calls
 `google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.8`
 as a reusable workflow. The tag (`v2.3.8`) was confirmed as the project's
@@ -71,35 +71,35 @@ call signature could not be confirmed from the README in this session (the
 fetched excerpt didn't include a literal example). The job is marked
 `continue-on-error: true` until a real push to GitHub triggers it and the
 call is confirmed to actually run. **Action needed:** first real CI run,
-then remove `continue-on-error` once confirmed — per spec §6/§7 this is
+then remove `continue-on-error` once confirmed. Per spec §6/§7 this is
 meant to be a hard gate.
 
 ### External accounts not yet provisioned
 These block later phases and require either credentials the assistant
 doesn't have, or an outward-facing action (repo push, account creation) that
 should be confirmed with the project owner first:
-- **GitHub push** — `origin` is already configured
+- **GitHub push**: `origin` is already configured
   (`https://github.com/Eras256/Periplo.git`), `gh` is authenticated, but
   nothing has been pushed yet. Local commits only until confirmed.
-- **Supabase project** (Phase 2) — needed for the catalog Postgres instance,
+- **Supabase project** (Phase 2): needed for the catalog Postgres instance,
   pgvector, RLS.
 - **Fly.io apps** `periplo-testnet` / `periplo-mainnet` (Phase 10, staged
-  earlier for Phase 3 deploys) — needed for hosted facilitator deployment.
-- **Funded Stellar testnet keypairs** — a fee-sponsor key (Phase 3) and a
+  earlier for Phase 3 deploys): needed for hosted facilitator deployment.
+- **Funded Stellar testnet keypairs**: a fee-sponsor key (Phase 3) and a
   separate conformance-harness key (Phase 8). Friendbot can fund a testnet
   account without a human in the loop; this can likely be self-served in
   Phase 3 rather than waiting on the project owner.
-- **Matrix room + Mastodon/Bluesky account** (Phase 10) — genuine account
+- **Matrix room + Mastodon/Bluesky account** (Phase 10): genuine account
   creation, needs the project owner.
-- **x402 e2e suite upstream registration** (Phase 8) — registering
+- **x402 e2e suite upstream registration** (Phase 8): registering
   `e2e/facilitators/external-proxies/periplo/` means opening a PR against an
   external repo; needs owner sign-off before it's sent.
-- **Audit Bank engagement** (Phase 10) — a program application, not something
+- **Audit Bank engagement** (Phase 10): a program application, not something
   to submit unilaterally.
 
-### `pnpm@11.20.0` genuinely requires Node ≥22.13 — not just a spec preference
+### `pnpm@11.20.0` genuinely requires Node ≥22.13, not just a spec preference
 Running `pnpm install` on this machine's original Node v20.19.6 crashed
-outright (`ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite` — pnpm 11's own store
+outright (`ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite`, pnpm 11's own store
 resolver imports Node's built-in SQLite module, added in Node 22). This isn't
 a style preference in the spec; pnpm 11.20.0 cannot run at all on Node <22.
 **Resolved, not deferred:** `nvm` was already installed on this machine
@@ -108,54 +108,54 @@ set it as `nvm alias default 22`, and added `.nvmrc` (`22`) to the repo so
 `nvm use` picks it up automatically in any properly-configured shell. The
 one remaining friction: this harness's `Bash` tool starts a fresh, non-login
 shell per call, so `nvm use` doesn't persist automatically between tool
-calls within a session — each command that needs Node 22 currently sources
+calls within a session. Each command that needs Node 22 currently sources
 `~/.nvm/nvm.sh` and runs `nvm use 22` explicitly first. A real terminal
 session (or a shell profile with `nvm use` wired to `.nvmrc` on `cd`, e.g.
 via `avn` or a `.bashrc` hook) won't have this friction.
 
-### `packages/licence-check` — production vs. build-tooling license scope
+### `packages/licence-check`: production vs. build-tooling license scope
 First real run of the gate against actual installed packages caught a live
 case worth recording rather than silently special-casing: `vitest@4.1.10`
 (pinned, spec §2) hard-depends on `vite@8.2.0`, which hard-depends on
-`lightningcss` (and its platform binary `lightningcss-linux-x64-gnu`) —
-both MPL-2.0, a copyleft-adjacent license `DENIED_PATTERNS` correctly flags.
+`lightningcss` (and its platform binary `lightningcss-linux-x64-gnu`), both
+MPL-2.0, a copyleft-adjacent license `DENIED_PATTERNS` correctly flags.
 This is unavoidable while using vitest as pinned; it is not optional or
 prunable (confirmed: `lightningcss` is a plain `dependencies` entry in
 vite's own `package.json`, not `optionalDependencies`).
 **Design decision, not a policy weakening:** `packages/licence-check/src/cli.ts`
-now runs the classifier twice — once scoped to `pnpm licenses list --prod`
+now runs the classifier twice: once scoped to `pnpm licenses list --prod`
 (what a consumer actually installs and runs: "dependencies" +
 "optionalDependencies") as the **hard, blocking gate**, and once over the
 full graph (prod + dev + optional) to surface dev-only findings as
 **warnings only**. Rationale: devDependencies are never bundled into a
 deployed Periplo service, and MPL-2.0's actual obligation is file-level
 (share modifications to *that* file if distributed) rather than viral onto
-surrounding code — using it unmodified as a test/build tool doesn't create
+surrounding code. Using it unmodified as a test/build tool doesn't create
 the risk spec §1 is guarding against (a copyleft obligation reaching the
 *operated* service or its self-hosted deployments). A strict AGPL/GPL/LGPL
 hit would still warn the same way if it only appeared in devDependencies,
 but the classifier itself (`classify.ts`) is unchanged and still denies
-every copyleft family unconditionally when it's in the shipped graph —
-verify with `pnpm licence-check` once Phase 3 adds real runtime
+every copyleft family unconditionally when it's in the shipped graph.
+Verify with `pnpm licence-check` once Phase 3 adds real runtime
 dependencies (`hono`, `@x402/stellar`, etc.), which is when this distinction
 starts actually mattering.
 
-## Phase 0 — scope not built (by design, not by omission)
+## Phase 0: scope not built (by design, not by omission)
 
 Nothing in this category yet. Phase 0 as scoped (§5) is monorepo tooling +
 baseline capture; both are complete for what's reachable without the
 external accounts above.
 
-## Phase 2 — environment divergences and real findings
+## Phase 2: environment divergences and real findings
 
 Supabase project provisioned and credentials supplied directly in the build
 session (2026-08-07). **Handling:** credentials went straight into a local
-`.env` (gitignored, never committed — verified with `git status --porcelain`
+`.env` (gitignored, never committed, verified with `git status --porcelain`
 and `git check-ignore -v .env` before every commit this phase) and into this
 repo's GitHub Actions secrets (`gh secret set`, values piped via stdin, never
 put in an argv or echoed). **Rotation note:** the DB password and both
 service-role/anon JWTs were pasted as plaintext chat content, which may be
-retained in conversation history outside this repo's control — rotating
+retained in conversation history outside this repo's control. Rotating
 them (Supabase dashboard → Settings → Database / API) once Phase 2's
 migrations are confirmed stable is good hygiene, not an emergency, since
 nothing else has had access to them.
@@ -170,10 +170,10 @@ reached. **Fix:** used the transaction-pooler connection instead (port 6543,
 itself documents as the recommended path for IPv4-only environments. All
 migrations and integration tests in this phase went through the pooler.
 Plain DDL (CREATE TABLE/INDEX/POLICY, no CONCURRENTLY, no advisory locks)
-worked fine through it — no caveats hit in practice. If a future phase needs
+worked fine through it, no caveats hit in practice. If a future phase needs
 the direct connection specifically, this sandbox is the blocker, not Supabase.
 
-### `to_tsvector('english', text)` is not IMMUTABLE — can't use it directly in a generated column
+### `to_tsvector('english', text)` is not IMMUTABLE: can't use it directly in a generated column
 The master spec's literal SQL (§5 Phase 2) defines `fts` as
 `generated always as (to_tsvector('english', ...)) stored`. PostgreSQL's
 two-argument `to_tsvector(regconfig, text)` is marked STABLE, not IMMUTABLE
@@ -189,17 +189,17 @@ the full reasoning inline.
 ### Plain `unique (url, route_template, tool_name)` doesn't dedupe the way the spec intends
 Standard SQL `UNIQUE` treats `NULL` as distinct from `NULL`, so two HTTP
 listings sharing `(url, route_template)` with `tool_name` NULL in both rows
-would NOT collide and could both be inserted — silently defeating "one
+would NOT collide and could both be inserted, silently defeating "one
 catalog entry per resource." **Fix:** `unique nulls not distinct (...)`
-(PostgreSQL 15+, supported on Supabase's managed Postgres — confirmed by
+(PostgreSQL 15+, supported on Supabase's managed Postgres, confirmed by
 the migration applying cleanly). Not in the master spec's literal SQL;
 added and documented rather than reproducing a schema bug verbatim.
 
-### `auto_expose_new_tables` defaults to off — RLS policies alone aren't enough
+### `auto_expose_new_tables` defaults to off: RLS policies alone aren't enough
 Supabase's current default (confirmed via `supabase init`'s generated
 `config.toml` comment, not assumed) does **not** auto-grant the
 `anon`/`authenticated` Data API roles access to newly created tables. An RLS
-policy with no matching `GRANT` is unreachable dead code — PostgREST rejects
+policy with no matching `GRANT` is unreachable dead code, PostgREST rejects
 the request at the grant level before RLS is even evaluated. **Fix:**
 explicit `grant select on resources to anon, authenticated;` (plus
 `grant usage on schema public`) alongside the RLS policy. Verified end to
@@ -211,7 +211,7 @@ real against the live project (`pnpm test`, gated by
 this repo's GitHub Actions secrets and in local `.env`).
 
 ### `@supabase/supabase-js@2.112.2`'s generic types silently collapse to `never` with an `interface`
-Not a Supabase-specific bug — a general TypeScript behavior that happens to
+Not a Supabase-specific bug, a general TypeScript behavior that happens to
 bite hard here. `postgrest-js`'s `.from()` resolves its row/insert/update
 types via a conditional type that checks `Row extends Record<string,
 unknown>`. A named `interface` does **not** satisfy that check the way a
@@ -220,26 +220,26 @@ identical and an `interface` value assigns to `Record<string, unknown>`
 just fine directly. The failure mode is silent and confusing: every
 `.from("resources")` call's inferred argument/result type quietly becomes
 `never` instead of raising a type error pointing at the real cause.
-Diagnosed empirically with an isolated conditional-type repro (not by
-guessing) — see `packages/bazaar/src/db/client.ts`'s comments. **Fix:**
+Diagnosed empirically with an isolated conditional-type repro, not by
+guessing. See `packages/bazaar/src/db/client.ts`'s comments. **Fix:**
 `Database` and `ResourceRow` are declared with `type`, not `interface`.
 Worth remembering for any future generated-types file (Phase 4/5 will need
 richer row types as the schema grows).
 
-## Phase 3 — environment divergences and real findings
+## Phase 3: environment divergences and real findings
 
-### Circle's testnet USDC faucet has no API — blocks using real testnet USDC for an automated settlement
+### Circle's testnet USDC faucet has no API: blocks using real testnet USDC for an automated settlement
 `faucet.circle.com` requires a browser and reCAPTCHA; there is no
-programmatic endpoint (checked directly, not assumed — see the WebFetch
+programmatic endpoint (checked directly, not assumed, see the WebFetch
 result in this phase's session). This session can't complete that flow.
 **Resolved, not deferred:** issued a self-owned test SEP-41 token instead
 (`PTEST`, classic asset wrapped as a Stellar Asset Contract via `stellar
-contract asset deploy` — no custom contract code needed) and used it for
+contract asset deploy`, no custom contract code needed) and used it for
 the Phase 3 gate's settled transaction. `@x402/stellar`'s exact scheme
 treats the asset address as a parameter; nothing in the facilitator's
 logic is USDC-specific. Getting a real testnet-USDC-funded account (via
 the faucet, which needs a human) would let a future session additionally
-prove it works with the canonical asset — not required for the gate, since
+prove it works with the canonical asset. Not required for the gate, since
 the gate asks for *a* settled transaction hash, not specifically a USDC
 one, but worth doing before claiming full parity with the reference
 facilitator's asset support.
@@ -247,24 +247,24 @@ facilitator's asset support.
 ### Paying a classic asset back to its own issuer is a burn, not a transfer
 First settlement attempt used the test asset's own issuer account as
 `payTo`. Under classic Stellar semantics, sending an asset to its issuer
-redeems/burns it — the Stellar Asset Contract (SAC) bridge correctly
+redeems/burns it. The Stellar Asset Contract (SAC) bridge correctly
 represents this as a `burn` event (`topics: [burn, from, asset_code]`),
 not a CAP-46 `transfer` event (`topics: [transfer, from, to, asset]`).
 `@x402/stellar`'s `validateSimulationEvents` requires a `transfer` event
 matching sender/recipient/amount exactly and rejects anything else
-(`invalid_exact_stellar_payload_event_not_transfer`) — working as
+(`invalid_exact_stellar_payload_event_not_transfer`), working as
 designed; the bug was in the test setup, not the library. **Fix:** use a
 genuine third-party account, never the asset's own issuer, as `payTo`.
 Diagnosed by decoding the real simulation's diagnostic events directly
 (`Address.fromScAddress`/`scValToNative` over the raw XDR) rather than
-guessing from the error string alone — worth doing again if a similarly
+guessing from the error string alone, worth doing again if a similarly
 opaque `invalid_exact_stellar_payload_event_*` reason shows up later.
 
 ### A classic-asset-backed SAC still requires a classic trustline on both ends
 Also discovered while diagnosing the above: transferring a classic-asset
 SAC token to an account with no trustline for that asset fails outright
 (`HostError: Error(Contract, #13)`, `"trustline entry is missing for
-account"`) — SAC does not let a classic asset bypass trustlines for plain
+account"`). SAC does not let a classic asset bypass trustlines for plain
 G-accounts; that bridging only happens once the trustline exists. A
 genuinely Soroban-native token (not a classic-asset wrapper) wouldn't have
 this requirement, but this project's test asset is classic-backed since
@@ -273,15 +273,15 @@ writing a custom contract. **Fix:** the test seller account establishes a
 `PTEST` trustline before receiving the demo payment (see
 `apps/facilitator/scripts/settle-demo.ts` and the accounts recorded in
 `.env`). Real testnet/mainnet USDC is also classic-asset-backed, so a real
-x402 seller integrating against USDC needs the same trustline step —
-this is exactly the "an account needs a trustline before it can receive a
+x402 seller integrating against USDC needs the same trustline step. This
+is exactly the "an account needs a trustline before it can receive a
 SEP-41 asset... surface it as a distinct, actionable error" case spec §2
 already calls out; worth building that error path explicitly in a later
 phase (Phase 4 seller helpers, or the hub's `/buyers` trustline-step docs).
 
-### `@x402/stellar`'s facilitator `ExactStellarScheme` is a different export than the client one — same class name, different subpath
+### `@x402/stellar`'s facilitator `ExactStellarScheme` is a different export than the client one: same class name, different subpath
 The package's main entry (`@x402/stellar`) re-exports `ExactStellarScheme`
-from `./exact/client` (the CLIENT variant — `SchemeNetworkClient`, used to
+from `./exact/client` (the CLIENT variant, `SchemeNetworkClient`, used to
 *build* a payment). The FACILITATOR variant (`SchemeNetworkFacilitator`,
 used to *verify/settle* one) is a separate subpath export,
 `@x402/stellar/exact/facilitator`. Importing the wrong one from the main
@@ -293,9 +293,9 @@ explaining why, specifically so this isn't "fixed" back to the barrel
 import later by someone who sees `ExactStellarScheme` unqualified and
 assumes there's only one.
 
-### No Node HTTP adapter for Hono chosen yet — needed before real deployment
+### No Node HTTP adapter for Hono chosen yet: needed before real deployment
 `apps/facilitator` is tested via Hono's own `app.request()` (in-memory,
-no real port) — sufficient for Phase 3's gate (verify/settle logic +
+no real port), sufficient for Phase 3's gate (verify/settle logic +
 one settled transaction), but running this as an actual listening service
 (Fly.io, Phase 10, or any "hosted"/"self-hosted" deployment path) needs a
 Node HTTP adapter, most likely `@hono/node-server` (official, small,
@@ -304,10 +304,10 @@ manifest, and working rule 6 says ask before adding one rather than
 sneaking it in alongside unrelated work. Flagging here now so it's a
 known, upcoming decision rather than a surprise at Phase 10.
 
-### `Exact scheme requires areFeesSponsored to be true` — client-side requirement, not just facilitator-side
+### `Exact scheme requires areFeesSponsored to be true`: client-side requirement, not just facilitator-side
 `@x402/stellar`'s client `ExactStellarScheme.createPaymentPayload` throws
-outright if `paymentRequirements.extra.areFeesSponsored` isn't `true` —
-the client needs to know fee sponsorship is happening so it doesn't try to
+outright if `paymentRequirements.extra.areFeesSponsored` isn't `true`.
+The client needs to know fee sponsorship is happening so it doesn't try to
 provision its own fee payment when building the transaction. Found by
 running the demo script and reading the real error, not documented
 anywhere obvious beforehand. Any seller-side helper built in Phase 4 that
@@ -315,19 +315,19 @@ constructs `paymentRequirements` for Stellar must set this field, or every
 client using `@x402/stellar` against it will fail before even reaching the
 facilitator.
 
-## Phase 10 — started early, at explicit request (deployment, not the full phase)
+## Phase 10: started early, at explicit request (deployment, not the full phase)
 
 `apps/facilitator` is live on Fly.io (`stellar:testnet` only) at
 `https://periplo-testnet.fly.dev`, deployed 2026-08-07 out of the normal
 phase sequence because the project owner asked for it directly. **This is
-not "Phase 10 complete"** — it's the one piece (facilitator deployment)
+not "Phase 10 complete"**: it's the one piece (facilitator deployment)
 pulled forward; the rest of Phase 10's scope (an equivalent
 `periplo-mainnet` app, the runbook, monitoring beyond a bare `/health`,
 public telemetry endpoint, both example integrations, hardening pass,
 Matrix/Mastodon channels) is still not built, and shouldn't be inferred
 from the app being live.
 
-- **`@hono/node-server@2.1.0` (MIT) added** — this closes the gap flagged
+- **`@hono/node-server@2.1.0` (MIT) added.** This closes the gap flagged
   in Phase 3's entry above ("No Node HTTP adapter for Hono chosen yet").
   It's outside spec §2's manifest; flagged here rather than silently
   bundled into an unrelated commit, per working rule 6, even though the
@@ -335,37 +335,37 @@ from the app being live.
 - **`periplo-mainnet` does not exist and won't until a real mainnet
   fee-sponsor key exists.** Spec §2/§13 commit to both networks, but
   nothing about "deploy now" implies fabricating mainnet infrastructure
-  ahead of having real funds/a real key to back it — that's a distinct,
+  ahead of having real funds/a real key to back it. That's a distinct,
   later decision, not an oversight.
 - **Fly API token** was pasted directly in the build session (same
   handling as the Supabase/Stellar secrets before it): stored in local
-  `.env` only, never committed. Not actually needed for this deploy — the
+  `.env` only, never committed. Not actually needed for this deploy: the
   `fly` CLI on this machine was already authenticated interactively
-  (`ticketsafes@gmail.com`) — kept for a possible future GitHub Actions
+  (`ticketsafes@gmail.com`), kept for a possible future GitHub Actions
   deploy workflow instead.
 - **Docker build context is the whole monorepo** (`Dockerfile.facilitator`
   builds only `apps/facilitator`, but needs the workspace root for pnpm
-  resolution) — added `.dockerignore` to keep `node_modules`/`dist` out of
+  resolution). Added `.dockerignore` to keep `node_modules`/`dist` out of
   the ~217MB context Fly's builder otherwise re-uploads on every deploy.
-- **Circle testnet USDC — first funding attempt bounced, cause found and
+- **Circle testnet USDC: first funding attempt bounced, cause found and
   fixed.** The project owner funded `STELLAR_TEST_BUYER_PUBLIC` via
   Circle's faucet ("Tokens sent, 20 testnet USDC..."), but the buyer
-  account had no classic trustline for USDC yet — same "trustline entry
+  account had no classic trustline for USDC yet, same "trustline entry
   is missing" failure mode discovered with `PTEST` earlier in this phase,
   now confirmed to apply to real USDC too (it's classic-asset-backed, not
   a pure Soroban-native token). Checked directly: no balance, no claimable
   balance either, so the transfer genuinely never landed rather than
   being recoverable. **Fixed**: established the trustline
-  (`USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` — the
+  (`USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`, the
   real issuer, read authoritatively off the SAC contract's own `name()`
   call rather than guessed) via the `stellar` CLI using the buyer's key
   this project already holds. Balance is `0.0000000 USDC`, ready to
-  receive — needs a resend from the faucet now that the trustline exists.
+  receive, needs a resend from the faucet now that the trustline exists.
 
-## CI was broken from Phase 1 through Phase 3 — the local gate was real, the CI gate wasn't
+## CI was broken from Phase 1 through Phase 3: the local gate was real, the CI gate wasn't
 
 `gh run list` showed every push since Phase 1 failing in ~0 seconds with
-zero jobs scheduled — GitHub rejected `.github/workflows/ci.yml` outright
+zero jobs scheduled. GitHub rejected `.github/workflows/ci.yml` outright
 before running anything, including the `build` job (typecheck/lint/test/
 licence-check). Root cause: the `osv-scan` job's reusable-workflow call
 (`google/osv-scanner-action/.../osv-scanner-reusable.yml@v2.3.8`,
@@ -378,7 +378,7 @@ now, checking `gh run list` directly rather than continuing to trust the
 local `pnpm ci` result as a stand-in for CI passing. **Fix**: removed the
 broken `osv-scan` job outright rather than guess at the correct reusable-
 workflow syntax a second time; `build` now runs on its own. Re-adding a
-working `osv-scan` job (spec §6/§7 want it as a hard gate) is still open —
+working `osv-scan` job (spec §6/§7 want it as a hard gate) is still open;
 next attempt should be validated against a real, isolated push before
 being trusted, not assumed correct from the manifest/release-tag check
 alone.
@@ -392,44 +392,44 @@ running `pnpm ci` locally and assuming CI mirrors it.
 
 - **Scaled from 2 machines to 1** (`fly scale count 1`). Fly creates 2 by
   default for zero-downtime rolling deploys; for a testnet demo (not yet
-  under any uptime SLA — that's Phase 10's runbook territory) 1 is
+  under any uptime SLA, that's Phase 10's runbook territory) 1 is
   simpler and cheaper, and `min_machines_running = 1` in
   `fly.facilitator.toml` already covers "never 0." Both machines were
   observed idling to `stopped` between requests regardless
   (`auto_stop_machines = "stop"`) and Fly's proxy auto-starts one on
-  demand — confirmed this works via a real cold request, not assumed.
+  demand, confirmed this works via a real cold request, not assumed.
 - **Added a `GET /` route.** Hitting the bare host 404ed with no context
-  (nothing was ever routed there) — not a bug, but confusing without
+  (nothing was ever routed there), not a bug, but confusing without
   explanation, so it now returns a small JSON description of the service
   and its real endpoints. No new claims: it's honest about what exists
   today (no frontend, no `/browse` etc.).
 - **`fly deploy` prints a "not listening on the expected address" warning
   every time** even with `@hono/node-server`'s `hostname` explicitly set
   to `0.0.0.0`. Real external `curl` requests succeed regardless (checked
-  after both the warned and the explicit-hostname deploys) — treated as a
+  after both the warned and the explicit-hostname deploys), treated as a
   startup-timing false positive in Fly's smoke-check, not a real
   reachability problem, since the actual behavior (not the warning text)
   is what was verified.
 
-## CI, part 2 — resolved: the billing block was private-repo Actions minutes
+## CI, part 2: resolved. The billing block was private-repo Actions minutes
 
 After removing the broken `osv-scan` job, the next push's run parsed and
-scheduled `build` (12s runtime, not 0s — confirming the workflow-file fix
+scheduled `build` (12s runtime, not 0s, confirming the workflow-file fix
 worked), but the job itself never started:
 > "The job was not started because recent account payments have failed or
 > your spending limit needs to be increased."
 
 Cause, per the project owner: the repo was private, and private repos on
 GitHub only get a limited free tier of Actions minutes before requiring
-billing/a spending limit — public repos get free standard-runner minutes
+billing/a spending limit; public repos get free standard-runner minutes
 without that constraint. **Fixed** by making `Eras256/Periplo` public.
 
 **Verified twice, not assumed once:**
 1. `gh run rerun 31222094411` after the visibility change actually
    executed this time (`in_progress`, not an instant billing-error
-   failure) and finished `build` — success, 24s.
+   failure) and finished `build`, success, 24s.
 2. The project owner (correctly) pushed back on trusting a manual rerun
-   alone — a rerun can behave differently from an organic trigger. The
+   alone, a rerun can behave differently from an organic trigger. The
    very next real `push` (no `rerun` involved) triggered its own new run,
    `31222406798`, and it also passed for real: `build` in 23s
    (`https://github.com/Eras256/Periplo/actions/runs/31222406798`).
@@ -438,44 +438,44 @@ Also re-verified the earlier "workflow file issue" runs weren't actually
 the same billing problem wearing a different message, rather than just
 asserting the two-cause story: `gh api
 repos/Eras256/Periplo/actions/runs/31220202302/jobs` (a pre-fix, `push`-
-triggered run) returns `{"total_count":0,"jobs":[]}` — literally zero job
+triggered run) returns `{"total_count":0,"jobs":[]}`, literally zero job
 entries created. That's structurally different from the billing block,
 which *does* create a `build` job entry and then blocks it from starting.
 Two distinct GitHub error messages, two distinct job-scheduling shapes,
-two independent fixes, both confirmed against real runs — not one
+two independent fixes, both confirmed against real runs, not one
 misdiagnosed cause redescribed. CI is confirmed green as of 2026-08-07.
 
 One harmless annotation surfaced on the passing run: `actions/checkout@v4`,
 `actions/setup-node@v4`, and `pnpm/action-setup@v4` are running on a
 deprecated internal Node 20 runner-action-runtime (unrelated to this
-project's own Node 22 pin — it's about the version GitHub's runner uses to
+project's own Node 22 pin, it's about the version GitHub's runner uses to
 execute the action's own code). Not urgent; worth bumping to newer action
 versions eventually.
 
 Re-adding a working `osv-scan` job (spec §6/§7 want it as a hard gate) is
-still open — next attempt should be validated against a real, isolated
+still open; next attempt should be validated against a real, isolated
 push before being trusted, same caution as before.
 
-**Update 2026-08-08 — the billing message resurfaced once, transiently.**
+**Update 2026-08-08: the billing message resurfaced once, transiently.**
 After four consecutive green organic-push runs, one run
 (`31241780851`, the `docs(spec)` commit) failed with the exact same
 "recent account payments have failed or your spending limit needs to be
-increased" message — with the repo confirmed still public
+increased" message, with the repo confirmed still public
 (`gh repo view --json isPrivate` → `false`) at the time. The very next
 push, 8 minutes later with no changes to repo settings, succeeded
 normally (`31242097451`). Read as a transient false-positive in GitHub's
-billing check itself, not a regression back to the private-repo state —
+billing check itself, not a regression back to the private-repo state,
 worth knowing this can happen even on a public repo, not worth blocking
 on. If it recurs persistently (not just once), revisit.
 
-## README's `upto` link — resolved before Phase 6 formally started
+## README's `upto` link: resolved before Phase 6 formally started
 
 README's "What Periplo is (planned)" section linked `upto`'s spec to
-[`spec/`](../spec/), a directory that has never existed in this repo — a
+[`spec/`](../spec/), a directory that has never existed in this repo, a
 dead link in the most-read file. Turned out moot rather than needing a
 wait for Phase 6: the network spec was already opened upstream directly
 against `x402-foundation/x402` (PR #3098, issue #3097, both verified real
-via the GitHub API — title, draft status, and the same three open
+via the GitHub API: title, draft status, and the same three open
 on-chain assumptions this repo's own `docs/SPEC.md` §6 names), work done
 in parallel outside this repo's own phase sequence. README now links the
 PR directly instead of a local directory.
@@ -484,15 +484,15 @@ PR directly instead of a local directory.
 does not exist here, and won't): the RFP deliverable is "merged upstream
 into the x402 package," so the PR itself is the evidence, not a local
 copy. A duplicate invites drift (one copy updates, the other doesn't) and
-a fork of a spec that's actively being upstreamed reads oddly — the
+a fork of a spec that's actively being upstreamed reads oddly, the
 spec's place is upstream. The Soroban contract
 (`contracts/upto-settlement`) was still genuinely not started as of this
-note — see "Phase 6 — environment divergences and real findings" below
+note. See "Phase 6: environment divergences and real findings" below
 for what actually got built.
 
-## Phase 4 — environment divergences and real findings
+## Phase 4: environment divergences and real findings
 
-### `Dockerfile.facilitator` didn't build or ship `@periplo/bazaar` — first Phase 4 deploy crash-looped
+### `Dockerfile.facilitator` didn't build or ship `@periplo/bazaar`: first Phase 4 deploy crash-looped
 
 Found live, immediately after pushing and redeploying: `apps/facilitator`
 never had a real runtime dependency on `packages/bazaar` before Phase 4, so
@@ -503,14 +503,14 @@ locally (which uses `tsc -b`, project-reference mode, and doesn't need
 
 1. **Build stage:** `pnpm --filter @periplo/facilitator build` runs plain
    `tsc -p tsconfig.json` (not `-b`), which does not auto-build referenced
-   projects — it resolves `@periplo/bazaar` via normal node-module
+   projects. It resolves `@periplo/bazaar` via normal node-module
    resolution against `packages/bazaar/package.json`'s `types` field
    (`dist/index.d.ts`), which didn't exist because nothing had built
    `packages/bazaar` in the image. Fixed: `RUN pnpm --filter @periplo/bazaar
    build` before the facilitator build step.
 2. **Runtime stage:** even after the build succeeded, the deployed machine
    crash-looped on `ERR_MODULE_NOT_FOUND: Cannot find package
-   '@supabase/supabase-js'` — pnpm gives every workspace package its own
+   '@supabase/supabase-js'`. pnpm gives every workspace package its own
    `node_modules/` of symlinks to its own direct dependencies (resolved
    from the shared store), and `packages/bazaar/node_modules` was never
    copied into the runtime stage, only `dist/` and `package.json`. Fixed by
@@ -518,7 +518,7 @@ locally (which uses `tsc -b`, project-reference mode, and doesn't need
 
 Both fixes verified against the real deployment: `curl
 https://periplo-testnet.fly.dev/supported` returned `"extensions":["bazaar"]`
-only after the second deploy, not the first — the first one looked
+only after the second deploy, not the first. The first one looked
 successful in `fly deploy`'s own output (image built, pushed) right up
 until the machine actually tried to boot the new code.
 
@@ -526,15 +526,15 @@ until the machine actually tried to boot the new code.
 
 `pnpm ci` is a reserved pnpm CLI command (`pnpm help ci` → alias for
 `clean-install`: `pnpm clean` + `pnpm install --frozen-lockfile`), which
-shadows the root `package.json` script of the same name — bare `pnpm ci`
+shadows the root `package.json` script of the same name. Bare `pnpm ci`
 silently reinstalls dependencies instead of running
 `typecheck && lint && test && licence-check`, with nothing pointing at the
 shadowing. `pnpm run ci` (explicit `run`) forces package.json resolution
 and is the command that actually runs the gate. Caught running this exact
-command during Phase 4; low severity in practice — `.github/workflows/ci.yml`
+command during Phase 4; low severity in practice, `.github/workflows/ci.yml`
 already invokes each step individually (`pnpm typecheck`, `pnpm lint`,
 `pnpm test`, `pnpm licence-check`), never the compound `pnpm ci`, and this
-session's own phase-gate verifications ran the individual commands too — so
+session's own phase-gate verifications ran the individual commands too, so
 no phase's gate was actually unverified, just documented with a command
 that would have silently done the wrong thing if anyone (a reviewer
 reproducing the gate locally, most plausibly) had copy-pasted it verbatim.
@@ -554,7 +554,7 @@ including its transitive deps). `apps/facilitator/src/discovery.ts` is built
 on `extractDiscoveryInfo`/`validateDiscoveryExtension`/
 `validateDiscoveryExtensionSpec` from that package rather than
 reimplementing the extension's JSON-Schema validation and info-extraction
-logic — same "don't reimplement the wire protocol" principle spec §1
+logic, same "don't reimplement the wire protocol" principle spec §1
 applies to verify/settle, extended here on the session's own judgment
 (the package wasn't in the original manifest, so this is flagged per
 working rule 6, not silently added).
@@ -562,8 +562,8 @@ working rule 6, not silently added).
 **Dependency-weight tradeoff, accepted not hidden:** `@x402/extensions`
 bundles several extensions in one package (`bazaar`, `builder-code`,
 `offer-receipt`, `sign-in-with-x`, `payment-identifier`), and its
-`package.json` declares dependencies for all of them — `viem`, `jose`,
-`@signinwithethereum/siwe`, `tweetnacl`, `@noble/curves` — even though
+`package.json` declares dependencies for all of them: `viem`, `jose`,
+`@signinwithethereum/siwe`, `tweetnacl`, `@noble/curves`, even though
 `apps/facilitator` only imports the `./bazaar` subpath. pnpm installs the
 full declared dependency graph regardless of which subpath is actually
 imported, so these ship in `node_modules` (and the Docker image) unused.
@@ -578,8 +578,8 @@ One deliberate divergence from "build on the official package": Periplo's
 own Phase 1 `routeTemplate` validator (bounded-repeated percent-decoding,
 backslash normalization) is used instead of the official package's
 single-decode-pass equivalent, because upstream's version doesn't satisfy
-spec Phase 4's gate (hard-reject a hostile `routeTemplate`, no catalog row —
-upstream instead silently drops the field and catalogs the unparameterized
+spec Phase 4's gate (hard-reject a hostile `routeTemplate`, no catalog row.
+Upstream instead silently drops the field and catalogs the unparameterized
 URL). Full comparison table in `docs/INTEROP.md` §1.
 
 **Two genuine upstream findings.** The `mcp://` one is filed; the
@@ -590,11 +590,11 @@ single-decode one is not yet, pending the project owner's go-ahead
    surface for anyone calling `isValidRouteTemplate` directly. Not filed.
 2. `extractDiscoveryInfo` breaks on the `mcp://tool/{toolName}` URL form
    that `docs/SPEC.md` §4 (and the x402 e2e test itself) documents as the
-   *expected* MCP resource URL — `mcp:` isn't a WHATWG special scheme, so
+   *expected* MCP resource URL. `mcp:` isn't a WHATWG special scheme, so
    `new URL(...).origin` returns the literal string `"null"`, and upstream's
    canonical-URL logic (`${url.origin}${url.pathname}`) produces
    `"null/toolName"`. Found empirically via the real Supabase integration
-   test (`discovery.integration.test.ts`), not by inspection — first run
+   test (`discovery.integration.test.ts`), not by inspection, first run
    against live Supabase surfaced a wrong catalog `url` value. Worked
    around in `discovery.ts` by reconstructing the URL from `toolName`
    directly, bypassing the broken helper's output for MCP resources only.
@@ -610,14 +610,14 @@ single-decode one is not yet, pending the project owner's go-ahead
 
 `@x402/extensions/bazaar`'s `extractDiscoveryInfo` already soft-drop-sanitizes
 these three optional fields internally (`sanitizeResourceServiceMetadata`,
-`isValidServiceName`, `sanitizeTags`, `isValidIconUrl` — printable-ASCII,
+`isValidServiceName`, `sanitizeTags`, `isValidIconUrl`, printable-ASCII,
 length caps, SSRF-defended URL checks) and returns them on the
 `DiscoveredResource` it hands back. Periplo's `resources` table
 (`supabase/migrations/20260807202307_resources.sql`, Phase 2, unchanged
 since before this phase read the upstream package) has no columns for any
 of the three, so `discovery.ts` currently reads but discards them rather
 than storing something a migration hasn't been gated for. Not silently
-dropped — the values are real and sanitized, there's just nowhere to put
+dropped: the values are real and sanitized, there's just nowhere to put
 them yet. If added later, this is the concrete case `packages/bazaar`'s
 `softDropFields` mechanism (Phase 1, already built and tested, currently
 unused by Phase 4's own path) was built for: three independently-optional
@@ -627,28 +627,28 @@ listing as a whole.
 ### `docs/SPEC.md` §4's search param name (`q`) doesn't match the real wire (`query`)
 
 Found while reading the official client types (`SearchDiscoveryResourcesParams`)
-and the x402 e2e test's own probe — both use `query`. `docs/SPEC.md` was
+and the x402 e2e test's own probe, both use `query`. `docs/SPEC.md` was
 written from a wire-contract description before this phase actually opened
 the source, and Phase 0's own baseline probe against `x402.org` used `?q=`
 too, but that request 404'd regardless (no discovery endpoints exist there),
 so the wrong param name was never exercised against anything live. Not
-corrected in `docs/SPEC.md` yet — `GET /discovery/search` itself is Phase 5
+corrected in `docs/SPEC.md` yet, `GET /discovery/search` itself is Phase 5
 scope, not built in Phase 4. Recorded in `docs/INTEROP.md` §3 so Phase 5
 starts from the right name instead of re-deriving it.
 
-## Phase 5 — environment divergences and real findings
+## Phase 5: environment divergences and real findings
 
 ### Embedding model: no provider was pinned; picked and verified this phase
 
 `docs/SPEC.md` §5 specifies pgvector/HNSW/RRF exactly but never names an
-embedding model or provider — a real gap, not an oversight to defer.
+embedding model or provider, a real gap, not an oversight to defer.
 Resolved with the project owner (not decided unilaterally): a local model,
 no API key, no per-call cost, no new CI secret. Landed on `fastembed`'s
 `BGESmallENV15` (384-dim, MIT), not `@huggingface/transformers`:
 
 - `@huggingface/transformers` hard-depends on `sharp` for vision-model
   utilities this project never uses. `sharp`'s prebuilt `libvips` binary
-  (`@img/sharp-libvips-linux-x64`) is LGPL-3.0-or-later — a hard `deny`
+  (`@img/sharp-libvips-linux-x64`) is LGPL-3.0-or-later, a hard `deny`
   under `packages/licence-check`'s own `DENIED_PATTERNS` (spec §1: no
   copyleft anywhere in the *shipped* dependency path), confirmed by
   actually adding the package and running `license-checker` against it,
@@ -657,20 +657,20 @@ no API key, no per-call cost, no new CI secret. Landed on `fastembed`'s
   tokenizers` directly (both clean-licensed) to avoid `sharp` entirely.
   Abandoned: `@huggingface/tokenizers`'s own `Tokenizer` constructor takes
   pre-parsed `(tokenizer, config)` objects, not a `tokenizer.json` file
-  path — the file-loading/config-splitting logic lives inside
+  path. The file-loading/config-splitting logic lives inside
   `@huggingface/transformers` itself, unexported. Reimplementing HF's own
   tokenizer-config parser from scratch risked a silent correctness bug
   (subtly wrong tokenization degrading search quality with no error
-  thrown) for a phase whose entire gate is *measured* quality — a worse
+  thrown) for a phase whose entire gate is *measured* quality, a worse
   trade than the alternative below.
 - `fastembed` (MIT throughout, verified with `license-checker` before
   adopting it) carries an unpatched, no-non-major-bump-available critical
   `tar@^6.2.0` advisory (path traversal / arbitrary write on archive
-  extraction — `npm audit`, `fixAvailable: {isSemVerMajor: true}` to
+  extraction, `npm audit`, `fixAvailable: {isSemVerMajor: true}` to
   `tar@>7.5.20`, which `fastembed@2.1.0`'s own dependency range can't
   reach). Accepted: the archive `tar` extracts is the model file this
   code itself requests from a name it pins
-  (`EmbeddingModel.BGESmallENV15`), not attacker-supplied input — the same
+  (`EmbeddingModel.BGESmallENV15`), not attacker-supplied input, the same
   trust boundary every ONNX-model-downloading library in this space has,
   `@huggingface/transformers` included. Documented in
   `packages/search/src/embed.ts`'s own module doc, not hidden.
@@ -679,14 +679,14 @@ no API key, no per-call cost, no new CI secret. Landed on `fastembed`'s
 
 Phase 2 pinned `vector(512)` before any embedding model was chosen.
 Migrated in place (`supabase/migrations/20260812080000_search.sql`) since
-the column was all-NULL — Phase 4 never wrote embeddings — so there was no
+the column was all-NULL, Phase 4 never wrote embeddings, so there was no
 data to lose. HNSW indexes can't survive an `ALTER COLUMN TYPE` on the
 underlying vector column; the migration drops and recreates
 `resources_embedding_idx` around the `ALTER`, verified by querying
 `pg_indexes`/`pg_attribute` against the real project afterward, not
 assumed from the migration succeeding silently.
 
-### `onnxruntime-node`'s postinstall downloads a ~340MB CUDA binary by default on Linux/x64 — skipped
+### `onnxruntime-node`'s postinstall downloads a ~340MB CUDA binary by default on Linux/x64: skipped
 
 Found by inspecting `du -sh` on the installed package after a plain
 `pnpm install`: `libonnxruntime_providers_cuda.so` alone was 342MB, on a
@@ -696,7 +696,7 @@ CPU-only sandbox and a CPU-only Fly deployment (`shared-cpu-1x`, no GPU).
 around `pnpm install` in `Dockerfile.facilitator` and
 `.github/workflows/ci.yml`. One real gotcha while fixing this locally:
 pnpm's content-addressable store caches a package's postinstall *output*,
-not just its manifest — re-running `pnpm install` with the env var newly
+not just its manifest. Re-running `pnpm install` with the env var newly
 set did not re-trigger the download-skip until the store's cached copy of
 `onnxruntime-node` was invalidated (`pnpm install --side-effects-cache=false`
 after deleting `node_modules`). A fresh Docker build or CI runner has no
@@ -705,7 +705,7 @@ locally, not for correctness of the actual fix.
 
 Not addressed: the remaining ~208MB still bundles prebuilt binaries for
 every platform (darwin, win32, linux/arm64) that this Linux/x64-only
-deployment never uses — `Dockerfile.facilitator` copies the whole
+deployment never uses. `Dockerfile.facilitator` copies the whole
 `node_modules` tree regardless. A real, smaller follow-up (platform-scoped
 pruning) if image size becomes an actual operational problem; not blocking
 Phase 5's own gate.
@@ -716,13 +716,13 @@ Found against the real Supabase integration test, not from reading the
 types: the first live write failed with `invalid input syntax for type
 vector`, carrying a payload shaped like `{"0":v0,"1":v1,...}` instead of
 `[v0,v1,...]`. Root cause: `JSON.stringify` serializes a `Float32Array` as
-a plain object keyed by index, not as a JSON array — and `passageEmbed`/
+a plain object keyed by index, not as a JSON array, and `passageEmbed`/
 `queryEmbed` both return `Float32Array` at runtime despite the package's
 own type declarations saying `number[]`. Fixed with `Array.from(...)` in
 `packages/search/src/embed.ts` before the vector ever reaches
 `upsertCatalogResource`; documented inline so it survives a future
 refactor. Verified against the live project afterward (insert, then a real
-`periplo_hybrid_search` call, then delete) — the fix, not just the absence
+`periplo_hybrid_search` call, then delete), the fix, not just the absence
 of a thrown error, is what got checked.
 
 ### The eval harness's synthetic catalog is hand-authored, not sampled from real cataloged resources
@@ -734,16 +734,16 @@ listings to build a meaningful graded set from (most rows so far are
 Phase 3/4 test/demo artifacts, not a real marketplace). Each fixture is
 still seeded through the real write path (`@periplo/bazaar`'s
 `upsertCatalogResource`, the same function a real payment calls) and
-embedded through the real model — only the *content* of what's being
+embedded through the real model, only the *content* of what's being
 cataloged is synthetic, not the mechanism cataloging it. Revisit once the
 catalog has organic, diverse listings to sample from instead.
 
-### The first eval set (20 resources, 40 queries) was too easy — a review caught it before it became the committed baseline
+### The first eval set (20 resources, 40 queries) was too easy: a review caught it before it became the committed baseline
 
 The original design put every resource in an unrelated domain (weather,
 translate, currency, ...), so every query had exactly one plausible
 candidate out of twenty wildly different options. That scored nDCG@10
-0.9908, MRR 0.9875 — a near-perfect result on a small, self-authored
+0.9908, MRR 0.9875, a near-perfect result on a small, self-authored
 golden set, which is a classic overfitting signal, not evidence the
 ranker actually discriminates between similar options. Caught by review
 before committing it as the baseline, not after.
@@ -759,13 +759,13 @@ candidates, and multi-relevant judgments (grade 3 for the best match,
 grade 1 for a plausible-but-wrong sibling) instead of a single correct
 answer per query. Final set: 55 resources, 300 graded queries.
 
-The real, unmodified result: **nDCG@10 0.9346, MRR 0.9226** — a genuine
+The real, unmodified result: **nDCG@10 0.9346, MRR 0.9226**, a genuine
 drop from 0.9908, reported as-is rather than tuned back toward the old
 number (the person who flagged the overfitting risk explicitly said the
 score dropping was an acceptable, expected outcome). A worst-query
 breakdown (run once, not committed as a script) showed 231/300 queries
 still scoring a perfect nDCG@10, 0/300 scoring zero (the ranker never
-completely misses — some relevant result always appears, just not always
+completely misses, some relevant result always appears, just not always
 ranked first), and every one of the 69 imperfect queries was a genuine
 near-duplicate confusion the clusters were built to surface, e.g.
 `reverse-geocode` queries occasionally ranking plain `geocode` first, or
@@ -785,22 +785,22 @@ one should:
   than 300 queries give.
 - The search endpoint itself has not been hardened or tested under real
   load (concurrent request handling, embedding-model warm-up contention,
-  Supabase connection pooling under sustained traffic) — Phase 5's gate is
+  Supabase connection pooling under sustained traffic). Phase 5's gate is
   ranking quality, not throughput, and production readiness on that axis
   is still open.
 
-## Phase 6 — environment divergences and real findings
+## Phase 6: environment divergences and real findings
 
 ### `stellar contract init`'s default layout double-nests the crate directory
 
 Scaffolding with `stellar contract init contracts/upto-settlement --name
-upto-settlement` produces `contracts/upto-settlement/contracts/upto-settlement/`
-— a workspace-of-workspaces layout meant for repos with multiple
+upto-settlement` produces `contracts/upto-settlement/contracts/upto-settlement/`,
+a workspace-of-workspaces layout meant for repos with multiple
 contracts. Since this repo only ever plans one Soroban contract, flattened
 it: single `Cargo.toml` at `contracts/upto-settlement/`, `src/` directly
 underneath, matching the path `docs/SPEC.md` §3 names.
 
-### `env.register()` panics at ledger sequences near `u32::MAX` — a testutils/host limitation, not a contract bug
+### `env.register()` panics at ledger sequences near `u32::MAX`: a testutils/host limitation, not a contract bug
 
 Found by the `cargo-fuzz` target after removing an earlier clamp: an
 unclamped `u32` ledger-sequence input near 4.29 billion made
@@ -808,22 +808,22 @@ unclamped `u32` ledger-sequence input near 4.29 billion made
 (`HostError: Error(Context, InternalError)`, `soroban-sdk-27.0.5/src/env.rs:1106`),
 before any `UptoSettlement` code ran. Isolated with a standalone test
 containing only `Env::default()` + `ledger().with_mut()` +
-`env.register()` — same panic, zero contract-specific code involved,
+`env.register()`, same panic, zero contract-specific code involved,
 confirming it's `soroban-sdk`'s test-contract registration path running
 out of internal TTL headroom at that height, not anything this contract
 does. Real Stellar is nowhere near ledger 4.29 billion (~680 years of
 runtime at 5s/ledger from genesis) and won't be for centuries, so
 `fuzz_settle_arithmetic` clamps ledger inputs to a realistic-but-generous
-`0..100_000_000` range instead of the raw `u32` space. Not filed upstream
-— fuzzing an unreachable-in-practice height isn't a useful bug report,
+`0..100_000_000` range instead of the raw `u32` space. Not filed upstream,
+fuzzing an unreachable-in-practice height isn't a useful bug report,
 and the fix (bound the fuzz input to a plausible range) is the correct
 response either way.
 
-### Property tests wrote a snapshot per randomized case — 1,557 files, 24MB, never committed
+### Property tests wrote a snapshot per randomized case: 1,557 files, 24MB, never committed
 
 `soroban-sdk`'s test harness writes a `test_snapshots/*.json` file per
 test by default (`EnvTestConfig::capture_snapshot_at_drop`, on by
-default) — sensible for the 21 fixed-point unit tests (committed as
+default), sensible for the 21 fixed-point unit tests (committed as
 regression evidence, per the smart-contracts skill's own recommendation),
 useless noise for `proptest`-driven property tests that each run ~256
 randomized cases. Caught before committing anything, not after: `git diff
@@ -833,22 +833,22 @@ style filenames. Fixed by splitting `test::setup` into `setup` (default
 `Env`, snapshots on) and `setup_with_env` (takes a pre-built `Env`), with
 `property_test::setup_at` constructing its own `Env::new_with_config(
 EnvTestConfig { capture_snapshot_at_drop: false })` instead of reusing
-`setup` directly — exactly the skill's own documented escape hatch for
+`setup` directly, exactly the skill's own documented escape hatch for
 this exact situation ("Disable per-env with `Env::new_with_config` if
 they're noise"), not a workaround improvised after the fact.
 
-### `cargo-fuzz` needed no `clang` — `gcc` was already sufficient
+### `cargo-fuzz` needed no `clang`: `gcc` was already sufficient
 
 The smart-contracts skill's fuzz-testing section assumes `clang`/LLVM for
 libFuzzer; this machine has no `clang` and no passwordless `sudo` to
 install it. Before treating that as a blocker, tried building anyway:
 `cargo install cargo-fuzz --locked` and `cargo +nightly fuzz build`
-succeeded cleanly against the system `gcc` (13.3.0) — `libfuzzer-sys`
+succeeded cleanly against the system `gcc` (13.3.0), `libfuzzer-sys`
 bundles its own libFuzzer runtime and only needs a working C compiler to
 build it, not specifically `clang`. Ran for real: 47,630 executions in
 180 seconds, zero crashes after fixing two harness bugs it found along
 the way (a fixed buyer-supply constant smaller than a fuzzed `max_amount`,
-and the ledger-height issue above) — both harness issues, not contract
+and the ledger-height issue above), both harness issues, not contract
 bugs, confirmed by isolating each with a standalone reproduction before
 "fixing" anything.
 
@@ -871,22 +871,22 @@ contract, with no second reviewer, no formal verification tooling
 (Certora Sunbeam, Komet), and no adversarial incentive the way a paid
 audit or a bug bounty carries one. It found no issues, which is weaker
 evidence of correctness than an external audit finding no issues would
-be — the same blind spots that shaped the code are available to review
+be, the same blind spots that shaped the code are available to review
 it. The real pending step before this contract should move any
-production value is a third-party audit — **Audit Bank** is the
+production value is a third-party audit. **Audit Bank** is the
 SDF-subsidized program built for exactly this (SCF-funded protocols,
 partner firms including OtterSec, Veridise, Runtime Verification,
-CoinFabrik, Certora, Zellic, Code4rena) — tracked as a genuine Phase 10
+CoinFabrik, Certora, Zellic, Code4rena), tracked as a genuine Phase 10
 blocker in this file's "Deliberately not self-served" list ("Audit Bank
-engagement — a program application, not something to submit
+engagement, a program application, not something to submit
 unilaterally"), not something this session can complete on its own.
 Static analysis (`cargo scout-audit`, OpenZeppelin's Security Detectors
-SDK) has also not been run — a cheaper, faster gap than the audit itself,
+SDK) has also not been run, a cheaper, faster gap than the audit itself,
 and one that could reasonably run before Phase 10 rather than waiting for
 it; noted here rather than done, since it wasn't part of this phase's
 gate.
 
-### `Client.from(...)` fetches the on-chain contract spec live — no generated bindings committed
+### `Client.from(...)` fetches the on-chain contract spec live: no generated bindings committed
 
 `apps/facilitator/scripts/upto-settle-demo.ts` (the verification script
 that produced the settled transaction in `conformance/RESULTS.md`) uses
@@ -894,12 +894,12 @@ that produced the settled transaction in `conformance/RESULTS.md`) uses
 rather than `stellar contract bindings typescript`'s generated package.
 `Client.from` resolves the contract's spec from the deployed WASM over
 RPC at call time, so the script has no generated-bindings artifact to
-keep in sync with the contract or commit — it stays reproducible from a
+keep in sync with the contract or commit. It stays reproducible from a
 clean checkout against whatever is actually deployed at
 `UPTO_SETTLEMENT_CONTRACT_TESTNET`. Bindings were generated once, into
 the session scratchpad, only to read the exact generated method
 signature (`settle({authorization, actual_amount}, opts?)`) before writing
-the hand-rolled call — never committed, not needed at runtime.
+the hand-rolled call, never committed, not needed at runtime.
 
 ### The full upstream TypeScript package is still open work, not this phase's gate
 
@@ -910,9 +910,9 @@ scope, alongside the contract and the spec. The spec is upstream (PR
 settled a real transaction (this phase's actual gate, per §6's own gate
 line: `cargo test` passes, contract deployed to testnet, a settled `upto`
 transaction hash recorded, three assumptions closed). The TypeScript
-client/facilitator package — the piece that would let
+client/facilitator package, the piece that would let
 `apps/facilitator`'s own `/verify`/`/settle` routes actually serve `upto`
-requests over HTTP, not just a one-off verification script — is separate,
+requests over HTTP, not just a one-off verification script, is separate,
 larger, not-yet-started work. `apps/facilitator/scripts/upto-settle-demo.ts`
 proves the contract and the wire-level auth mechanism both work for real;
 it is not that package.
