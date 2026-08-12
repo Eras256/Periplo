@@ -198,6 +198,21 @@ export async function processBazaarExtension(
   // (`mcp://tool/{toolName}`). Reconstructed directly from `toolName` here
   // instead of trusting `discovered.resourceUrl` for MCP — found via the
   // real Supabase integration test, not assumed; see docs/INTEROP.md.
+  //
+  // This branches on discovery *type* (mcp vs http, upstream's own
+  // DiscoveredResource union), not on the resource URL's scheme, and never
+  // calls `new URL()` on the mcp:// string itself, so it was never
+  // vulnerable to the opaque-origin bug the way upstream's own code was.
+  // Still required at the currently pinned `@x402/extensions@2.21.0`: the
+  // upstream fix has a PR open (x402-foundation/x402#3138, closes #3121,
+  // scheme-agnostic, skips canonicalization entirely when
+  // `url.origin === "null"` instead of an mcp-specific branch) but isn't
+  // merged or released yet. Once Periplo upgrades past a release that
+  // includes it, `discovered.resourceUrl` will already be correct for MCP
+  // resources and this branch collapses to the same
+  // `catalogUrl: discovered.resourceUrl` the http case already uses.
+  // Check the changelog before removing this. Don't assume the pinned
+  // version has it.
   const { type, toolName, catalogRouteTemplate, catalogUrl } =
     "toolName" in discovered
       ? {
