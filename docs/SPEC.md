@@ -1,14 +1,14 @@
-# Periplo — Master Build Specification
+# Periplo: Master Build Specification
 
 > This is the governing build document for this repository, adapted from the
 > session that kicked off the build (2026-08-06/07) and committed here so it
 > survives across sessions instead of living only in chat context. `CLAUDE.md`
 > points here. Phase status and environment divergences are tracked separately
-> in `docs/DEFERRED.md` — this file is the brief, not the status report; don't
+> in `docs/DEFERRED.md`. This file is the brief, not the status report; don't
 > hand-edit it to reflect progress, update `docs/DEFERRED.md` and
 > `conformance/RESULTS.md` instead. Budget figures and submission-process
 > administrivia (tranche schedule, form-specific requirements) live in the
-> actual SCF submission, not here — this file is engineering scope and gates
+> actual SCF submission, not here. This file is engineering scope and gates
 > only.
 
 ---
@@ -20,7 +20,7 @@ x402-payable services on Stellar. This is a submission to the Stellar Community
 Fund **RFP Track**, responding to the open RFP *"X402 Facilitator with Bazaar
 (discovery) support"* (SCF #45, Q3 2026).
 
-RFP Track is decided by **panel review only — no community vote**, and
+RFP Track is decided by **panel review only, no community vote**, and
 acceptance is tested at the wire level: an unmodified canonical x402 client is
 pointed at the service and either completes a payment end to end or it
 doesn't. A conformance claim in prose doesn't substitute for that.
@@ -30,7 +30,7 @@ plus a non-conformant wire format produces an unusable service.
 
 ---
 
-## 0.1 Tooling available to you — use it
+## 0.1 Tooling available to you: use it
 
 This machine has **stellar-build** installed: 45 skills in `~/.claude/skills/`,
 the Raven MCP server, and a local data layer. Reach for these instead of
@@ -39,7 +39,7 @@ recalling Stellar facts from memory.
 **Raven MCP** (`stellar-raven`, `https://raven.stellar.buzz/mcp`) is the official
 hosted MCP for the Stellar ecosystem, exposing `search` (Stellar docs + ecosystem
 discovery) and `execute` (queries against live ecosystem data).
-**Query Raven before asserting any Stellar fact** — protocol behaviour, SEP
+**Query Raven before asserting any Stellar fact**: protocol behaviour, SEP
 details, RPC semantics, current network limits. If Raven and this document
 disagree, Raven is the live source; note the divergence and update the document.
 
@@ -48,7 +48,7 @@ disagree, Raven is the live source; note the divergence and update the document.
 | Phase | Skill | What it gives you |
 | --- | --- | --- |
 | all | `standards` | SEP/CAP map, ecosystem references, MCP server list |
-| 1, 4 | `agentic-payments` | x402 on Stellar — facilitator flow, fee-sponsored clients, MPP. The closest thing to a reference for this build. |
+| 1, 4 | `agentic-payments` | x402 on Stellar: facilitator flow, fee-sponsored clients, MPP. The closest thing to a reference for this build. |
 | 2, 5 | `data` | Stellar data access patterns, indexing |
 | 3, 10 | `dapp` | JS `stellar-sdk`, transaction building, simulation, error handling |
 | 3 | `assets` | SEP-41, the Stellar Asset Contract bridge, trustlines, authorization flags |
@@ -59,7 +59,7 @@ disagree, Raven is the live source; note the divergence and update the document.
 | every gate | `code-review`, `review-edge-case-hunter` | Run both before declaring a gate passed |
 
 **Do not use** the SCF skills (`scf-submission-drafter`, `scf-prescreen-checker`,
-`scf-budget-builder`, `scf-competitor-analyst`) during the build — they belong to
+`scf-budget-builder`, `scf-competitor-analyst`) during the build. They belong to
 the submission workflow, which is a separate task from writing this code.
 
 **Note on the environment:** a `UserPromptSubmit` hook rewrites prompts and a
@@ -95,9 +95,9 @@ Violating any of these invalidates the work.
 7. **Honest README.** Never state a capability that lacks a link, a test, or a
    transaction hash. Prefer "not implemented" to an optimistic claim.
 8. **Reference repositories are READ-ONLY unless they carry a permissive licence.**
-   Most of the Stellar prior art worth studying — `scrimp`, `stellar-mpp-demo`,
+   Most of the Stellar prior art worth studying: `scrimp`, `stellar-mpp-demo`,
    `yardstick-demo`, `Drand-Relay`, `stellar-playground`, `confidential-wallet`
-   and others listed in `CLAUDE.md` — publishes **no licence**, which means all
+   and others listed in `CLAUDE.md`, publishes **no licence**, which means all
    rights reserved. Public visibility is not permission.
 
    **You may:** read them, learn the approach, and write your own implementation
@@ -107,16 +107,16 @@ Violating any of these invalidates the work.
 
    Only these six are ✅ dependable: `OpenZeppelin/stellar-contracts` (MIT), and
    `stellar-agent-kit`, `soroban-diagnose`, `stellar-dev-skill`, `fKALE`, `Klink`
-   (Apache-2.0). The CI licence gate exists to catch violations of this rule —
-   do not work around it.
+   (Apache-2.0). The CI licence gate exists to catch violations of this rule.
+   Do not work around it.
 
 ---
 
 ## 2. Verified dependency manifest
 
 Versions confirmed against the npm registry and crates.io on **2026-08-07**. Pin
-these. If a version has moved, update it and note the change in the commit body —
-do not silently drift.
+these. If a version has moved, update it and note the change in the commit body.
+Do not silently drift.
 
 | Package | Version | Licence |
 | --- | --- | --- |
@@ -142,12 +142,12 @@ do not silently drift.
 **Node ≥ 22. pnpm workspaces. TypeScript strict, `noUncheckedIndexedAccess`,
 `exactOptionalPropertyTypes`.** Biome for lint/format (not ESLint + Prettier).
 
-### `@x402/stellar` public surface — use these, do not re-derive
+### `@x402/stellar` public surface: use these, do not re-derive
 
-- `ExactStellarScheme` — client, facilitator and server variants
-- `createEd25519Signer(privateKey, defaultNetwork)` — SEP-43 signer implementing
+- `ExactStellarScheme`: client, facilitator and server variants
+- `createEd25519Signer(privateKey, defaultNetwork)`: SEP-43 signer implementing
   `SignAuthEntry` and `SignTransaction`
-- `ClientStellarSigner`, `FacilitatorStellarSigner` — types
+- `ClientStellarSigner`, `FacilitatorStellarSigner`: types
 - `getRpcUrl(network, config?)`, `getRpcClient(network, config?)`,
   `getNetworkPassphrase(network)`
 - `validateStellarDestinationAddress(address)`, `validateStellarAssetAddress(address)`
@@ -157,7 +157,7 @@ Its `src/` contains `exact/` **only**. There is no `upto/`. That is Phase 6.
 ### Stellar facts that shape the code
 
 - CAIP-2 network ids: `stellar:testnet`, `stellar:pubnet`. Both are committed
-  deliverables — never one or the other.
+  deliverables, never one or the other.
 - **Ledger-based expiration, not timestamps.** Default ≈ 12 ledgers ≈ 60 s,
   derived from `maxTimeoutSeconds`. Use the live network estimate for seconds per
   ledger where available; fall back to 5.
@@ -176,7 +176,7 @@ Its `src/` contains `exact/` **only**. There is no `upto/`. That is Phase 6.
 
 ---
 
-## 3. Scope — build exactly this
+## 3. Scope: build exactly this
 
 | # | Component | Path |
 | --- | --- | --- |
@@ -202,7 +202,7 @@ documented rejection reason in this programme. If tempted, write it in
 
 Not all components carry equal weight. Use this to judge how much depth each
 phase deserves. If a phase is running past its allocation, cut scope inside it
-rather than borrowing from another — the RFP requires the Bazaar (catalog +
+rather than borrowing from another. The RFP requires the Bazaar (catalog +
 search) to carry the largest share of the total effort, and the allocation
 below reflects that.
 
@@ -223,7 +223,7 @@ because a product is being built around it.
 
 ---
 
-## 4. Wire contracts — asserted verbatim by the e2e suite
+## 4. Wire contracts: asserted verbatim by the e2e suite
 
 These shapes are validated by `e2e/extensions/bazaar.ts` in the x402 repository.
 **Reproduce them exactly. Do not "improve" field names or nesting.**
@@ -253,7 +253,7 @@ Query filters: `type`, `payTo`, `network`, `extensions`, `limit`, `offset`.
 
 ### `GET /discovery/search`
 
-Natural-language `query` (not `q` — confirmed against the official
+Natural-language `query` (not `q`, confirmed against the official
 `@x402/extensions/bazaar` client types and the x402 e2e test's own probe;
 this doc originally had `q`, corrected during Phase 4 while reading the
 primary source for something else, see `docs/INTEROP.md` §3), cursor
@@ -295,9 +295,9 @@ spec `payload: { transaction }` format verbatim.
 ## 5. Phase plan and gates
 
 Commit at the end of every phase with a conventional-commit message. The commit
-history is part of the deliverable — reviewers read it.
+history is part of the deliverable; reviewers read it.
 
-### Phase 0 — Foundation, and measuring the baseline first
+### Phase 0: Foundation, and measuring the baseline first
 Monorepo, Biome, TypeScript strict, Vitest, CI (GitHub Actions), Apache-2.0
 LICENSE, `.env.example`, licence-check script that fails on AGPL.
 
@@ -305,7 +305,7 @@ LICENSE, `.env.example`, licence-check script that fails on AGPL.
 The public `x402.org` facilitator supports `stellar:testnet` with no API key and
 correctly returns `extra: { areFeesSponsored: true }`. Point a stock client at it,
 capture every request and response verbatim, and commit the transcripts to
-`conformance/baseline/`. That transcript is your specification of "conformant" —
+`conformance/baseline/`. That transcript is your specification of "conformant":
 it is cheaper to match observed behaviour than to infer it from prose.
 
 Do the same against other multi-chain facilitators claiming Stellar support.
@@ -315,17 +315,17 @@ you document is evidence of conformance discipline for the submission.
 **Gate:** `pnpm install && pnpm typecheck && pnpm lint && pnpm test` exits 0, and
 `conformance/baseline/` contains real captured transcripts.
 
-### Phase 1 — Catalog trust boundary
+### Phase 1: Catalog trust boundary
 `packages/bazaar`: `routeTemplate` validation and soft-drop extraction.
 
-The facilitator is a trust boundary — clients echo the `resource` block into the
+The facilitator is a trust boundary: clients echo the `resource` block into the
 payment payload, so a hostile client can attempt to poison the catalog with
 forged metadata or a crafted `routeTemplate`.
 
 **`routeTemplate` must be percent-decoded BEFORE traversal checks.** A naive
 `includes("..")` is walked straight past by `%2e%2e`. Decode repeatedly (bounded)
 to catch double encoding, normalise backslashes, reject null bytes, absolute URLs
-and protocol-relative paths. Return the **original** template as the catalog key —
+and protocol-relative paths. Return the **original** template as the catalog key:
 returning the decoded form would collapse two distinct encodings onto one entry.
 
 Soft-drop: a metadata field failing its rule is dropped; the listing is not
@@ -334,7 +334,7 @@ rejected wholesale.
 **Gate:** ≥ 20 unit tests pass, including encoded, double-encoded and
 backslash traversal, malformed percent-encoding, and `/%2f%2fevil.example`.
 
-### Phase 2 — Data layer (Supabase)
+### Phase 2: Data layer (Supabase)
 Postgres schema, migrations, row-level security, and the retrieval indexes.
 
 ```sql
@@ -370,7 +370,7 @@ facilitator. Never expose the service key to a browser.
 
 **Gate:** migrations apply cleanly to a fresh database; RLS policy tests pass.
 
-### Phase 3 — Facilitator
+### Phase 3: Facilitator
 `apps/facilitator` on Hono. `verify`, `settle`, `supported` for `exact` on both
 networks, built on `@x402/stellar`.
 
@@ -378,7 +378,7 @@ Validate Soroban auth entries strictly: correctly signed, authorizing exactly th
 declared call / asset / amount / recipient, not replayed, not expired. Support
 classic keypairs (G-accounts) and custom `__check_auth` accounts (C-accounts).
 
-**Facilitator safety — all of these, or funds are at risk:**
+**Facilitator safety, all of these, or funds are at risk:**
 - The client-supplied transaction source MUST NOT be the facilitator.
 - The client-supplied operation source MUST NOT be the facilitator.
 - The facilitator MUST NOT be the `from` address.
@@ -387,13 +387,13 @@ classic keypairs (G-accounts) and custom `__check_auth` accounts (C-accounts).
 
 Testnet is free and needs no API key. Mainnet pricing is configurable, never
 hard-wired, so a self-hoster can change or remove it. Document the model.
-Caller authentication, metering and rate limiting are your design choice —
+Caller authentication, metering and rate limiting are your design choice:
 document the mechanism and make it configurable.
 
 **Package three deployment paths, all first-class:**
-1. **Hosted** — the managed service you operate.
-2. **Self-hosted** — someone forks and runs their own instance.
-3. **Self-facilitation inside a resource server** — a seller embeds the
+1. **Hosted**: the managed service you operate.
+2. **Self-hosted**: someone forks and runs their own instance.
+3. **Self-facilitation inside a resource server**: a seller embeds the
    facilitator in their own process and needs no external operator at all.
 
 Path 3 is explicitly required by the RFP and is the one most implementations
@@ -409,33 +409,33 @@ restructuring.
 **Gate:** a settled transaction hash on `stellar:testnet`, recorded in
 `conformance/RESULTS.md`.
 
-### Phase 4 — Automatic cataloging
+### Phase 4: Automatic cataloging
 When the facilitator receives a `PaymentPayload` carrying the discovery
 extension, validate `info` against the supplied schema and catalog the resource
 **with no separate registration step**. Manual registration may exist only as a
-secondary path — anything requiring a seller to act after payment gets skipped.
+secondary path; anything requiring a seller to act after payment gets skipped.
 
 Catalog both HTTP endpoints and MCP tools. Emit `EXTENSION-RESPONSES`.
 
-**Interoperate — Stellar must not become a walled garden.** A Stellar listing
+**Interoperate: Stellar must not become a walled garden.** A Stellar listing
 must be representable consistently with how other facilitators represent theirs.
 Take the transcripts captured in Phase 0, diff your catalog entries against how
 the same resource appears in a multi-chain facilitator's index, and record any
 divergence in `docs/INTEROP.md` with the reason. If a divergence is a bug on
-their side, file it upstream — interop bug reports are named in the RFP as a
+their side, file it upstream: interop bug reports are named in the RFP as a
 strong signal of conformance discipline.
 
 Also ship **seller-side helpers** so a resource server declares discovery
 metadata correctly with minimal boilerplate, including **per-parameter
 descriptions**. Those descriptions are what make an endpoint legible to an agent,
-and they are the primary input to search ranking in Phase 5 — a seller who omits
+and they are the primary input to search ranking in Phase 5. A seller who omits
 them gets found less, so make the helper make them easy.
 
-**Gate:** integration test — a payment carrying the extension results in a
+**Gate:** integration test, a payment carrying the extension results in a
 catalog row and a `success` header; a crafted hostile `routeTemplate` results in
 a `rejected` header with a specific reason and **no** row.
 
-### Phase 5 — Search
+### Phase 5: Search
 `packages/search`. Hybrid retrieval, and the honest measurement of it.
 
 Search quality is a deliverable, not a detail. It is the hardest part of the
@@ -443,7 +443,7 @@ scope and the part existing catalogs most often leave unimplemented.
 
 - **Lexical:** Postgres `tsvector` + GIN.
 - **Semantic:** pgvector `HNSW` with `vector_ip_ops`, embeddings over the
-  discovery `info` structure — resource description, **per-parameter
+  discovery `info` structure: resource description, **per-parameter
   descriptions**, and MCP tool schema.
 - **Fusion:** Reciprocal Rank Fusion, `1 / (k + rank)` with `k = 50`, separate
   `full_text_weight` and `semantic_weight`. Implement as a single Postgres
@@ -454,14 +454,14 @@ scope and the part existing catalogs most often leave unimplemented.
 **Gate:** `pnpm eval` prints nDCG@10 and MRR over ≥ 30 golden queries, and CI
 fails if nDCG@10 regresses more than 5% against the committed baseline.
 
-### Phase 6 — `upto` on Stellar
+### Phase 6: `upto` on Stellar
 The deepest technical contribution, and the one no other bidder will have.
 
 `upto` requires four properties a SEP-41 allowance cannot provide:
 single-use authorization, time bounds, **recipient binding**, and a maximum. An
 allowance fails recipient binding (`transfer_from` lets the spender choose any
 `to`) and single-use (an allowance is a standing balance). **A contract is
-required. Document this reasoning explicitly — it is the argument that
+required. Document this reasoning explicitly: it is the argument that
 demonstrates you understood the problem rather than the spec.**
 
 Build `contracts/upto-settlement` (Rust, `soroban-sdk` 27.0.5):
@@ -480,7 +480,7 @@ Build `contracts/upto-settlement` (Rust, `soroban-sdk` 27.0.5):
 
 Then author `spec/scheme_upto_stellar.md` following the structure of
 `specs/schemes/exact/scheme_exact_stellar.md`, and prepare the upstream
-contribution as `typescript/packages/mechanisms/stellar/src/upto/` — mirroring
+contribution as `typescript/packages/mechanisms/stellar/src/upto/`, mirroring
 the existing `src/exact/`.
 
 **Three assumptions are unverified. Test each on testnet before claiming the spec
@@ -495,20 +495,20 @@ is correct; if reality differs, change the spec, not the test:**
 transaction hash recorded; each of the three assumptions is a passing test or a
 documented spec change.
 
-### Phase 7 — MCP discovery server
+### Phase 7: MCP discovery server
 `packages/mcp` on `@modelcontextprotocol/sdk` 1.30.0. Let an agent search the
 Stellar Bazaar and make a paid call from inside an agent runtime, wrapping the
 discover → pay → retry loop behind MCP tools:
 
-- `search_services` — natural-language query over the Bazaar
-- `call_paid_service` — proxy that handles the 402 loop
+- `search_services`: natural-language query over the Bazaar
+- `call_paid_service`: proxy that handles the 402 loop
 
 Structured, deterministic inputs and outputs with machine-readable error codes.
 
 **Gate:** the server registers in Claude Desktop / any MCP client and completes a
 paid testnet call end to end.
 
-### Phase 8 — Conformance
+### Phase 8: Conformance
 This is the acceptance criterion. Treat it as the highest-value phase.
 
 Register Periplo with the x402 e2e suite as an external proxy:
@@ -544,23 +544,23 @@ Record every result in `conformance/RESULTS.md` with hashes and timestamps.
 **Gate:** the e2e suite passes with Periplo selected as facilitator, Stellar as
 protocol, and Bazaar as extension.
 
-### Phase 9 — Developer hub
+### Phase 9: Developer hub
 `apps/hub` on Next.js 16.3.0 + Tailwind 4.3.3. See §10 for exact scope.
 **Gate:** Playwright E2E covers each role path; Lighthouse accessibility ≥ 95.
 
-### Phase 10 — Examples, deployment, hardening
+### Phase 10: Examples, deployment, hardening
 
 **Two end-to-end example integrations**, both runnable from a clean clone:
 1. A paid API that becomes discoverable and gets paid **by an agent**.
-2. An MCP-driven agent that **discovers and pays with no pre-baked integration** —
+2. An MCP-driven agent that **discovers and pays with no pre-baked integration**:
    this is the one that proves the Bazaar earns its existence.
 
 Fly.io deployment to both networks, runbook, monitoring, public telemetry endpoint.
 
 **Security review routes through the Audit Bank**, not your own budget. v1 ships
 no new Soroban contract on the settlement path, so the review covers an off-chain
-service and its cryptographic validation rather than a full contract audit —
-scope it that way when you apply. The `UptoSettlement` contract is a separate,
+service and its cryptographic validation rather than a full contract audit.
+Scope it that way when you apply. The `UptoSettlement` contract is a separate,
 smaller review. Audit fees are **not** an eligible budget line; the Audit Bank is
 a distinct programme.
 
@@ -625,7 +625,7 @@ Run `osv-scanner` and a licence audit in CI. Fail on any AGPL transitive.
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 1        # never 0 — cold start breaks agent latency SLOs
+  min_machines_running = 1        # never 0, cold start breaks agent latency SLOs
   [http_service.concurrency]
     type = "requests"
     soft_limit = 200
@@ -670,7 +670,7 @@ The submission form asks for this explicitly. Answer it with architecture:
 
 ---
 
-## 10. Developer hub — exact scope
+## 10. Developer hub: exact scope
 
 This exists because the RFP names it: *a role-based developer guide modeled on
 the Algorand x402 developer hub, organized around what the reader is building,
@@ -694,7 +694,7 @@ Build these pages and **no others**:
 pages, dark and light themes, keyboard-navigable, WCAG AA contrast, all code
 blocks copyable, every claim linked to a hash or a test. Target: a developer gets
 from the hub to a paid, discoverable endpoint appearing in the Bazaar in **well
-under an hour** — that is a stated RFP requirement, so instrument it and measure
+under an hour**, that is a stated RFP requirement, so instrument it and measure
 it once with a real first-time user.
 
 No marketing page. No pricing page. No sign-up. No dashboard.
@@ -703,27 +703,27 @@ No marketing page. No pricing page. No sign-up. No dashboard.
 
 ## 11. Documentation deliverables
 
-- `README.md` — honest status, verify-it-yourself commands, architecture diagram
+- `README.md`: honest status, verify-it-yourself commands, architecture diagram
   in Mermaid, licence.
-- `docs/ARCHITECTURE.md` — the diagram plus a plain-English explanation of the
+- `docs/ARCHITECTURE.md`: the diagram plus a plain-English explanation of the
   stack. Both are required by the submission form.
-- `docs/DECENTRALIZATION.md` — the index is off-chain by design; an on-chain
+- `docs/DECENTRALIZATION.md`: the index is off-chain by design; an on-chain
   Soroban registry adds rent that must be extended or entries are evicted, and
   per-payment anchoring roughly doubles settlement cost. Decentralization is
   achieved through **replicability**: permissive licence, first-class
   self-hosting, and an interoperable catalog format, so no operator is a single
   point of failure. State this position explicitly rather than leaving it implied.
-- `docs/INFRASTRUCTURE.md` — what runs where, and who pays for it after the grant.
-- `docs/MAINTENANCE.md` — how conformance is maintained as the discovery
+- `docs/INFRASTRUCTURE.md`: what runs where, and who pays for it after the grant.
+- `docs/MAINTENANCE.md`: how conformance is maintained as the discovery
   conventions evolve under the x402 Foundation: how spec changes are monitored,
   how quickly conformance updates ship, and what happens at grant end. **Drift,
   not inability, is the failure mode this RFP screens for.**
-- `docs/PRIVACY.md` — §9, as a document.
-- `docs/INTEROP.md` — how a Periplo listing maps to how other facilitators
+- `docs/PRIVACY.md`: §9, as a document.
+- `docs/INTEROP.md`: how a Periplo listing maps to how other facilitators
   represent the same resource, with every divergence and its reason.
-- `conformance/RESULTS.md` — the evidence table.
-- `conformance/baseline/` — the Phase 0 transcripts from the reference facilitator.
-- `docs/DEFERRED.md` — everything deliberately not built, with reasons.
+- `conformance/RESULTS.md`: the evidence table.
+- `conformance/baseline/`: the Phase 0 transcripts from the reference facilitator.
+- `docs/DEFERRED.md`: everything deliberately not built, with reasons.
 
 **Stellar tech stack currency.** The RFP requires the most recent stable release.
 The manifest in §2 was verified on 2026-08-07; before submission, re-verify each
