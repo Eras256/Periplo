@@ -832,6 +832,40 @@ and the ledger-height issue above) — both harness issues, not contract
 bugs, confirmed by isolating each with a standalone reproduction before
 "fixing" anything.
 
+### An internal security review ran on this contract. It is not, and is not presented as, a third-party audit.
+
+`docs/SKILLS.md` had flagged `security-review` as overdue since Phase 3,
+specifically for "the `upto` contract, real money-adjacent," so it ran
+before this phase was called done: every vulnerability class in the
+`smart-contracts` skill's own checklist (missing auth, auth replay
+through middleware, reentrancy, integer overflow, TTL-as-security,
+arbitrary token addresses) walked by hand against the actual code, plus
+the Soroban-specific properties the checklist doesn't name directly
+(atomicity-on-panic protecting the nonce-then-transfer ordering, the
+platform's own reentrancy guarantee ruling out a hostile-token
+callback). Nothing above a false-positive threshold survived scrutiny.
+
+**What this is not:** a substitute for independent third-party review.
+This was a single AI-assisted pass by the same agent that wrote the
+contract, with no second reviewer, no formal verification tooling
+(Certora Sunbeam, Komet), and no adversarial incentive the way a paid
+audit or a bug bounty carries one. It found no issues, which is weaker
+evidence of correctness than an external audit finding no issues would
+be — the same blind spots that shaped the code are available to review
+it. The real pending step before this contract should move any
+production value is a third-party audit — **Audit Bank** is the
+SDF-subsidized program built for exactly this (SCF-funded protocols,
+partner firms including OtterSec, Veridise, Runtime Verification,
+CoinFabrik, Certora, Zellic, Code4rena) — tracked as a genuine Phase 10
+blocker in this file's "Deliberately not self-served" list ("Audit Bank
+engagement — a program application, not something to submit
+unilaterally"), not something this session can complete on its own.
+Static analysis (`cargo scout-audit`, OpenZeppelin's Security Detectors
+SDK) has also not been run — a cheaper, faster gap than the audit itself,
+and one that could reasonably run before Phase 10 rather than waiting for
+it; noted here rather than done, since it wasn't part of this phase's
+gate.
+
 ### `Client.from(...)` fetches the on-chain contract spec live — no generated bindings committed
 
 `apps/facilitator/scripts/upto-settle-demo.ts` (the verification script

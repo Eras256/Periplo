@@ -533,18 +533,31 @@ explained away.
   the two harness bugs above were fixed. Worth the ten minutes it took
   to check before asking.
 - **A security review found nothing new to fix, and that's a real
-  result, not a non-event.** Ran `security-review` deliberately before
-  calling the contract done — `docs/SKILLS.md` had flagged it as
-  overdue since Phase 3, specifically for "the `upto` contract, real
-  money-adjacent." Manually walked every class in the skill's own
-  checklist (missing auth, auth replay through middleware, reentrancy,
-  integer overflow, TTL-as-security, arbitrary token addresses) against
-  the actual code and reasoned through the Soroban-specific properties
-  the checklist doesn't cover by name (atomicity-on-panic protecting the
+  result, not a non-event — but it's an internal review, not an audit,
+  and the write-up needs to say so every place it appears, not just
+  once.** Ran `security-review` deliberately before calling the contract
+  done — `docs/SKILLS.md` had flagged it as overdue since Phase 3,
+  specifically for "the `upto` contract, real money-adjacent." Manually
+  walked every class in the skill's own checklist (missing auth, auth
+  replay through middleware, reentrancy, integer overflow,
+  TTL-as-security, arbitrary token addresses) against the actual code
+  and reasoned through the Soroban-specific properties the checklist
+  doesn't cover by name (atomicity-on-panic protecting the
   nonce-then-transfer ordering, the platform's own reentrancy guarantee
   ruling out a hostile-token callback). Nothing above a false positive
-  survived scrutiny — worth recording as a clean pass, not skipping the
-  write-up just because there was nothing dramatic to report.
+  survived scrutiny. **First pass at reporting this left the audit
+  disclaimer implicit** — present in how I'd describe it if asked, but
+  not written down anywhere in the repo itself; `docs/DEFERRED.md`'s
+  Phase 6 section didn't mention the review at all, and this file's own
+  bullet (before this edit) read like a clean bill of health without
+  qualification. A same-agent, no-second-reviewer, no-formal-verification
+  pass finding nothing is real evidence but weaker evidence than an
+  external audit finding nothing — flagged directly, not after being
+  asked, once the gap was noticed: added an explicit "this is not a
+  substitute for Audit Bank" section to `docs/DEFERRED.md`. Standing
+  rule going forward: a self-run security review gets the disclaimer
+  written into the same paragraph that reports the result, every time,
+  not appended later as a correction.
 - **The full upstream TypeScript package
   (`typescript/packages/mechanisms/stellar/src/upto/`) is still open,
   and staying honest about the boundary of what this phase actually
