@@ -21,7 +21,7 @@ invoke it by name via `Skill` and check the result.**
 | --- | --- | --- |
 | `standards` | Invoked directly (Phase 0) | Returned SEP/CAP map, ecosystem reference, and the Raven MCP connect command (`claude mcp add --transport http stellar-raven "https://raven.stellar.buzz/mcp"`). Used this to connect Raven — see below. |
 | `init` | Invoked directly (Phase 0) | Used to scaffold `CLAUDE.md`. |
-| `code-review`, `review-edge-case-hunter`, `security-review` | Listed in the session's available-skills reminder | **Still not invoked as of Phase 3.** Every gate through Phase 3 (including 3's facilitator-safety checks) was verified by running the real gate commands, real integration tests against live testnet/Supabase, and a real settled transaction cross-checked against Horizon — not by these review skills. That's a legitimate substitute for "did it work," but not for "did a second pass catch something the first pass missed." Genuinely overdue — run at least `security-review` before Phase 6 (the `upto` contract, real money-adjacent) if not sooner.
+| `code-review`, `review-edge-case-hunter`, `security-review` | `security-review` invoked directly (Phase 6) | **`security-review` finally ran, before Phase 6 was called done, not after.** Walked every vulnerability class in the `smart-contracts` skill's own checklist against `contracts/upto-settlement`'s actual code, plus the Soroban-specific properties the checklist doesn't name by number. Found nothing above a false positive — see `docs/DEFERRED.md`'s "An internal security review ran on this contract" section for the full result, and just as important, for the explicit disclaimer that this is not a substitute for a third-party audit (Audit Bank is still the real pending step before mainnet). `code-review` and `review-edge-case-hunter` remain unused as of Phase 6.
 
 ## Named in spec §0.1, still not exercised through Phase 3 + deployment
 
@@ -31,18 +31,20 @@ These showed up in the fuller available-skills listing surfaced mid-session
 (data layer), Phase 3 (facilitator), or the Fly deployment either, despite
 spec §0.1 naming `agentic-payments` for exactly Phase 3's work:
 
-`agentic-payments`, `data`, `dapp`, `assets`, `smart-contracts`,
+`agentic-payments`, `data`, `dapp`, `assets`,
 `tyler-architect`, `deploy-stellar-mainnet`.
 
-**Pattern worth being honest about**: every one of those phases ended up
-using *direct* verification instead — reading `@x402/stellar`'s actual
-shipped source and type definitions, live `curl`/API calls against
-Horizon and Soroban RPC, and the `stellar`/`supabase`/`fly` CLIs directly
-— rather than going through a skill first. Not a rejection of the skills
-specifically; it's what "trust reality over documentation" (spec §12 rule
-3) ended up meaning in practice for this build. Worth trying one of these
-skills deliberately in Phase 5 or 6 to see whether it changes anything, so
-this isn't just a habit going unexamined.
+**Pattern worth being honest about, and Phase 6 is where it finally broke.**
+Phases 1 through 5 all used *direct* verification instead of the named
+skills — reading `@x402/stellar`'s actual shipped source and type
+definitions, live `curl`/API calls against Horizon and Soroban RPC, and
+the `stellar`/`supabase`/`fly` CLIs directly — rather than going through a
+skill first. Not a rejection of the skills specifically; it's what "trust
+reality over documentation" (spec §12 rule 3) ended up meaning in practice
+for this build. Phase 6 tried one of these deliberately, per this file's
+own earlier suggestion, and it earned its place — see the `smart-contracts`
+section below. The remaining six (`agentic-payments`, `data`, `dapp`,
+`assets`, `tyler-architect`, `deploy-stellar-mainnet`) are still untried.
 
 Phase 4 (automatic cataloging) kept the pattern: none of these skills were
 invoked. Instead, the session read `@x402/extensions/bazaar`'s real source
@@ -50,6 +52,24 @@ directly off GitHub (found the package existed at all this way — it isn't
 in `docs/SPEC.md`'s manifest), and verified every claim against a real
 Supabase write, a real Fly deploy, and a real GitHub issue filed, not a
 skill's output.
+
+## `smart-contracts` — invoked for real in Phase 6
+
+The one skill from the list above that actually got tried, deliberately,
+per this file's own earlier note. Invoked via the `Skill` tool at the start
+of Phase 6 with a specific ask (project setup, `require_auth_for_args`
+scoped to a sub-tuple, `temporary()` storage/TTL for a single-use nonce,
+the pull-and-refund cross-contract transfer pattern, and fuzz/property
+testing of the auth paths), and it delivered real, load-bearing guidance:
+the storage-type decision tree that led to `temporary()` for the nonce key,
+the exact `require_auth_for_args` scoping used in `settle()`, and the
+`security.md` checklist that the later `security-review` skill invocation
+(see above) was run against. One place it was wrong: it assumes
+`clang`/LLVM for `cargo-fuzz`; this environment has neither, and `gcc`
+turned out to be sufficient once tried, so the assumption didn't block
+anything, it was just inaccurate for this machine. Full contract detail is
+in `CLAUDE.md`'s `contracts/upto-settlement` paragraph; the fuzz/proptest
+findings are in `docs/DEFERRED.md`'s Phase 6 section.
 
 ## Explicitly not to be used during the build
 
