@@ -1,0 +1,23 @@
+[package]
+name = "upto-settlement-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+arbitrary = { version = "1", features = ["derive"] }
+libfuzzer-sys = "0.4"
+soroban-sdk = { version = "27.0.5", features = ["testutils"] }
+
+[dependencies.upto-settlement]
+path = ".."
+
+[[bin]]
+name = "fuzz_settle_arithmetic"
+path = "fuzz_targets/fuzz_settle_arithmetic.rs"
+test = false
+doc = false
+bench = false

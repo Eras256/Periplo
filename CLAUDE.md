@@ -12,15 +12,16 @@ directly rather than read prose claiming conformance.
 
 The full build plan lives at [`docs/SPEC.md`](docs/SPEC.md) — read it before
 starting any phase. It is phased (0–10); each phase ends in a gate command
-that must exit 0 before the next phase starts. **Current status: Phase 5
-(search) complete, Phase 6 (`upto` on Stellar) next** — see
+that must exit 0 before the next phase starts. **Current status: Phase 6
+(`upto` on Stellar) complete, Phase 7 (MCP discovery server) next** — see
 [`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`conformance/RESULTS.md`](conformance/RESULTS.md),
 [`conformance/baseline/`](conformance/baseline),
 [`packages/bazaar`](packages/bazaar), [`packages/search`](packages/search),
-[`eval/`](eval), [`supabase/`](supabase), and
-[`apps/facilitator`](apps/facilitator) for what exists concretely. Do not
-start a phase whose predecessor hasn't cleared its gate.
+[`eval/`](eval), [`supabase/`](supabase),
+[`apps/facilitator`](apps/facilitator), and
+[`contracts/upto-settlement`](contracts/upto-settlement) for what exists
+concretely. Do not start a phase whose predecessor hasn't cleared its gate.
 
 **CI passing locally is not the same claim as CI passing.** `.github/workflows/ci.yml`
 silently failed to run at all from Phase 1 through Phase 3 (two stacked,
@@ -300,6 +301,74 @@ match, so it needs its own explicit `pnpm-workspace.yaml` entry to resolve
 job-level `env:` + `if: env.SUPABASE_URL != ''`, not `if: secrets.X` —
 GitHub Actions' schema doesn't allow `secrets` directly inside `if:`,
 caught by the editor's validator before it shipped, not assumed).
+
+`contracts/upto-settlement` (Phase 6) is a standalone Cargo/Rust project
+(`soroban-sdk 27.0.5`), not a pnpm workspace member — no `tsconfig.json`,
+no `pnpm-workspace.yaml` entry, its own `Cargo.toml`/`Cargo.lock`. The
+`UptoSettlement` contract's `settle(authorization, actual_amount)` is the
+whole public surface (one exported function, checked in the build
+summary): `authorization.from.require_auth_for_args((authorization,))`
+is the actual mechanism that makes `upto` expressible on Soroban — it
+keeps `actual_amount` outside what the buyer signs, so a plain
+`require_auth()` (which would authorize the full arg list including the
+charge) would collapse `upto` into `exact`. `authorization.facilitator`
+gets its own separate `require_auth()`, satisfied in the deployed flow by
+the facilitator being the submitting transaction's source account (no
+separate signed entry needed — confirmed live, not assumed, via
+`inspectAuthEntry` on a real testnet simulation). Time bounds are ledger
+sequences, never timestamps; `MAX_WINDOW_LEDGERS` (17,280, ~1 day at
+5s/ledger) is a contract-level ceiling independent of and tighter than
+the network's own storage-TTL ceiling (`state_archival.max_entry_ttl`,
+checked live via `stellar network settings --network testnet`, not
+assumed — see `docs/DEFERRED.md`). The nonce lives in `temporary()`
+storage because the deadline dominates it: an entry only needs to survive
+until `deadline_ledger`, checked unconditionally before the nonce check
+ever runs. Pull-and-refund is atomic — up to three token transfers in one
+invocation, no custody window — and `settle` asserts a zero contract
+balance at the end as a genuine runtime check (`Error::
+BalanceInvariantViolated`), not just a test assertion, since Soroban's
+"transaction is the atomicity boundary" guarantee means a non-standard
+(e.g. fee-on-transfer) token would otherwise be able to leave value stuck
+silently. `src/test.rs` (21 unit tests) and `src/property_test.rs` (6
+proptest properties, ~1,500 randomized cases per run) share one fixture
+path via `test::setup_with_env`, which is also why property tests build
+their own `Env` with `EnvTestConfig { capture_snapshot_at_drop: false }`
+instead of reusing `test::setup` directly — an earlier version left
+`test_snapshots/` at 1,557 files / 24MB (one snapshot per randomized
+case), never committed, fixed before it became a problem. `fuzz/` is a
+real `cargo-fuzz` target (`fuzz_settle_arithmetic`, nightly toolchain,
+`gcc` sufficed for the bundled libFuzzer runtime — no `clang` needed
+despite the smart-contracts skill assuming it) exercising the
+ceiling/time-bound arithmetic across the full `i128`/`u32` input space
+with auth always granted (`mock_all_auths`); auth-approval/rejection
+itself is a small enumerable state space the unit and property tests
+already cover exhaustively by name, so the fuzz target spends its budget
+on the arithmetic instead. It found two real harness bugs before settling
+at 47,630 clean executions: a fixed buyer-supply constant smaller than a
+fuzzed `max_amount` (surfaced the token's own insufficient-balance error,
+not a contract bug), and an unclamped ledger-sequence fuzz input that hit
+a `soroban-sdk` testutils limitation at ledger ~4.29 billion (reproducible
+with zero `UptoSettlement` code involved — isolated to `env.register()`
+itself; real Stellar is nowhere near that height and won't be for
+centuries, so `fuzz_settle_arithmetic` clamps ledger inputs to a
+generous-but-realistic `0..100_000_000` range instead). Deployed to
+`stellar:testnet` at `CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`
+via a dedicated `periplo-upto-deployer` identity (separate from the
+fee-sponsor, which never deploys code — spec §1 constraint 3).
+`apps/facilitator/scripts/upto-settle-demo.ts` is the verification
+script — real partial settlement (buyer signs a ceiling, facilitator
+settles less), auth-entry structure and resource usage read directly
+from a real simulation (not asserted), nonce TTL read back from RPC after
+settlement — recorded in `conformance/RESULTS.md`, cross-checked against
+Horizon. It builds against the contract's on-chain spec via
+`contract.Client.from(...)` rather than committed generated bindings, so
+it stays reproducible from a clean checkout. Wiring `upto` into
+`apps/facilitator`'s own `/verify`/`/settle` HTTP routes (the TypeScript
+client/facilitator package mirroring `@x402/stellar`'s `exact`
+implementation, per spec §6's "prepare the upstream contribution as
+`typescript/packages/mechanisms/stellar/src/upto/`") is separate,
+not-yet-started work — this phase's gate is the contract itself, not that
+integration; see `docs/DEFERRED.md`.
 
 `Dockerfile.facilitator` builds and ships `@periplo/bazaar` and
 `@periplo/search` alongside `@periplo/facilitator`. Three things the image

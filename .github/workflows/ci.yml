@@ -91,6 +91,35 @@ jobs:
         if: ${{ env.SUPABASE_URL != '' }}
         run: pnpm eval
 
+  # contracts/upto-settlement (Phase 6) is a standalone Cargo/Rust
+  # project, not a pnpm workspace member — its own job, its own
+  # toolchain, no dependency on the `build` job above. Deliberately does
+  # NOT deploy to testnet or run the cargo-fuzz target here: a testnet
+  # deploy on every push would spend real fee-sponsor funds for no
+  # per-push benefit (the contract address doesn't change), and fuzzing
+  # is a periodic/manual exercise (see `docs/DEFERRED.md` for the real
+  # 47,630-execution run this phase's gate is based on), not something
+  # that belongs in the fast feedback loop. `cargo test` plus a release
+  # WASM build is what the smart-contracts skill's own suggested CI
+  # pattern covers, and what actually needs to stay green on every push.
+  contract:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts/upto-settlement
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32v1-none
+
+      - name: cargo test (unit + property tests)
+        run: cargo test
+
+      - name: Build release WASM (128KB contract-size ceiling)
+        run: cargo build --release --target wasm32v1-none
+
 # osv-scan job removed 2026-08-07 (see docs/DEFERRED.md): its
 # reusable-workflow call was malformed in a way that broke GitHub's
 # workflow-file parsing entirely, which meant the `build` job above never

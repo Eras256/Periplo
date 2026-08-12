@@ -480,3 +480,78 @@
      same underlying lesson: passing a gate and personally verifying the
      thing the gate is supposed to catch are not interchangeable, even
      when the gate is one this project wrote and trusts.
+
+## 2026-08-12 — Phase 6 (`upto` Soroban contract): no rush, real rigor
+
+Explicit instruction this time was different from every prior phase:
+"today or tomorrow, no fixed deadline... report back when genuinely
+ready, not when the clock says so." Used the room that gave: fuzz-tested
+before calling anything done, ran a real security review, and let two
+real bugs the fuzzer found actually get investigated rather than
+explained away.
+
+- **`require_auth_for_args` restricted to `(authorization,)` is the whole
+  mechanism, and it's now verified against real testnet behavior, not
+  just the spec's own pseudocode.** Confirmed via `inspectAuthEntry` on a
+  real simulation: the buyer's signed root call has `argCount=1`, one
+  sub-invocation (`transfer(from, contract, max_amount)`). All three
+  on-chain assumptions the spec PR (x402-foundation/x402#3098) marks
+  open closed with real data in one session — resource usage
+  (2M instructions of a 400M ceiling), TTL coverage (nonce entry
+  outlives `deadline_ledger`), and the auth-entry shape above.
+- **The fuzzer found two real bugs — both in the harness, not the
+  contract — and the difference mattered enough to isolate each one
+  before writing it down as a finding.** First: a fixed buyer-supply
+  constant that was smaller than a fuzzed `max_amount`, surfacing the
+  *token's* insufficient-balance error rather than one of the contract's
+  own typed errors — fixed by funding proportionally to the fuzzed
+  amount instead of a flat constant. Second, more interesting: an
+  unclamped `u32` ledger-sequence input near 4.29 billion panicked
+  `env.register()` itself, before any contract code ran at all —
+  reproduced with a standalone test containing zero `UptoSettlement`
+  code to confirm it was `soroban-sdk`'s own test-contract registration
+  running out of internal TTL headroom at that height, not this
+  contract. Real Stellar won't reach that ledger height for centuries.
+  Fixed by clamping the fuzz target's ledger inputs to a realistic
+  range, not by suppressing or explaining away the crash.
+- **Caught real bloat before it became a commit, not after.** Property
+  tests were writing a `test_snapshots/*.json` file per randomized
+  case — 1,557 files, 24MB, entirely disposable — because `proptest`
+  runs each property ~256 times and `soroban-sdk`'s test harness
+  snapshots by default. Noticed while staging files for the security
+  review (`git diff --stat` on the untracked tree was pages of
+  `*.1.json` through `*.256.json`), not from a deliberate audit step —
+  worth remembering that routine housekeeping commands surface real
+  problems opportunistically, and it's worth reading their output rather
+  than skimming past it.
+- **`cargo-fuzz` didn't actually need the `clang` toolchain the
+  smart-contracts skill assumes.** This machine has neither `clang` nor
+  passwordless `sudo`. Rather than treating that as a hard blocker
+  requiring the user's intervention, tried the install anyway —
+  `libfuzzer-sys` bundles its own libFuzzer runtime and built cleanly
+  against the system `gcc`. 47,630 fuzz executions, zero crashes once
+  the two harness bugs above were fixed. Worth the ten minutes it took
+  to check before asking.
+- **A security review found nothing new to fix, and that's a real
+  result, not a non-event.** Ran `security-review` deliberately before
+  calling the contract done — `docs/SKILLS.md` had flagged it as
+  overdue since Phase 3, specifically for "the `upto` contract, real
+  money-adjacent." Manually walked every class in the skill's own
+  checklist (missing auth, auth replay through middleware, reentrancy,
+  integer overflow, TTL-as-security, arbitrary token addresses) against
+  the actual code and reasoned through the Soroban-specific properties
+  the checklist doesn't cover by name (atomicity-on-panic protecting the
+  nonce-then-transfer ordering, the platform's own reentrancy guarantee
+  ruling out a hostile-token callback). Nothing above a false positive
+  survived scrutiny — worth recording as a clean pass, not skipping the
+  write-up just because there was nothing dramatic to report.
+- **The full upstream TypeScript package
+  (`typescript/packages/mechanisms/stellar/src/upto/`) is still open,
+  and staying honest about the boundary of what this phase actually
+  closes mattered.** `docs/SPEC.md` §6 names it as Phase 6 scope
+  alongside the contract, but the phase's own gate line (`cargo test`
+  passes, testnet deploy, settled tx hash, three assumptions closed)
+  doesn't require it. Built a real, working verification script
+  (`upto-settle-demo.ts`) that proves the contract and the wire-level
+  mechanism both work end to end — deliberately not dressed up as the
+  full facilitator integration it isn't.

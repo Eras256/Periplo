@@ -486,7 +486,9 @@ into the x402 package," so the PR itself is the evidence, not a local
 copy. A duplicate invites drift (one copy updates, the other doesn't) and
 a fork of a spec that's actively being upstreamed reads oddly — the
 spec's place is upstream. The Soroban contract
-(`contracts/upto-settlement`) is still genuinely Phase 6, not started.
+(`contracts/upto-settlement`) was still genuinely not started as of this
+note — see "Phase 6 — environment divergences and real findings" below
+for what actually got built.
 
 ## Phase 4 — environment divergences and real findings
 
@@ -766,3 +768,97 @@ near-duplicate confusion the clusters were built to surface, e.g.
 (mostly right, sometimes confuses close near-duplicates, never totally
 lost) reads as a believable result for a real hybrid retrieval system,
 which the original 0.99 did not.
+
+## Phase 6 — environment divergences and real findings
+
+### `stellar contract init`'s default layout double-nests the crate directory
+
+Scaffolding with `stellar contract init contracts/upto-settlement --name
+upto-settlement` produces `contracts/upto-settlement/contracts/upto-settlement/`
+— a workspace-of-workspaces layout meant for repos with multiple
+contracts. Since this repo only ever plans one Soroban contract, flattened
+it: single `Cargo.toml` at `contracts/upto-settlement/`, `src/` directly
+underneath, matching the path `docs/SPEC.md` §3 names.
+
+### `env.register()` panics at ledger sequences near `u32::MAX` — a testutils/host limitation, not a contract bug
+
+Found by the `cargo-fuzz` target after removing an earlier clamp: an
+unclamped `u32` ledger-sequence input near 4.29 billion made
+`env.register(UptoSettlement, ())` itself panic
+(`HostError: Error(Context, InternalError)`, `soroban-sdk-27.0.5/src/env.rs:1106`),
+before any `UptoSettlement` code ran. Isolated with a standalone test
+containing only `Env::default()` + `ledger().with_mut()` +
+`env.register()` — same panic, zero contract-specific code involved,
+confirming it's `soroban-sdk`'s test-contract registration path running
+out of internal TTL headroom at that height, not anything this contract
+does. Real Stellar is nowhere near ledger 4.29 billion (~680 years of
+runtime at 5s/ledger from genesis) and won't be for centuries, so
+`fuzz_settle_arithmetic` clamps ledger inputs to a realistic-but-generous
+`0..100_000_000` range instead of the raw `u32` space. Not filed upstream
+— fuzzing an unreachable-in-practice height isn't a useful bug report,
+and the fix (bound the fuzz input to a plausible range) is the correct
+response either way.
+
+### Property tests wrote a snapshot per randomized case — 1,557 files, 24MB, never committed
+
+`soroban-sdk`'s test harness writes a `test_snapshots/*.json` file per
+test by default (`EnvTestConfig::capture_snapshot_at_drop`, on by
+default) — sensible for the 21 fixed-point unit tests (committed as
+regression evidence, per the smart-contracts skill's own recommendation),
+useless noise for `proptest`-driven property tests that each run ~256
+randomized cases. Caught before committing anything, not after: `git diff
+--stat` on the untracked `contracts/` tree showed page after page of
+`..._rejects_every_subsequent_actual_amount.1.json` through `.256.json`
+style filenames. Fixed by splitting `test::setup` into `setup` (default
+`Env`, snapshots on) and `setup_with_env` (takes a pre-built `Env`), with
+`property_test::setup_at` constructing its own `Env::new_with_config(
+EnvTestConfig { capture_snapshot_at_drop: false })` instead of reusing
+`setup` directly — exactly the skill's own documented escape hatch for
+this exact situation ("Disable per-env with `Env::new_with_config` if
+they're noise"), not a workaround improvised after the fact.
+
+### `cargo-fuzz` needed no `clang` — `gcc` was already sufficient
+
+The smart-contracts skill's fuzz-testing section assumes `clang`/LLVM for
+libFuzzer; this machine has no `clang` and no passwordless `sudo` to
+install it. Before treating that as a blocker, tried building anyway:
+`cargo install cargo-fuzz --locked` and `cargo +nightly fuzz build`
+succeeded cleanly against the system `gcc` (13.3.0) — `libfuzzer-sys`
+bundles its own libFuzzer runtime and only needs a working C compiler to
+build it, not specifically `clang`. Ran for real: 47,630 executions in
+180 seconds, zero crashes after fixing two harness bugs it found along
+the way (a fixed buyer-supply constant smaller than a fuzzed `max_amount`,
+and the ledger-height issue above) — both harness issues, not contract
+bugs, confirmed by isolating each with a standalone reproduction before
+"fixing" anything.
+
+### `Client.from(...)` fetches the on-chain contract spec live — no generated bindings committed
+
+`apps/facilitator/scripts/upto-settle-demo.ts` (the verification script
+that produced the settled transaction in `conformance/RESULTS.md`) uses
+`@stellar/stellar-sdk/contract`'s `Client.from({ contractId, ... })`
+rather than `stellar contract bindings typescript`'s generated package.
+`Client.from` resolves the contract's spec from the deployed WASM over
+RPC at call time, so the script has no generated-bindings artifact to
+keep in sync with the contract or commit — it stays reproducible from a
+clean checkout against whatever is actually deployed at
+`UPTO_SETTLEMENT_CONTRACT_TESTNET`. Bindings were generated once, into
+the session scratchpad, only to read the exact generated method
+signature (`settle({authorization, actual_amount}, opts?)`) before writing
+the hand-rolled call — never committed, not needed at runtime.
+
+### The full upstream TypeScript package is still open work, not this phase's gate
+
+`docs/SPEC.md` §6 names `typescript/packages/mechanisms/stellar/src/upto/`
+(mirroring `@x402/stellar`'s existing `src/exact/`) as part of Phase 6's
+scope, alongside the contract and the spec. The spec is upstream (PR
+#3098, already open). The contract is built, tested, deployed, and
+settled a real transaction (this phase's actual gate, per §6's own gate
+line: `cargo test` passes, contract deployed to testnet, a settled `upto`
+transaction hash recorded, three assumptions closed). The TypeScript
+client/facilitator package — the piece that would let
+`apps/facilitator`'s own `/verify`/`/settle` routes actually serve `upto`
+requests over HTTP, not just a one-off verification script — is separate,
+larger, not-yet-started work. `apps/facilitator/scripts/upto-settle-demo.ts`
+proves the contract and the wire-level auth mechanism both work for real;
+it is not that package.

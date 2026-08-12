@@ -1,0 +1,32 @@
+[package]
+name = "upto-settlement"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "UptoSettlement: the Soroban contract for the x402 `upto` scheme on Stellar (see spec/scheme_upto_stellar.md, x402-foundation/x402#3098)."
+
+[lib]
+crate-type = ["lib", "cdylib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = "27.0.5"
+
+[dev-dependencies]
+proptest = "1.11.0"
+soroban-sdk = { version = "27.0.5", features = ["testutils"] }
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+# https://developers.stellar.org/docs/build/smart-contracts/example-contracts/logging#cargotoml-profile
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true

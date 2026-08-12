@@ -4,11 +4,11 @@
 
 The discovery layer for x402-payable services on Stellar.
 
-**Status: Phase 5, search, is complete.** The facilitator is live on
-`stellar:testnet` at https://periplo-testnet.fly.dev. The rest of Phase
-10 is not done; see [`docs/DEFERRED.md`](docs/DEFERRED.md). This README
-states what is built, linked, tested, or hashed today. Everything else is
-marked as planned.
+**Status: Phase 6, the `upto` Soroban contract, is complete.** The
+facilitator is live on `stellar:testnet` at
+https://periplo-testnet.fly.dev. The rest of Phase 10 is not done; see
+[`docs/DEFERRED.md`](docs/DEFERRED.md). This README states what is built,
+linked, tested, or hashed today. Everything else is marked as planned.
 
 **There is no frontend yet.** The developer hub (`apps/hub`) is Phase 9
 and has not started. `/browse`, `/playground`, `/status` and the rest of
@@ -103,6 +103,20 @@ user-facing surface right now.
   resources, 40 queries, all in unrelated domains) scored 0.99, which
   turned out to be an overfitting signal rather than evidence of good
   ranking; the harder set above replaced it.
+- [`contracts/upto-settlement`](contracts/upto-settlement) is
+  `UptoSettlement`, the Soroban contract behind `upto`'s `contract`
+  profile: `require_auth_for_args` restricted to `(authorization,)` keeps
+  the settled amount outside what the buyer signs, an atomic
+  pull-pay-refund moves funds with no custody window, and a nonce in
+  temporary storage enforces single use. 27 unit and property tests, plus
+  a `cargo-fuzz` target that ran 47,630 executions against the
+  ceiling/time-bound arithmetic with zero crashes. Deployed to
+  `stellar:testnet`
+  (`CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`); a real
+  **partial settlement** — buyer signs a ceiling, facilitator settles less
+  — is recorded in [`conformance/RESULTS.md`](conformance/RESULTS.md),
+  independently checked against Horizon, closing all three on-chain
+  assumptions the spec PR marks open.
 
 ## What Periplo is (planned)
 
@@ -113,12 +127,18 @@ catalog of x402-payable HTTP and MCP services, so an agent can find and
 pay for a service without a human wiring up an integration first.
 
 It also carries `upto`, a metered payment scheme for Stellar that a
-plain SEP-41 allowance cannot express. The network spec is open upstream
+plain SEP-41 allowance cannot express — it fails recipient binding
+(`transfer_from` lets the spender choose any destination) and single-use
+(an allowance is a standing balance). The network spec is open upstream
 as a Draft PR at
 [x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098)
-([issue #3097](https://github.com/x402-foundation/x402/issues/3097)),
-with three on-chain assumptions marked open. The Soroban contract is
-Phase 6 and has not started.
+([issue #3097](https://github.com/x402-foundation/x402/issues/3097)). The
+Soroban contract, `contracts/upto-settlement`, is built, tested, and
+deployed to `stellar:testnet`
+(`CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`), with a real
+settled transaction recorded in
+[`conformance/RESULTS.md`](conformance/RESULTS.md) closing all three
+on-chain assumptions the spec PR marks open.
 
 This is a response to the Stellar Community Fund RFP, "X402 Facilitator
 with Bazaar (discovery) support" (SCF #45, Q3 2026). See
@@ -127,13 +147,18 @@ this repository is built against.
 
 ## Architecture
 
-The **Facilitator**, the automatic-cataloging edge into **Bazaar**, and
-**Search** are all real and deployed. Bazaar here means the catalog
-itself, backed by Supabase, not the node's full future scope. See
-"What's real right now" above and
-[Deployment](#deployment-what-actually-runs). The Hub and the `upto`
-contract are still planned. Solid borders below mark what runs today;
-dashed borders mark what does not.
+The **Facilitator**, the automatic-cataloging edge into **Bazaar**,
+**Search**, and the **`UptoSettlement`** contract are all real and
+deployed. Bazaar here means the catalog itself, backed by Supabase, not
+the node's full future scope. See "What's real right now" above and
+[Deployment](#deployment-what-actually-runs). The Hub is still planned,
+and the facilitator does not call `UptoSettlement` yet — the contract
+itself is deployed and settled a real transaction
+(`conformance/RESULTS.md`), but wiring `upto` into `/verify`/`/settle`'s
+HTTP routes (the TypeScript client/facilitator package mirroring
+`@x402/stellar`'s `exact` implementation) is separate, not-yet-started
+work, tracked in `docs/DEFERRED.md`. Solid borders below mark what runs
+today; dashed borders and edges mark what does not.
 
 ```mermaid
 flowchart LR
@@ -170,7 +195,7 @@ flowchart LR
     Hub --> Facilitator
 
     classDef planned stroke-dasharray: 5 5
-    class Hub,Upto planned
+    class Hub planned
 ```
 
 ## Verify it yourself
