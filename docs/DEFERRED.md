@@ -774,6 +774,21 @@ near-duplicate confusion the clusters were built to surface, e.g.
 lost) reads as a believable result for a real hybrid retrieval system,
 which the original 0.99 did not.
 
+### Not yet done: growing the golden set further, and load-hardening the search endpoint
+
+Two engineering follow-ups this phase's gate does not require but a later
+one should:
+
+- The golden query set (55 resources, 300 graded queries) is planned to
+  grow toward 500 graded queries, for stronger coverage of near-duplicate
+  clusters beyond what's built so far and more stable nDCG@10/MRR numbers
+  than 300 queries give.
+- The search endpoint itself has not been hardened or tested under real
+  load (concurrent request handling, embedding-model warm-up contention,
+  Supabase connection pooling under sustained traffic) — Phase 5's gate is
+  ranking quality, not throughput, and production readiness on that axis
+  is still open.
+
 ## Phase 6 — environment divergences and real findings
 
 ### `stellar contract init`'s default layout double-nests the crate directory
