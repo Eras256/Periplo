@@ -651,3 +651,45 @@ loose ends from shipping `contracts/upto-settlement`.
   uncommitted in the working tree from earlier in the session. Fixed by
   actually running the commit and confirming with
   `git log -1 -- <path>` this time, not by re-describing the intent.
+
+## 2026-08-12, continued: repo-wide em-dash register cleanup
+
+- **A twelve-file em-dash cleanup, done one file per commit with the diff
+  shown before every commit.** Scope: `docs/DEFERRED.md` (150 instances),
+  `docs/MEMORY.md` (93), `CLAUDE.md` (72), `docs/SPEC.md` (66),
+  `docs/ECOSYSTEM.md` (28), `conformance/RESULTS.md` (17), `docs/SKILLS.md`
+  (14), `contracts/upto-settlement/README.md` (6), and four
+  `conformance/baseline/` transcripts (23 combined). Method: read each
+  instance in context and rewrite the sentence it sits in (period and a
+  new sentence, a comma, or a colon, whichever the sentence actually
+  needed), not a blind find-and-replace; every technical value (hashes,
+  addresses, ledger numbers, amounts, table cells, code blocks) diffed
+  against `HEAD` before each commit, not sampled. The four conformance
+  transcripts got an extra check the narrative docs didn't need: the raw
+  captured HTTP header and JSON body blocks were diffed byte-for-byte
+  separately from the prose, since those files are evidence, and an
+  editing mistake there would look like altering a transcript rather than
+  fixing prose.
+- **The counts requested up front didn't match what was actually in the
+  files, checked before starting rather than trusted.** `docs/DEFERRED.md`
+  was 150 instances, not the 148 quoted; `docs/MEMORY.md` was 93, not 91;
+  `docs/ECOSYSTEM.md` was 28, not 26; `conformance/RESULTS.md` was 17, not
+  15; one baseline transcript was 7, not 6. All confirmed with a fresh
+  `grep -coP` run against the real files rather than assumed from the
+  numbers as given, and used as the actual target going forward.
+- **Two files believed already clean from an earlier prose-register pass
+  turned out not to be, found by a repo-wide grep after the twelve-file
+  pass rather than trusted on the earlier claim.** `README.md` still had 4
+  em dashes and `docs/SELLERS.md` had 1, missed by that earlier pass.
+  Fixed in a follow-up commit with the same discipline, including
+  converting one stacked em-dash parenthetical in `README.md` into plain
+  parentheses rather than just swapping the character. The full repo
+  (`grep -rlP '\x{2014}' --include="*.md" .`) is now em-dash-free.
+- **`raw.githubusercontent.com` served a stale, cached copy of a just-
+  pushed file and gave a false read.** Verifying the last two files
+  against the CDN briefly showed old content still carrying em dashes
+  moments after the push had landed. Re-verified against the GitHub
+  Contents API instead (`gh api repos/.../contents/<path>`), which
+  reported 0 em dashes and a HEAD sha matching the push exactly. Worth
+  remembering for any future verify-after-push step: the CDN and the API
+  are not the same source of truth, and the CDN lags.

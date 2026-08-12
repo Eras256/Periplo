@@ -384,12 +384,21 @@ Linux/x64 that this CPU-only deployment never uses, found by inspecting
 `du -sh` on the installed package, not assumed from the install succeeding
 quietly).
 
-`README.md`, `docs/INTEROP.md`, and `docs/SELLERS.md` went through a
-prose-register pass (em dashes, negation-for-emphasis, bold overuse
-removed; every fact and code block verified unchanged). `docs/DEFERRED.md`,
-`docs/SPEC.md`, and this file have not, still carry the heavier register,
-lowest priority since reviewers read them less than the README/INTEROP/SELLERS
-trio.
+`README.md`, `docs/INTEROP.md`, and `docs/SELLERS.md` went through a full
+prose-register pass early in the build (em dashes, negation-for-emphasis,
+bold overuse removed; every fact and code block verified unchanged). Every
+other markdown file in the repo later went through a narrower, em-dash-only
+pass: `docs/DEFERRED.md`, `docs/MEMORY.md`, `docs/SPEC.md`, this file,
+`docs/ECOSYSTEM.md`, `conformance/RESULTS.md`, `docs/SKILLS.md`,
+`contracts/upto-settlement/README.md`, all four `conformance/baseline/`
+transcripts, plus a follow-up fix to four leftover instances in `README.md`
+and one in `docs/SELLERS.md` a repo-wide grep caught afterward. Same
+discipline throughout (period, comma, or colon chosen per sentence, never a
+blind find-and-replace) and same verification (every technical value, hash,
+table, and code block diffed against `HEAD` before each commit), but not
+the fuller negation/bold treatment the original trio got. The repo is
+verified em-dash-free as of this pass (`grep -rlP '\x{2014}' --include="*.md" .`
+returns nothing).
 
 `conformance/baseline/` holds real, captured HTTP transcripts (not
 reconstructed from documentation) against the public reference facilitator
