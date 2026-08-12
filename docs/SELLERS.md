@@ -30,7 +30,7 @@ const facilitatorClient = new HTTPFacilitatorClient({
 const resourceServer = new x402ResourceServer(facilitatorClient)
   .register("stellar:testnet", new ExactStellarScheme())
   // Registering this is what fills in the HTTP method / dynamic-route
-  // pathParams automatically — see step 2.
+  // pathParams automatically, see step 2.
   .registerExtension(bazaarResourceServerExtension);
 
 const routes = {

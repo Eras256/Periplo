@@ -119,8 +119,8 @@ user-facing surface right now.
   ceiling/time-bound arithmetic with zero crashes. Deployed to
   `stellar:testnet`
   (`CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`); a real
-  **partial settlement** — buyer signs a ceiling, facilitator settles less
-  — is recorded in [`conformance/RESULTS.md`](conformance/RESULTS.md),
+  **partial settlement** (buyer signs a ceiling, facilitator settles less)
+  is recorded in [`conformance/RESULTS.md`](conformance/RESULTS.md),
   independently checked against Horizon, closing all three on-chain
   assumptions the spec PR marks open.
 
@@ -133,7 +133,7 @@ catalog of x402-payable HTTP and MCP services, so an agent can find and
 pay for a service without a human wiring up an integration first.
 
 It also carries `upto`, a metered payment scheme for Stellar that a
-plain SEP-41 allowance cannot express — it fails recipient binding
+plain SEP-41 allowance cannot express: it fails recipient binding
 (`transfer_from` lets the spender choose any destination) and single-use
 (an allowance is a standing balance). The network spec is open upstream at
 [x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098)
@@ -163,7 +163,7 @@ The **Facilitator**, the automatic-cataloging edge into **Bazaar**,
 deployed. Bazaar here means the catalog itself, backed by Supabase, not
 the node's full future scope. See "What's real right now" above and
 [Deployment](#deployment-what-actually-runs). The Hub is still planned,
-and the facilitator does not call `UptoSettlement` yet — the contract
+and the facilitator does not call `UptoSettlement` yet: the contract
 itself is deployed and settled a real transaction
 (`conformance/RESULTS.md`), but wiring `upto` into `/verify`/`/settle`'s
 HTTP routes (the TypeScript client/facilitator package mirroring
