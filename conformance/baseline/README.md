@@ -1,4 +1,4 @@
-# Baseline transcripts — Phase 0
+# Baseline transcripts: Phase 0
 
 Master spec §5, Phase 0: *"Point a stock client at [the reference facilitator],
 capture every request and response verbatim, and commit the transcripts... That
@@ -11,13 +11,13 @@ raw response headers + body verbatim.
 
 ## Captured: `x402.org` (the public reference facilitator)
 
-- [`x402-org/supported.md`](x402-org/supported.md) — `GET /facilitator/supported`.
+- [`x402-org/supported.md`](x402-org/supported.md): `GET /facilitator/supported`.
   Confirms: Stellar support is advertised as `stellar:testnet` only (no
   `stellar:pubnet` entry), `extra.areFeesSponsored: true`, and two Stellar
   G-account signers. No `stellar:pubnet` kind and no `upto` scheme for
-  Stellar — both expected, since this is the reference facilitator we're
+  Stellar, both expected, since this is the reference facilitator we're
   building beyond, not a finished target.
-- [`x402-org/discovery-404.md`](x402-org/discovery-404.md) — `GET
+- [`x402-org/discovery-404.md`](x402-org/discovery-404.md): `GET
   /facilitator/discovery/resources` and `GET
   /facilitator/discovery/search?q=weather`, both `404`. **This is the
   measured gap Periplo's Bazaar fills**: the reference facilitator's
@@ -26,7 +26,7 @@ raw response headers + body verbatim.
   discovery endpoints at all. Recorded here rather than assumed, per spec
   §5's "advertised support and reachable support are not the same thing."
 - [`x402-org/verify-settle-malformed.md`](x402-org/verify-settle-malformed.md)
-  (Phase 3) — `POST /facilitator/verify` and `POST /facilitator/settle`
+  (Phase 3): `POST /facilitator/verify` and `POST /facilitator/settle`
   with a deliberately malformed-but-well-shaped body: confirms both return
   `200` (not `400`) with validity carried in the JSON body, and that
   `invalidReason`/`errorReason` are populated on failure.
@@ -34,7 +34,7 @@ raw response headers + body verbatim.
 ## Not yet captured
 
 Spec §5 Phase 0 also asks to check "other multi-chain facilitators claiming
-Stellar support." Only `x402.org` was captured in this pass — sequenced next,
+Stellar support." Only `x402.org` was captured in this pass, sequenced next,
 not silently dropped (see `docs/DEFERRED.md`). Candidates to check: any
 facilitator whose `/supported` response includes a `stellar:*` kind, found via
 the x402 Foundation's facilitator registry/ecosystem listing once located.
