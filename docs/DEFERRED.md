@@ -1009,3 +1009,47 @@ Periplo-wide or portfolio-wide default. Applied identically to both
 `#3098`'s branch and `#3138`'s branch, and confirmed `Verified` on
 GitHub's own API (`verified: true`, `reason: valid`) for every commit on
 both, not just checked locally.
+
+## `upto` profile discrimination: three real implementation gaps, found responding to external review, not self-discovered
+
+[HeylmStoned's comment](https://github.com/x402-foundation/x402/pull/3134)
+on `#3134` raised a wire-level concern: if both `contract` and `stateless`
+ship as conformant `upto` profiles, `scheme: "upto"` alone is ambiguous on
+the wire, and Periplo's own `/supported`, `PaymentRequirements.extra`, and
+Bazaar catalog filters need a stable way to discriminate between them. The
+spec text itself already has an answer: `extra.uptoProfile` is defined as a
+required, shared `PaymentRequirements` field in `#3098`'s
+`scheme_upto_stellar.md`. Checked against Periplo's actual code, not the
+spec text, per the same standard this project holds every other capability
+claim to, three real gaps surfaced, none of them previously recorded:
+
+1. **`/supported` cannot report `upto` at all, in any form.**
+   `apps/facilitator/src/core.ts` registers only `ExactStellarScheme`. Since
+   `upto` isn't wired into the HTTP facilitator yet (already noted in this
+   file's Phase 6 section), there is currently no `upto` kind to
+   discriminate a profile on in the first place.
+2. **No `GET /discovery/resources` or `GET /discovery/search` HTTP route
+   exists in `apps/facilitator` at all.** Grepped, zero hits. Even the
+   filters `docs/SPEC.md` §4 names (`type`, `payTo`, `network`,
+   `extensions`) are unimplemented, not just a `scheme`/profile dimension.
+   `packages/search/src/hybrid-search.ts`'s `HybridSearchParams` confirms
+   the same gap from the search side: `query`, `limit`, `offset`, and the
+   RRF weights only, no filter parameter of any kind.
+3. **`packages/bazaar/src/db/catalog.ts`'s `mergeAccepts` dedupe key is not
+   `extra`-aware, and this is a real data-loss risk, not just a missing
+   feature.** The key is `${scheme}|${network}|${asset}|${payTo}`. Two
+   `accepts` entries differing only in `extra.uptoProfile` hash to the same
+   key. Once `upto` cataloging exists, a facilitator advertising both
+   profiles for the same resource, network, asset, and `payTo` would have
+   one profile's entry silently overwritten by the other's on the next
+   payment, losing that listing rather than just failing to surface it.
+
+Not fixed yet. Recorded here first, deliberately, before any reply was
+drafted or posted, so the finding is on record independent of how the
+thread response reads. Fixing this needs real implementation work: wiring
+`upto` into `/supported` and `/verify`/`/settle` (already tracked as
+separate, not-yet-started work), building the `GET /discovery/*` routes
+with the filters spec §4 already names, extending them to filter on
+`extra.uptoProfile` once `upto` exists, and making `mergeAccepts` key on
+`extra.uptoProfile` when the scheme is `upto` so two profiles for the same
+resource coexist instead of colliding.
