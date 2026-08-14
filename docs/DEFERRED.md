@@ -1207,3 +1207,35 @@ contract, architecturally simpler and needing no nested auth entry at
 all) instead of `Signer::Delegated`, or a working example from
 OpenZeppelin directly, since their own documentation names this exact
 gap without supplying one.
+
+## `routeTemplate` for opaque-origin schemes: deliberately left unbuilt, on a reviewer's own reasoning
+
+`x402-foundation/x402#3138`'s fix (the opaque-origin canonical-URL
+stripping, closing
+[#3121](https://github.com/x402-foundation/x402/issues/3121)) only
+covers the raw-URL branch. The `routeTemplate` branch (dynamic,
+parameterized routes) still only applies to WHATWG special schemes; an
+opaque scheme like `mcp://` never takes it, even if a producer someday
+declares a templated MCP tool URL.
+
+This is not an oversight left unfiled. whawk46, the same reviewer who
+found the query-stripping gap and whose suggested shape closed it,
+raised it directly and gave the reasoning for leaving it unbuilt,
+quoted verbatim from the PR thread: "I'd leave it unpinned,
+deliberately. The mechanical form is obvious whenever it's needed —
+protocol + host + template, same shape as this commit — but whether
+collapsing templated tools into one canonical is even the right catalog
+semantics for a non-special scheme is a question I'd rather answer with
+a real producer in hand than by guessing ahead of one. The first time
+someone declares a template on an opaque scheme, it's a five-line PR
+with a test, and this thread is the paper trail for where it goes."
+
+Recorded here for the same reason the thread itself exists: not a gap
+in Periplo's own work, and not something to build ahead of a real need,
+on a reviewer's own explicit call, not this project's guess. If a real
+opaque-scheme `routeTemplate` producer shows up, the fix is small and
+already sketched (`protocol + host + template`, the same reconstruction
+`#3138` already uses for the raw-URL branch) and belongs in
+`@x402/extensions/bazaar` itself, following the same "don't reimplement
+the wire protocol" principle every other upstream-facing piece of this
+project already follows.

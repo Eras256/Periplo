@@ -77,10 +77,17 @@ user-facing surface right now.
   documents for MCP tools. We found it through the live integration
   test, not by reading the code, and filed it as
   [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121).
-  A fix is now open against it as
+  A fix is open against it as
   [x402-foundation/x402#3138](https://github.com/x402-foundation/x402/pull/3138),
   built scheme-agnostic per a reviewer's suggested shape rather than an
-  `mcp://`-specific patch.
+  `mcp://`-specific patch. That same reviewer, whawk46, later found a
+  real follow-on gap in the fix itself (the opaque-origin branch skipped
+  the query/fragment stripping the function exists to do), we
+  implemented the fix they suggested for it with a new regression test,
+  and they reviewed that too, quoted verbatim: "LGTM as it stands —
+  merge-ready from my side." The PR is open, mergeable, reviewed twice
+  by the person who reported the original bug, blocked only on a
+  maintainer's approval to merge.
 
   The facilitator reports the outcome through the `EXTENSION-RESPONSES`
   header: `{"bazaar":{"status":"success"}}`, or

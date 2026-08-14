@@ -102,6 +102,21 @@ not a spec PR. `CONTRIBUTING.md`'s "issue before spec" requirement is for
 spec changes; a bug report is lighter-weight and is explicitly one of the
 two things GitHub issues are for in that document.
 
+**Fix status, updated 2026-08-14**: a fix is open as
+[x402-foundation/x402#3138](https://github.com/x402-foundation/x402/pull/3138),
+built scheme-agnostic per whawk46's suggested shape rather than an
+`mcp://`-specific patch, with a regression test on a second, unrelated
+made-up scheme. whawk46 reviewed it and separately found a real
+follow-on gap in the fix itself: the opaque-origin branch skipped the
+query/fragment stripping the function exists to do, reintroducing the
+same per-variant catalog duplication that stripping prevents. We
+implemented the fix they suggested for it (`${url.protocol}//${url.host}${url.pathname}`)
+with a new regression test, and they reviewed that too: "LGTM as it
+stands — merge-ready from my side" (quoted verbatim). The PR is open,
+mergeable, reviewed twice by the person who reported the original bug,
+blocked only on a maintainer's approval to merge, not on anything left
+for this project to do.
+
 ## 3. `docs/SPEC.md` §4's `GET /discovery/search` param name is wrong
 
 `docs/SPEC.md` §4 was written before this phase, from a wire-contract
