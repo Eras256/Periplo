@@ -120,22 +120,27 @@ user-facing surface right now.
   `stellar:testnet`
   (`CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`); a real
   **partial settlement** (buyer signs a ceiling, facilitator settles less)
-  and a real **zero-settlement** (buyer signs a ceiling, facilitator
-  settles nothing, the full ceiling comes back, and the nonce is still
-  consumed) are both recorded in
-  [`conformance/RESULTS.md`](conformance/RESULTS.md), independently
-  checked against Horizon, closing all three on-chain assumptions the
-  spec PR marks open. A further extension, an agent's key wrapped in a
-  real `stellar-accounts` (OpenZeppelin, MIT) smart account scoped to
-  authorizing only `UptoSettlement` calls, with a spending budget
-  reconciled against the actual amount charged rather than the signed
-  ceiling, is built and tested at the contract level (8 more tests for
-  the budget reconciliation, 3 for the account's own authorization
-  scoping, both contracts deployed to testnet) in
-  [`contracts/agent-smart-account`](contracts/agent-smart-account), but a
-  live, signed transaction exercising it end to end is not yet produced,
-  see `docs/DEFERRED.md`'s Phase 6b section for what was tried and what
-  remains open.
+  is recorded in [`conformance/RESULTS.md`](conformance/RESULTS.md),
+  independently checked against Horizon, closing all three on-chain
+  assumptions the spec PR marks open.
+
+  Two Phase 6b extensions, additional evidence, not an SCF tranche
+  deliverable:
+  - **Zero-settlement: complete.** Real testnet transaction
+    [`2138c0418a85e1bb29c2eab6cea6c76b3b0231d894450a35905053f36403d358`](https://stellar.expert/explorer/testnet/tx/2138c0418a85e1bb29c2eab6cea6c76b3b0231d894450a35905053f36403d358),
+    verified against Horizon. The full ceiling is refunded when real
+    usage is zero, and a second attempt with the same authorization was
+    rejected on-chain (`AuthorizationConsumed`): the nonce is consumed
+    even when the charge is zero.
+  - **OpenZeppelin integration: in progress, not complete.** `budget.rs`
+    (budget reconciliation tied to `actual_amount`, not the signed
+    ceiling) and
+    [`contracts/agent-smart-account`](contracts/agent-smart-account) (a
+    real `ContextRule::CallContract`, not simulated) are built, tested,
+    and deployed to `stellar:testnet`. There is still no real, signed
+    transaction where the smart account is `authorization.from`. See
+    `docs/DEFERRED.md`'s Phase 6b section for what was tried and the path
+    to closing it.
 
 ## What Periplo is (planned)
 
