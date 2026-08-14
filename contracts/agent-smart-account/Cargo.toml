@@ -1,0 +1,34 @@
+[package]
+name = "agent-smart-account"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Phase 6b demo: a real OpenZeppelin stellar-accounts smart account scoped to authorizing only UptoSettlement calls, for an agent key with a reserved budget."
+
+[lib]
+crate-type = ["lib", "cdylib"]
+doctest = false
+
+[dependencies]
+# Pinned to match the published crate's own soroban-sdk requirement exactly
+# (see contracts/upto-settlement/src/budget.rs's module doc for why that
+# crate isn't a dependency of upto-settlement itself: stellar-accounts 0.7.2
+# pins soroban-sdk ^26.1, not the 27.0.5 the rest of this repo's Soroban
+# work targets). This crate has no soroban-sdk-version-sensitive dependency
+# of its own, so it can target the SDK version the account framework
+# actually requires without affecting anything else in the repo.
+soroban-sdk = "26.1.1"
+stellar-accounts = "0.7.2"
+
+[dev-dependencies]
+soroban-sdk = { version = "26.1.1", features = ["testutils"] }
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true

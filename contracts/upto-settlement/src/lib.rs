@@ -87,6 +87,17 @@ pub enum Error {
     /// balance persist has introduced custody this scheme is designed not
     /// to have.
     BalanceInvariantViolated = 7,
+    /// Phase 6b: `install_budget` called with `spending_limit <= 0` or
+    /// `period_ledgers == 0`.
+    InvalidBudget = 8,
+    /// Phase 6b: `install_budget` called for a buyer that already has a
+    /// budget installed. Use `set_budget` to change an existing one.
+    BudgetAlreadyInstalled = 9,
+    /// Phase 6b: `actual_amount` would push the buyer's spend in the
+    /// current rolling window over their reserved budget. See `budget.rs`
+    /// for why this is reconciled against `actual_amount`, not
+    /// `max_amount`.
+    BudgetExceeded = 10,
 }
 
 /// Topics: `("settled", from, to)`. Emitted once per successful settlement,
@@ -177,8 +188,19 @@ impl UptoSettlement {
             panic_with_error!(&env, Error::AuthorizationConsumed);
         }
         let ttl = authorization.deadline_ledger.saturating_sub(ledger);
-        env.storage().temporary().set(&key, &authorization.deadline_ledger);
+        env.storage()
+            .temporary()
+            .set(&key, &authorization.deadline_ledger);
         env.storage().temporary().extend_ttl(&key, ttl, ttl);
+
+        // --- 1d. Phase 6b: reconcile actual_amount against the buyer's
+        // reserved budget, if one is installed. A no-op for a buyer with no
+        // budget (see budget.rs for why this can't be the stock
+        // OpenZeppelin spending_limit policy attached the normal way, and
+        // why actual_amount is the only correct thing to reconcile
+        // against). Runs before any transfer, so a budget rejection
+        // reverts the whole settlement atomically. ---
+        budget::reconcile(&env, &authorization.from, actual_amount);
 
         // --- 3. Recipient binding + atomic pull-and-refund. `to` comes only
         // from the struct the buyer signed. The buyer's signed
@@ -216,7 +238,26 @@ impl UptoSettlement {
         }
         .publish(&env);
     }
+
+    /// Phase 6b: reserves a spending budget for `buyer`, enforced against
+    /// `actual_amount` (not `max_amount`) on every future `settle` call
+    /// where `authorization.from == buyer`. Requires `buyer`'s own
+    /// authorization; for a smart-account buyer this routes through its
+    /// `__check_auth`, same as any other call the account authorizes.
+    /// Strictly opt-in: a buyer that never calls this settles exactly as
+    /// before Phase 6b existed. See `budget.rs` for the full reasoning.
+    pub fn install_budget(env: Env, buyer: Address, spending_limit: i128, period_ledgers: u32) {
+        budget::install(&env, &buyer, spending_limit, period_ledgers);
+    }
+
+    /// Phase 6b: reads a buyer's current budget state (limit, rolling
+    /// window length, and cached total spent in the current window).
+    /// Returns `None` if no budget is installed for `buyer`.
+    pub fn get_budget(env: Env, buyer: Address) -> Option<budget::SpendingLimitData> {
+        budget::get_budget(&env, &buyer)
+    }
 }
 
-mod test;
+mod budget;
 mod property_test;
+mod test;

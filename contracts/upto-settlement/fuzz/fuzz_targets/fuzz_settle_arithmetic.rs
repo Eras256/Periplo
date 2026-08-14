@@ -141,7 +141,17 @@ fuzz_target!(|input: FuzzInput| {
                 // already be consumed, and the balance invariant can
                 // never actually trip given the proportional mint above —
                 // reaching either here would itself be the finding.
-                Error::AuthorizationConsumed | Error::BalanceInvariantViolated => {
+                //
+                // Phase 6b: this target never calls install_budget, so
+                // budget::reconcile is always a no-op (see budget.rs) and
+                // none of the three budget-related variants can occur
+                // either — reaching any of them here would itself be the
+                // finding, same as the two above.
+                Error::AuthorizationConsumed
+                | Error::BalanceInvariantViolated
+                | Error::InvalidBudget
+                | Error::BudgetAlreadyInstalled
+                | Error::BudgetExceeded => {
                     panic!("unreachable rejection reason hit: {matched:?}")
                 }
             }

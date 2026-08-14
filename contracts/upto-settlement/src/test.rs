@@ -13,7 +13,9 @@ use soroban_sdk::{
 /// — `settle` panics rather than returning `Result`, matching the spec's
 /// reference pseudocode. This converts our typed variant into the shape
 /// `try_settle` actually returns, so assertions stay readable.
-fn rejected(e: Error) -> Result<Result<(), soroban_sdk::ConversionError>, Result<SdkError, soroban_sdk::InvokeError>> {
+fn rejected(
+    e: Error,
+) -> Result<Result<(), soroban_sdk::ConversionError>, Result<SdkError, soroban_sdk::InvokeError>> {
     Err(Ok(SdkError::from(e)))
 }
 
@@ -180,7 +182,11 @@ fn settled_event_reports_actual_amount_not_maximum() {
     // pull/pay legs — filter down to this contract's own event.
     use soroban_sdk::{testutils::Events as _, Event as _};
     assert_eq!(
-        f.env.events().all().filter_by_contract(&f.contract_id).events(),
+        f.env
+            .events()
+            .all()
+            .filter_by_contract(&f.contract_id)
+            .events(),
         &[expected.to_xdr(&f.env, &f.contract_id)],
     );
 }
@@ -401,7 +407,10 @@ fn rejects_settlement_without_facilitator_auth() {
     }]);
 
     let result = client(&f).try_settle(&a, &100);
-    assert!(result.is_err(), "settlement without facilitator auth must fail");
+    assert!(
+        result.is_err(),
+        "settlement without facilitator auth must fail"
+    );
 }
 
 #[test]
@@ -438,7 +447,10 @@ fn a_third_party_cannot_settle_on_a_different_facilitators_behalf() {
     ]);
 
     let result = client(&f).try_settle(&a, &100);
-    assert!(result.is_err(), "an unnamed facilitator must not be able to settle");
+    assert!(
+        result.is_err(),
+        "an unnamed facilitator must not be able to settle"
+    );
 }
 
 // ---------------------------------------------------------------------
@@ -462,4 +474,129 @@ fn one_signature_covers_any_actual_amount_up_to_the_maximum() {
 
     assert_eq!(token(&f).balance(&f.to), 501);
     assert_eq!(token(&f).balance(&f.contract_id), 0);
+}
+
+// ---------------------------------------------------------------------
+// Phase 6b: budget reconciliation. A buyer with a reserved budget must be
+// charged against actual_amount, never max_amount — the whole point of the
+// feature is that the stock OpenZeppelin spending-limit policy can't do
+// this (see budget.rs), so this is the one place proving the reconciled
+// number is actually right, not just plausible.
+// ---------------------------------------------------------------------
+
+#[test]
+fn settling_with_no_budget_installed_is_unaffected() {
+    // Same assertion as one_signature_covers_any_actual_amount_up_to_the_maximum
+    // above, restated to make the "budget is opt-in" claim explicit: a buyer
+    // who never calls install_budget settles exactly as before Phase 6b.
+    let f = setup(1_000);
+    let a = auth(&f, 500, 0, 2_000, 1);
+
+    client(&f).settle(&a, &200);
+
+    assert_eq!(client(&f).get_budget(&f.from), None);
+    assert_eq!(token(&f).balance(&f.to), 200);
+}
+
+#[test]
+fn budget_is_debited_by_actual_amount_not_max_amount() {
+    let f = setup(10_000);
+    client(&f).install_budget(&f.from, &1_000, &100);
+
+    // max_amount (5,000) is far larger than the entire budget (1,000).
+    // Only settling for less than the budget can possibly succeed — this
+    // is the direct evidence the reconciliation is keyed on actual_amount.
+    let a = auth(&f, 5_000, 0, 2_000, 1);
+    client(&f).settle(&a, &300);
+
+    let budget = client(&f).get_budget(&f.from).expect("budget installed");
+    assert_eq!(budget.cached_total_spent, 300);
+    assert_eq!(token(&f).balance(&f.to), 300);
+    assert_eq!(token(&f).balance(&f.from), 10_000 - 300);
+}
+
+#[test]
+fn a_settlement_that_would_exceed_the_remaining_budget_is_rejected() {
+    let f = setup(10_000);
+    client(&f).install_budget(&f.from, &1_000, &100);
+
+    let first = auth(&f, 5_000, 0, 2_000, 1);
+    client(&f).settle(&first, &900);
+
+    // 900 already spent, budget is 1,000: 150 more would exceed it, even
+    // though max_amount (5,000) has plenty of room left.
+    let second = auth(&f, 5_000, 0, 2_000, 2);
+    let result = client(&f).try_settle(&second, &150);
+    assert_eq!(result, rejected(Error::BudgetExceeded));
+
+    // The rejected settlement must not have moved any funds or consumed
+    // the second authorization's nonce.
+    assert_eq!(token(&f).balance(&f.to), 900);
+    let third = auth(&f, 5_000, 0, 2_000, 2); // same nonce as `second`
+    client(&f).settle(&third, &50); // 900 + 50 = 950, within budget
+    assert_eq!(token(&f).balance(&f.to), 950);
+}
+
+#[test]
+fn zero_settlement_never_touches_the_budget() {
+    // Mirrors zero_settlement_refunds_everything above, but with a budget
+    // installed: spending nothing must not count against any budget,
+    // matching OpenZeppelin's own "a zero-amount transfer has no effect on
+    // the spending budget" rule for the stock spending-limit policy.
+    let f = setup(1_000);
+    client(&f).install_budget(&f.from, &1, &100); // smallest possible budget
+
+    let a = auth(&f, 500, 0, 2_000, 1);
+    client(&f).settle(&a, &0);
+
+    let budget = client(&f).get_budget(&f.from).expect("budget installed");
+    assert_eq!(budget.cached_total_spent, 0);
+    assert_eq!(token(&f).balance(&f.from), 1_000);
+}
+
+#[test]
+fn budget_rolling_window_evicts_expired_spend() {
+    let f = setup(10_000);
+    client(&f).install_budget(&f.from, &1_000, &50); // 50-ledger window
+
+    let first = auth(&f, 5_000, 0, 2_000, 1);
+    client(&f).settle(&first, &1_000); // spends the entire budget
+
+    let second_blocked = auth(&f, 5_000, 0, 2_000, 2);
+    let result = client(&f).try_settle(&second_blocked, &1);
+    assert_eq!(result, rejected(Error::BudgetExceeded));
+
+    // Advance past the rolling window: the first entry should now evict.
+    f.env.ledger().with_mut(|l| {
+        l.sequence_number += 51;
+    });
+
+    let second_allowed = auth(&f, 5_000, 0, 4_000, 3);
+    client(&f).settle(&second_allowed, &1_000);
+
+    let budget = client(&f).get_budget(&f.from).expect("budget installed");
+    assert_eq!(budget.cached_total_spent, 1_000);
+}
+
+#[test]
+fn installing_a_budget_twice_is_rejected() {
+    let f = setup(1_000);
+    client(&f).install_budget(&f.from, &500, &100);
+
+    let result = client(&f).try_install_budget(&f.from, &500, &100);
+    assert_eq!(result, rejected(Error::BudgetAlreadyInstalled));
+}
+
+#[test]
+fn installing_a_non_positive_budget_is_rejected() {
+    let f = setup(1_000);
+    let result = client(&f).try_install_budget(&f.from, &0, &100);
+    assert_eq!(result, rejected(Error::InvalidBudget));
+}
+
+#[test]
+fn installing_a_budget_with_a_zero_period_is_rejected() {
+    let f = setup(1_000);
+    let result = client(&f).try_install_budget(&f.from, &500, &0);
+    assert_eq!(result, rejected(Error::InvalidBudget));
 }

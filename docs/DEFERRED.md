@@ -1053,3 +1053,157 @@ with the filters spec §4 already names, extending them to filter on
 `extra.uptoProfile` once `upto` exists, and making `mergeAccepts` key on
 `extra.uptoProfile` when the scheme is `upto` so two profiles for the same
 resource coexist instead of colliding.
+
+## Phase 6b: additional evidence for `upto` on Stellar, not an SCF tranche deliverable
+
+Two extension scenarios beyond Phase 6's own gate, same treatment as the
+Phase 4/5/6 additions before it: real testnet transactions, checked
+against Horizon, not unit tests standing in for them.
+
+### Zero-settlement: done, with real evidence
+
+A genuine `actual_amount = 0` settlement against the already-deployed
+Phase 6 contract (`CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`,
+unchanged), needing no contract code at all: `settle` never special-cases
+`actual_amount == 0`, so the existing pull-and-refund logic already
+handles it correctly, confirmed first by the pre-existing unit test
+`zero_settlement_refunds_everything`, then for real.
+`apps/facilitator/scripts/upto-settle-zero-demo.ts` produced a real
+settled transaction
+(`2138c0418a85e1bb29c2eab6cea6c76b3b0231d894450a35905053f36403d358`),
+independently checked against Horizon: the buyer's balance is unchanged
+before and after (the full `0.05 PTEST` ceiling came back), the seller's
+balance is unchanged (nothing was charged), and `/effects` shows the full
+pull-then-refund sequence with no transfer to the seller at all, matching
+`settle`'s own `if actual_amount > 0` guard around that leg. A second,
+genuine replay attempt against the same authorization was rejected on
+testnet with `Error(Contract, #6)` (`AuthorizationConsumed`), confirming
+the nonce is consumed even when nothing was actually charged, not just
+when a real transfer happens. Recorded in `conformance/RESULTS.md`.
+
+### OpenZeppelin smart-account integration: contract and account both built and tested, live transaction still open
+
+The scenario: an agent's key wrapped in a real `stellar-accounts` smart
+account, scoped so it can only ever authorize calls to the deployed
+`UptoSettlement` instance, spending against a reserved budget reconciled
+against the actual amount charged, not the signed ceiling.
+
+**What's genuinely done, verified two different ways:**
+
+- `contracts/upto-settlement/src/budget.rs`: a new, purely additive,
+  strictly opt-in reconciliation path in `settle`, called after
+  `actual_amount` is validated and before any transfer moves funds. Eight
+  new unit tests prove it's keyed on `actual_amount`, not `max_amount`
+  (`budget_is_debited_by_actual_amount_not_max_amount` settles for far
+  less than `max_amount` and confirms the budget only moved by the real
+  charge), that a settlement exceeding the remaining budget is rejected
+  even when `max_amount` has room (`a_settlement_that_would_exceed_the_
+  remaining_budget_is_rejected`), that a zero-amount settlement never
+  touches the budget (`zero_settlement_never_touches_the_budget`,
+  matching OpenZeppelin's own rule for the stock policy), and that the
+  rolling window genuinely evicts expired spend
+  (`budget_rolling_window_evicts_expired_spend`). All 27 pre-existing
+  Phase 6 tests still pass unchanged, and the fuzz target still runs
+  clean (21,402 executions, zero crashes, after adding the three new
+  `Error` variants to its exhaustive match).
+- `contracts/agent-smart-account/`: a new, standalone Cargo crate, a real
+  `stellar-accounts` (MIT, `OpenZeppelin/stellar-contracts`) smart
+  account, not a mock. Its `__constructor` creates one `ContextRule` of
+  type `CallContract(upto_settlement_address)` with a single
+  `Signer::Delegated(agent_key)`. Three unit tests call `__check_auth`
+  directly (via `env.as_contract`, not mocked past): a call scoped to the
+  registered contract with the right signer succeeds, a call to any other
+  contract is rejected even with a fully valid signature (the actual
+  claim this scenario makes: the agent key cannot spend anywhere except
+  through `UptoSettlement`), and a signature from an unregistered signer
+  is rejected. Both contracts are deployed to `stellar:testnet`:
+  `UptoSettlement` (Phase 6b) at
+  `CDJY6YLHORR5WYCJM5OQZQZ5SBGBMFZZFRHSIMKEQ2N2KNX237K2B42Q` (a new
+  instance, not an upgrade of Phase 6's own deployment, since the
+  contract has no upgrade mechanism and re-verifying the whole Phase 6
+  gate against a downgraded SDK version to add one was rejected, see
+  below), and `agent-smart-account` at
+  `CAG4OYCEYXHM3SYWMXBITBB6RGYDDHXUQKILFSBTMTPIGLJHDSX42DAJ`, constructed
+  against a real, dedicated, funded testnet keypair
+  (`GA7VZHIP2TJPXJGAMCN5BO7HJC5H4YWX5PZ5ZBHRD4BFD6EXT6NALLP5`) as the
+  agent key. Queried directly from the live contract, not just asserted:
+  `get_context_rule(0)` on the deployed account returns exactly the
+  configured rule, scoped to the deployed `UptoSettlement` address, with
+  the agent key as its one Delegated signer.
+
+**A real, load-bearing environment finding along the way**: the published
+`stellar-accounts` crate on crates.io (0.7.2, the latest stable as of
+this writing) pins `soroban-sdk ^26.1`, not the `27.x` line this
+project's already-deployed, already-proven Phase 6 contract targets
+(matching the live testnet protocol version). Confirmed by a real build
+attempt, not assumed from the version numbers: adding `stellar-accounts`
+directly to `upto-settlement`'s own `Cargo.toml` pulled in a second,
+incompatible `soroban-sdk` into the same dependency graph, producing
+genuine type errors at every storage read and write (two distinct
+`soroban_sdk::Vec` types, neither convertible to the other). The upstream
+`stellar-contracts` repo's own unreleased `main` branch has already moved
+its workspace pin to `soroban-sdk 27.0.2`, so this is a real but likely
+temporary publish lag, not a permanent incompatibility. Resolved by
+keeping `upto-settlement` dependency-free of `stellar-accounts` (its
+`budget.rs` mirrors `SpendingLimitData`/`SpendingEntry` field-for-field
+instead of importing them, documented as such in that module's own doc
+comment) and giving the real dependency only to the new,
+independent `agent-smart-account` crate, which has no such conflict and
+can freely target the SDK version the account framework actually
+requires.
+
+**What's still open: a real, signed, cross-contract settlement
+transaction specifically.** Everything above is proven at the Rust level
+and independently confirmed against the live, deployed contract state.
+What has not yet been produced is a genuine testnet transaction where
+`authorization.from` is the smart account and the settlement actually
+goes through, the same evidence bar every other Phase 6/6b claim in this
+file meets. This was attempted at real length, not given up on early:
+
+- Simulating a call where the smart account is the buyer correctly
+  surfaces the need for its own top-level authorization entry
+  (`needsNonInvokerSigningBy()` reports the smart account's address), but
+  the simulation's auth-recording pass does not itself invoke
+  `__check_auth`, so it never surfaces the *nested* requirement
+  `authenticate()` creates for the agent's own key
+  (`Signer::Delegated`'s verification is `addr.require_auth_for_args(
+  (auth_digest,))`, called from inside `__check_auth` itself). That
+  nested entry has to be constructed by hand, which OpenZeppelin's own
+  documentation explicitly names as a real gap in tooling, not something
+  this session missed: "This model requires manual authorization entry
+  crafting, because it is not returned in a simulation mode."
+- Reasoned out and confirmed against `do_check_auth`'s real source (not
+  guessed) that the nested entry's digest is not `signature_payload`
+  directly, but `sha256(signature_payload.to_bytes() ++
+  context_rule_ids.to_xdr())`, binding which context rule was selected
+  into what the delegated signer actually attests to.
+- Correctly encoding the `AuthPayload` signature itself required
+  abandoning a hand-built XDR attempt (which produced a value the
+  contract's own generated argument-unmarshaling code silently rejected)
+  in favor of generating real TypeScript bindings from the deployed
+  contract's own spec (`stellar contract bindings typescript`) and
+  encoding through its embedded `ContractSpec`, eliminating guesswork
+  about the exact shape.
+- None of this closed the gap. Every constructed transaction still traps
+  inside `__check_auth` itself
+  (`HostError: Error(Auth, InvalidAction)`, `VM call trapped:
+  UnreachableCodeReached`) before `do_check_auth`'s own business logic
+  ever runs, confirmed by testing with an empty `signers` map (which
+  should fail with a *typed*, controlled `SmartAccountError` at worst,
+  not a raw VM trap, if the encoding were the only remaining problem) and
+  by testing with only the smart account's own entry present, no nested
+  entry at all (identical trap either way, ruling out the nested entry as
+  the cause). The isolation work rules out several specific hypotheses
+  (hand-built vs. spec-generated `AuthPayload` encoding, nonce reuse
+  across two `simulateTransaction` calls vs. a fresh nonce, the nested
+  entry's presence or absence) without yet finding what actually causes
+  the trap.
+
+Not fabricated, not skipped silently. The contract-level and
+account-level work above is real, tested, and deployed; the live
+transaction is a genuinely open item, most likely worth a fresh attempt
+using `Signer::External` (a direct signature check against a verifier
+contract, architecturally simpler and needing no nested auth entry at
+all) instead of `Signer::Delegated`, or a working example from
+OpenZeppelin directly, since their own documentation names this exact
+gap without supplying one.
