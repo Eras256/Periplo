@@ -1239,3 +1239,37 @@ already sketched (`protocol + host + template`, the same reconstruction
 `@x402/extensions/bazaar` itself, following the same "don't reimplement
 the wire protocol" principle every other upstream-facing piece of this
 project already follows.
+
+## A design note for any future usage-based ranking signal: wash-trading resistance has to be designed in, not added after
+
+Not a gap in what's built today. `packages/search`'s ranking is purely
+metadata-based: `periplo_hybrid_search`
+(`supabase/migrations/20260812080000_search.sql`) scores on lexical
+relevance (`ts_rank_cd` over `fts`) and semantic similarity (`embedding
+<#> query_embedding`) fused by RRF, confirmed directly in the SQL, not
+assumed: no payment amount, volume, buyer count, or usage figure
+appears anywhere in the scoring formula. There is nothing to
+wash-trade today, since the ranking never looks at payments at all.
+
+Worth writing down anyway, since the temptation to add a
+usage-based credibility signal (payment volume, buyer diversity, a
+low observed failure rate) is an obvious future direction for search
+quality, and the wash-trading resistance for it is much cheaper to
+design in from the start than to retrofit once real listings depend on
+the ranking behaving a certain way:
+
+- Payer diversity, discounted for shared funding origin, not raw
+  payment count. A resource paid for many times by the same buyer, or
+  by buyers funded from the same source, should not score as more
+  credible than one paid for by genuinely independent buyers a few
+  times.
+- Keep any credibility score separate from the relevance score, never
+  folded into one number. A padded credibility signal must never be
+  able to outrank a genuinely more relevant result on its own; the two
+  need to compose in a way that keeps that bound obvious, not just
+  likely.
+
+Not a decision made now, since there is no usage signal to secure yet.
+Recorded here so the next session that adds one starts from this list
+instead of rediscovering it after the ranking is already live and
+harder to change.
