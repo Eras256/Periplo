@@ -1273,3 +1273,12 @@ Not a decision made now, since there is no usage signal to secure yet.
 Recorded here so the next session that adds one starts from this list
 instead of rediscovering it after the ranking is already live and
 harder to change.
+
+## A skill for skills.stellar.org, deliberately after Phase 7, not before
+
+A skill for skills.stellar.org, deliberately after Phase 7 (MCP
+discovery server), not before: without it, there is not yet enough to
+teach an agent. Today's surface is facilitator and Bazaar APIs only,
+thin next to what an agent actually wants to do, discover and pay for
+an x402 service with no prior integration, which is what Phase 7
+exists to make possible. A sequencing decision, not an oversight.
