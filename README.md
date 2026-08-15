@@ -61,6 +61,20 @@ user-facing surface right now.
   `GET /health`, or `GET /supported` directly. `stellar:pubnet` is not
   configured because no mainnet key exists yet. See
   [Deployment](#deployment-what-actually-runs) below for how it runs.
+
+  Reviewing `@x402/core`, the package this facilitator is built directly
+  on, as part of a wider pass over the dependency (not triggered by
+  anything breaking in our own deployment, which only ever registers a
+  single Stellar namespace), we found a real bug in
+  `x402Facilitator.derivePattern()`: registering a facilitator against
+  networks from more than one CAIP-2 namespace in a single call silently
+  drops wildcard matching in every namespace involved, not just the
+  second. Verified empirically against the published
+  `@x402/core@2.21.0`, with a working reproduction contrasting
+  mixed-namespace registration (fails) against single-namespace
+  registration (works as intended). Filed as
+  [x402-foundation/x402#3172](https://github.com/x402-foundation/x402/issues/3172),
+  open.
 - **Automatic cataloging** lives in `apps/facilitator/src/discovery.ts`.
   A payment carrying the `bazaar` discovery extension is validated and
   written to the catalog on `/verify` and `/settle`. There is no
