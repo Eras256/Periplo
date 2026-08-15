@@ -71,6 +71,17 @@ anything, it was just inaccurate for this machine. Full contract detail is
 in `CLAUDE.md`'s `contracts/upto-settlement` paragraph; the fuzz/proptest
 findings are in `docs/DEFERRED.md`'s Phase 6 section.
 
+**Not yet run against Phase 6b's two new contracts
+(`contracts/agent-verifier`, `contracts/agent-smart-account`)**, unlike
+`upto-settlement`, which explicitly went through `security-review` before
+being called done. Consistent with the same discipline, not a new gap:
+neither contract is done, the live smart-account settlement transaction
+is a genuinely open blocker (`docs/DEFERRED.md`'s Phase 6b section,
+[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839)),
+so a security review would be reviewing code still missing its central
+end-to-end proof. Worth running once that blocker closes, whenever that
+turns out to be, not before.
+
 ## Explicitly not to be used during the build
 
 Per spec §0.1: `scf-submission-drafter`, `scf-prescreen-checker`,

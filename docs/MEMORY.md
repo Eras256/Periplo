@@ -693,3 +693,200 @@ loose ends from shipping `contracts/upto-settlement`.
   reported 0 em dashes and a HEAD sha matching the push exactly. Worth
   remembering for any future verify-after-push step: the CDN and the API
   are not the same source of truth, and the CDN lags.
+
+## 2026-08-13/14: responding to external review on #3098/#3138, three profile-discrimination gaps, and the wash-trading design note
+
+- **A reviewer's comment on `#3134` surfaced a wire-level ambiguity in
+  Periplo's own `/supported` and catalog filters that self-testing never
+  would have caught**, since it only shows up when comparing Periplo's
+  own spec text against its own implementation side by side. Verified
+  against the actual code, not the spec's prose, before responding
+  publicly (explicit instruction: don't reply until this is resolved).
+  Found three real, concrete gaps between what `docs/SPEC.md` §6 claims
+  and what the code does, documented plainly in `docs/DEFERRED.md` as
+  found responding to external review, not self-discovered, then fixed
+  the low-risk one (the "(default)"/"(alternative)" label wording in
+  `#3098`'s spec text) before drafting a reply crediting the reviewer.
+- **whawk46 found a real follow-on gap in the already-merged `#3138`
+  fix itself**: the opaque-origin branch skipped query/fragment
+  stripping the function exists to do. Implemented the fix they
+  suggested, added a regression test with a query string on an opaque
+  scheme, confirmed it fails before the fix and passes after, and they
+  reviewed it: "LGTM as it stands, merge-ready from my side" (quoted
+  verbatim in `README.md` and `docs/INTEROP.md`, with its original em
+  dash preserved on purpose, see the register-cleanup note below).
+  Separately, whawk46 explained on the same thread why leaving
+  `routeTemplate` unbuilt for opaque-origin schemes was a deliberate
+  choice, not an oversight; that reasoning is quoted verbatim in
+  `docs/DEFERRED.md` too, for the same reason.
+- **A wash-trading design note was written for search ranking that
+  doesn't exist yet**, at explicit request, checked first rather than
+  assumed: grepped `packages/search/src/*.ts` and the RRF SQL migration
+  to confirm today's ranking is purely metadata-based (lexical +
+  semantic, no usage/payment signal at all), so no wash-trading vector
+  exists today. Recorded design considerations for *any future*
+  usage-based signal (payer-diversity discounting, credibility kept
+  separate from relevance) in `docs/DEFERRED.md` without touching the
+  SCF submission draft, per the scope given.
+- **The skills.stellar.org sequencing decision was written down as a
+  deliberate choice, not a deferral by omission**: wait for Phase 7 (MCP
+  discovery server) before publishing a Periplo skill there, one line in
+  `docs/DEFERRED.md`, exact wording given rather than reworded.
+
+## 2026-08-14/15: Phase 6b, the OpenZeppelin smart-account blocker, and #839
+
+- **Zero-settlement shipped clean, with real evidence, no surprises.**
+  `actual_amount = 0` against the existing Phase 6 contract needed no new
+  contract code (the existing pull-and-refund logic already handles it),
+  confirmed first by the pre-existing unit test, then for real:
+  `2138c0418a85e1bb29c2eab6cea6c76b3b0231d894450a35905053f36403d358` on
+  `stellar:testnet`, full ceiling refunded, nothing charged, replay
+  correctly rejected as `AuthorizationConsumed`. Recorded in
+  `conformance/RESULTS.md`.
+- **The OpenZeppelin smart-account scenario is the first Phase 6b (or
+  any phase) result this project has not been able to close, and it
+  stayed honestly reported as open rather than quietly dropped or
+  papered over with a weaker claim.** `contracts/agent-smart-account`
+  (a real `stellar-accounts` account, `ContextRule::CallContract`-scoped
+  to `UptoSettlement`) and `contracts/upto-settlement/src/budget.rs`
+  (reserved-budget reconciliation keyed on `actual_amount`, mirroring
+  `SpendingLimitData` locally rather than depending on `stellar-accounts`
+  directly, since that pulls in a conflicting `soroban-sdk` version) are
+  both built and genuinely unit-tested, 38 Rust tests across two crates.
+  What never closed: a real, signed, on-chain settlement with the smart
+  account as `authorization.from`. Every construction attempted traps
+  inside `__check_auth` with `HostError: Error(Auth, InvalidAction)`,
+  `VM call trapped: UnreachableCodeReached`, before `do_check_auth`'s own
+  logic ever runs.
+- **Isolation was genuinely systematic, not a handful of guesses,
+  narrowing the problem by one variable at a time across two full
+  rounds:** hand-built XDR vs. spec-driven `ContractSpec.nativeToUdt`
+  encoding (same trap either way), nonce reuse across simulations (same
+  trap with a fresh nonce every time), the nested delegated entry's
+  presence or absence (same trap with only the top-level entry present,
+  ruling out entry content as the cause), an empty `AuthPayload.signers`
+  map (still traps, meaning it's not a recoverable encoding mismatch),
+  the documented `soroban-sdk ^26.1` vs. `27.x` mismatch between
+  `stellar-accounts` and the rest of this project (rebuilt against
+  `stellar-contracts`' own unreleased `main` at a specific commit to
+  align versions, same trap, reverted after), the target contract's own
+  complexity (built a trivial single-line `probe` contract with no
+  storage or business logic at all, same trap), and finally signer type
+  itself: retried the entire construction with `Signer::External`
+  instead of `Signer::Delegated`, a real, motivated hypothesis (reviewing
+  `authenticate`'s two arms in `stellar_accounts::smart_account::storage`
+  shows `External` needs no second nested entry at all), built a
+  deployable `contracts/agent-verifier` Ed25519 verifier for it, added a
+  second `ContextRule` the real `settle()` call actually needs (the
+  nested SEP-41 `transfer` is its own context), verified the
+  `Signer::External` ScVal encoding byte-for-byte against the real
+  on-chain state before ever signing anything with it. Same trap. Also
+  ruled out `Client.from(...).methodName()` vs. building
+  `AssembledTransaction` directly, the one remaining structural
+  difference from every outside reference point consulted. Signer type
+  was the working hypothesis, informed by architecture, not by reading
+  either of the two adjacent competitor repos' code (see below); it
+  turned out not to be the actual differentiator either.
+- **Checked whether `stellar-accounts` itself has any test coverage of
+  this real, host-driven path before drafting an issue, found none, in
+  either the crate or its own official example.** Every test touching
+  `Signer::Delegated`/`Signer::External` + `ContextRuleType::CallContract`
+  calls `do_check_auth` as a plain internal Rust function under
+  `mock_all_auths()`, with empty signature bytes, never a real
+  `SorobanAuthorizationEntry` driven through the actual `__check_auth`
+  entry point. Doesn't rule out an error on this project's own side, but
+  raises the odds this is a genuinely untested path upstream.
+- **Filed [OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839)
+  framed as a request for diagnostic help, not a confirmed bug report,
+  first contact with this maintainer**, with the full construction, both
+  isolation rounds, and the no-coverage finding. Explicit instruction
+  followed exactly: this diagnostic round is closed on purpose, don't
+  reopen it with another angle without a new concrete trigger.
+- **Two adjacent projects competing for the same SCF RFP
+  (`Vellar-Wallet/vellar-facilitator`, `Ithaca-Labs/openx402`) were read
+  for architectural understanding during this investigation, never
+  copied from, never commented on, never interacted with publicly**, a
+  hard rule applied without exception. Reading their public code
+  (both permissively licensed) is what actually motivated the
+  `Signer::External` retry hypothesis, since both avoid the nested
+  `Signer::Delegated`-style entry in their own working implementations,
+  but the public framing of everything that came from this (the #839
+  issue itself, the README, `docs/DEFERRED.md`) attributes the reasoning
+  only to reading `stellar-accounts`' own source, never to observing a
+  competitor's implementation, per explicit instruction on how to narrate
+  this without naming competitors anywhere in the repo.
+- **Separately, verified there is genuinely no on-chain link between this
+  project's Stellar identities/contracts and the user's other projects'
+  identities (specifically Nirium's `nirium-deployer`)** on request: full
+  operation history for both sides, cross-checked against every known
+  address/contract on both, zero shared signers, zero payments, zero
+  contract-invocation overlap, on the only network `nirium-deployer`
+  exists on (testnet; it was never created on mainnet). Recorded as a
+  standing constraint for whenever Periplo generates its own mainnet
+  keys at Tranche #3: fresh, project-own identities, never reused or
+  derived from another project's.
+
+## 2026-08-15: a second bug-hunting round on upstream dependencies, three more filed, one round intentionally paused
+
+- **Explicit, narrow scope given for where to look, and it mattered**:
+  `stellar/stellar-dev-skill` (only if already there for another reason,
+  not worth actively searching), `OpenZeppelin/stellar-contracts` beyond
+  `smart_account` (already covered by `#839`), `stellar/js-stellar-sdk`
+  (the code this project now knows most deeply, thanks to `#839`), never
+  Vellar's or openx402's repos, no exception. `x402-foundation/x402` was
+  added to the list only after an explicit scoping question got answered:
+  yes, but bounded to `bazaar/mcp/`, `bazaar/v1/`, and `@x402/core`'s
+  dispatch, not back to `bazaar/facilitator.ts` or the `exact/stellar`
+  scheme, both already exhausted across earlier rounds.
+- **Found one real bug in `isValidRouteTemplate` distinct from the
+  already-known `mcp://` origin bug**, verified before assuming it was
+  novel: PR `#3138` (the origin fix) was confirmed still open, not
+  merged, so the current upstream `main` still has the unfixed version.
+  The traversal/scheme-injection checks decode `routeTemplate` with a
+  single `decodeURIComponent` pass; a double percent-encoded payload
+  (`%252e%252e%252f`, `%253a%252f%252f`) survives one decode still
+  encoded, passing both checks. Verified directly against the isolated
+  function, both payloads. Filed as
+  [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169).
+- **A pass over `OpenZeppelin/stellar-contracts`' `fee-abstraction`
+  examples and `only_role` macro, and separately its `accounts` (webauthn
+  verifier, spending-limit and weighted-threshold policies) and
+  `governance` packages (timelock, votes checkpoint binary search,
+  governor vote-counting), found nothing genuine**, reported as such
+  rather than forcing a finding: "no encontramos nada genuino" is a valid
+  result, stated explicitly more than once this round. Specific
+  suspicions were checked and ruled out with real reasoning each time,
+  not skipped (a self-administration `__check_auth` that ignores its own
+  signature payload turned out to be sound, gated by the already-scheduled
+  operation hash rather than a cryptographic signature; the checkpoint
+  binary search's `div_ceil`-biased mid was traced by hand and is
+  correct).
+- **`x402Facilitator.derivePattern()` silently drops wildcard coverage
+  when a single facilitator registers networks across more than one
+  CAIP-2 namespace**, found reading `@x402/core`'s facilitator dispatch,
+  the package `apps/facilitator` is built directly on. The mixed-
+  namespace branch returns only the first registered network as the
+  fallback pattern, providing zero wildcard coverage in *any* of the
+  registered namespaces for a variant not explicitly listed. Verified
+  empirically against the real published `@x402/core@2.21.0` (not a
+  re-derivation of the logic): a mixed-namespace registration
+  (`stellar:testnet` + `eip155:8453`) rejects an unlisted same-family
+  variant (`stellar:pubnet`); the identical single-namespace registration
+  (`stellar:testnet` + `stellar:futurenet`) matches it correctly via
+  wildcard. Explicitly not a security hole, fails closed. Doesn't affect
+  Periplo's own deployment, which only ever registers one Stellar
+  namespace, stated plainly in both the issue and where it's linked from
+  `README.md`, to avoid implying it broke something live when it didn't.
+  Filed as [x402-foundation/x402#3172](https://github.com/x402-foundation/x402/issues/3172),
+  with a disclosure line about AI-assisted analysis added at the user's
+  suggestion (verified first against `x402`'s own `CONTRIBUTING.md`
+  wording before adding it, rather than trusted secondhand).
+- **The SCF Build Award was submitted 2026-08-11.** Bug-hunting rounds
+  are paused afterward, not abandoned: no urgency to generate more
+  upstream evidence right now (five real issues/PRs already attached:
+  `#3098` merged, `#3121`/`#3138` open, `#839` open, `#3169`/`#1655`/`#3172`
+  open), and a lead toward `stellar-docs` (the Agent Skills discovery
+  index publication mechanism, an indirect relationship to Periplo) was
+  explicitly deferred rather than chased, named directly as the kind of
+  scope sprawl this project has already documented as its own failure
+  mode. Wait for the prescreen result before deciding on another round.

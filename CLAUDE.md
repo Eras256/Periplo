@@ -13,7 +13,10 @@ directly rather than read prose claiming conformance.
 The full build plan lives at [`docs/SPEC.md`](docs/SPEC.md), read it before
 starting any phase. It is phased (0–10); each phase ends in a gate command
 that must exit 0 before the next phase starts. **Current status: Phase 6
-(`upto` on Stellar) complete, Phase 7 (MCP discovery server) next.** See
+(`upto` on Stellar) complete, Phase 6b (additional evidence, not a tranche
+deliverable) has real contract-level results and a genuinely open blocker,
+Phase 7 (MCP discovery server) next. The SCF Build Award was submitted
+2026-08-11; prescreen is pending.** See
 [`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`conformance/RESULTS.md`](conformance/RESULTS.md),
 [`conformance/baseline/`](conformance/baseline),
@@ -370,6 +373,63 @@ implementation, per spec §6's "prepare the upstream contribution as
 not-yet-started work, this phase's gate is the contract itself, not that
 integration; see `docs/DEFERRED.md`.
 
+**Phase 6b** (`contracts/agent-verifier`, `contracts/agent-smart-account`,
+`contracts/upto-settlement/src/budget.rs`) is additional evidence beyond
+Phase 6's own gate, not an SCF tranche deliverable, same treatment as
+Phase 4/5/6: zero-settlement is done and evidenced (a real
+`actual_amount = 0` transaction, full refund, nonce still consumed,
+recorded in `conformance/RESULTS.md`); the OpenZeppelin `stellar-accounts`
+smart-account integration (an agent key that can only spend through
+`UptoSettlement`, within a reserved budget reconciled against the actual
+charge) is built and unit-tested at the contract level but has **no real,
+signed testnet transaction yet**, a genuinely open blocker, not a silent
+gap. `__check_auth` traps (`UnreachableCodeReached`) on every construction
+tried: `Signer::Delegated` (the original attempt) and `Signer::External`
+(the retry, informed by reviewing `authenticate`'s two arms in
+`stellar_accounts::smart_account::storage`, not by reading any
+competitor's code), both against the real target contract and against a
+trivial single-line `probe` contract used to isolate the trap from
+`UptoSettlement`'s own complexity. Seven specific hypotheses ruled out
+with real evidence (see `docs/DEFERRED.md`'s Phase 6b section for all of
+them: encoding method, nonce reuse, nested-entry presence, `AuthPayload`
+content, `soroban-sdk` version alignment, target-contract complexity,
+signer type, and `Client.from` vs. `AssembledTransaction.build`
+directly), plus independent confirmation that `stellar-accounts` itself
+has no test coverage of this real, host-driven auth path in either the
+crate or its own official example. Filed as
+[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839),
+framed as a request for diagnostic help, open. This diagnostic round is
+closed on purpose (the user's own instruction: don't reopen #839 with
+another angle without a new concrete trigger); further attempts get their
+own separately-scoped investigation.
+
+Reviewing the dependencies this project actually builds on, both directly
+from the #839 investigation and in separately-scoped bug-hunting rounds
+afterward, turned up four more real, independently verified upstream
+bugs, all filed, all still open as of this writing:
+[x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169)
+(`isValidRouteTemplate`'s traversal/scheme-injection checks decode once,
+so double percent-encoding bypasses both),
+[stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655)
+(`needsNonInvokerSigningBy`/`signAuthEntries` only see the top-level node
+of a CAP-71 `SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES` entry, missing
+an outstanding delegate signature), and
+[x402-foundation/x402#3172](https://github.com/x402-foundation/x402/issues/3172)
+(`x402Facilitator.derivePattern()` silently drops wildcard coverage when
+one facilitator registers networks from more than one CAIP-2 namespace),
+alongside the earlier `mcp://` canonical-URL bug (#3121, fix at #3138,
+open, LGTM'd twice, blocked only on maintainer merge). Each was verified
+directly against the real published package before filing, not asserted
+from reading the source alone; severity was calibrated honestly in every
+case (none of the four is a security vulnerability, all fail closed or
+degrade functionally, stated as such in the issue itself). Two adjacent
+projects' repos (`Vellar-Wallet/vellar-facilitator`,
+`Ithaca-Labs/openx402`) were read for architectural understanding only,
+during the #839 investigation, and explicitly excluded from every later
+bug-hunting round; both are direct competitors for the same SCF RFP, so
+their code was never copied and neither repo was ever commented on or
+interacted with publicly, per explicit standing instruction.
+
 `Dockerfile.facilitator` builds and ships `@periplo/bazaar` and
 `@periplo/search` alongside `@periplo/facilitator`. Three things the image
 needs or the deploy crash-loops: `pnpm --filter @periplo/bazaar build`
@@ -396,9 +456,18 @@ and one in `docs/SELLERS.md` a repo-wide grep caught afterward. Same
 discipline throughout (period, comma, or colon chosen per sentence, never a
 blind find-and-replace) and same verification (every technical value, hash,
 table, and code block diffed against `HEAD` before each commit), but not
-the fuller negation/bold treatment the original trio got. The repo is
-verified em-dash-free as of this pass (`grep -rlP '\x{2014}' --include="*.md" .`
-returns nothing).
+the fuller negation/bold treatment the original trio got. The same
+discipline has applied to every doc edit since: own prose gets rewritten
+per-sentence, verbatim quotes from a reviewer's actual words (whawk46's,
+in `README.md`, `docs/INTEROP.md`, and `docs/DEFERRED.md`) keep their
+original em dashes exactly, on purpose, not missed.
+
+**`grep -rlP '\x{2014}' --include="*.md" .` gives false positives in this
+environment** and cannot be trusted, found checking this claim again
+later: it flags dozens of files with no real em dash at all. Use the raw
+byte sequence instead, `grep -rl $'\xe2\x80\x94' --include="*.md" .`,
+confirmed to match the same three files the verbatim-quote exception
+above names and nothing else.
 
 `conformance/baseline/` holds real, captured HTTP transcripts (not
 reconstructed from documentation) against the public reference facilitator
