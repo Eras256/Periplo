@@ -1302,6 +1302,42 @@ reproduces against a target contract with a single line of body
 build's client-side auth-entry construction feeds it, independent of
 anything specific to Periplo's own contract.
 
+### `stellar-accounts` itself has no test that exercises this path: checked two independent ways
+
+Before drafting an upstream issue, checked whether `stellar-accounts`
+(the published `0.7.2` crate) or its own official example
+(`examples/multisig-smart-account` in `OpenZeppelin/stellar-contracts`)
+already has a reference test for `Signer::Delegated` +
+`ContextRuleType::CallContract` that could be diffed against, in either
+direction: does the reference case pass clean (compare construction
+step by step), or does it trap identically (a clean library bug)?
+
+Neither. `grep -rn "SorobanAuthorizationEntry\|set_auths\|
+authorize_as_current_contract"` across the full crate source returned
+nothing, and manual reading of every test touching `Signer::Delegated`
++ `ContextRuleType::CallContract` (`src/smart_account/test/
+context_rules.rs` in the crate itself,
+`examples/multisig-smart-account/account/src/test.rs` in the repo's own
+official example) confirmed the same pattern in both: every one calls
+`do_check_auth` directly as a plain Rust function inside
+`e.mock_all_auths()`, with empty signature bytes
+(`create_signatures`'s `Bytes::new(e)` per signer) and an arbitrary
+payload never derived by the host. None of them construct a real
+`SorobanAuthorizationEntry` tree or drive it through the host's actual
+`__check_auth` invocation, the mechanism this build's auth-entry
+construction depends on. `Architecture.md` does not document the
+`auth_digest` derivation either; the only source for it is
+`do_check_auth`'s own Rust body, already read directly for this build's
+construction.
+
+This does not rule out an error on this build's own side. It does mean
+there is no reference case, in either direction, to diff against, and
+that the real host-driven path for `Signer::Delegated` +
+`ContextRuleType::CallContract` appears to have no test coverage
+upstream, at either the library or its own example level, which raises
+the odds this is a genuine, currently-untested gap rather than a
+misuse of a well-exercised path.
+
 ## `routeTemplate` for opaque-origin schemes: deliberately left unbuilt, on a reviewer's own reasoning
 
 `x402-foundation/x402#3138`'s fix (the opaque-origin canonical-URL
