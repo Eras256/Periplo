@@ -89,6 +89,28 @@ user-facing surface right now.
   by the person who reported the original bug, blocked only on a
   maintainer's approval to merge.
 
+  Reviewing the same `@x402/extensions/bazaar` package a second time
+  turned up another real bug, this one in `isValidRouteTemplate`
+  itself: its traversal and scheme-injection checks decode
+  `routeTemplate` once, so a double percent-encoded payload survives
+  the first decode still encoded and slips past both checks, verified
+  directly against the function with two working repro payloads. Filed
+  as [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169),
+  open, awaiting a maintainer response.
+
+  A separate one surfaced while working the OpenZeppelin smart-account
+  issue below (`#839`): `@stellar/stellar-sdk`'s
+  `AssembledTransaction.needsNonInvokerSigningBy()` and
+  `signAuthEntries()` only ever look at the top-level node of a
+  `SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES` (CAP-71) auth entry, so
+  a delegate signature that's still outstanding is never reported,
+  verified with two real entries built via the SDK's own
+  `buildWithDelegatesEntry`/`authorizeEntry`. CAP-71 isn't live on any
+  network yet, so this has no impact today, but the bug is real in
+  code already shipped. Filed as
+  [stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655),
+  open, awaiting a maintainer response.
+
   The facilitator reports the outcome through the `EXTENSION-RESPONSES`
   header: `{"bazaar":{"status":"success"}}`, or
   `{"status":"rejected","rejectedReason":"routeTemplate failed validation"}`.
