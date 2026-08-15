@@ -1,0 +1,32 @@
+[package]
+name = "agent-verifier"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Phase 6b retry: a deployable Ed25519 Verifier contract wrapping stellar_accounts::verifiers::ed25519, so agent-smart-account can use a Signer::External signer instead of Signer::Delegated."
+
+[lib]
+crate-type = ["lib", "cdylib"]
+doctest = false
+
+[dependencies]
+# Same pin as agent-smart-account, for the same reason (see that crate's
+# Cargo.toml comment): stellar-accounts 0.7.2 pins soroban-sdk ^26.1, not the
+# 27.0.5 line the rest of this repo's Soroban work targets.
+soroban-sdk = "26.1.1"
+stellar-accounts = "0.7.2"
+
+[dev-dependencies]
+soroban-sdk = { version = "26.1.1", features = ["testutils"] }
+ed25519-dalek = { version = "2.1.1", default-features = false, features = ["rand_core"] }
+rand_core = { version = "0.6", default-features = false, features = ["getrandom"] }
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true

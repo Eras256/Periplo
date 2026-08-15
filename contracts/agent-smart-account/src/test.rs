@@ -2,7 +2,7 @@
 extern crate std;
 
 use super::*;
-use soroban_sdk::{symbol_short, testutils::Address as _, vec, Bytes, Map, Val};
+use soroban_sdk::{symbol_short, testutils::Address as _, vec, Bytes, Map, TryFromVal, Val};
 
 /// `agent-smart-account` (soroban-sdk 26.1.1, to match the real published
 /// `stellar-accounts` crate) and `upto-settlement` (soroban-sdk 27.0.5, to
@@ -25,16 +25,38 @@ use soroban_sdk::{symbol_short, testutils::Address as _, vec, Bytes, Map, Val};
 /// address as `authorization.from` is proven the stronger way: a real,
 /// cross-contract testnet transaction, recorded in
 /// `conformance/RESULTS.md`.
+///
+/// `MockVerifierContract` matches `stellar-accounts`' own test convention
+/// (`src/smart_account/test/context_rules.rs`): a stand-in `Verifier` whose
+/// `verify` always returns `true`, so these tests exercise the account's own
+/// authorization decision (scoping, signer recognition) without also
+/// re-testing Ed25519 cryptography that `contracts/agent-verifier`'s own
+/// test suite already covers with real signatures.
+#[contract]
+struct MockVerifierContract;
 
-fn create_signatures(e: &Env, agent_key: &Address, context_rule_id: u32) -> AuthPayload {
+#[contractimpl]
+impl MockVerifierContract {
+    pub fn verify(_e: Env, _hash: Bytes, _key_data: Val, _sig_data: Val) -> bool {
+        true
+    }
+
+    pub fn canonicalize_key(e: Env, key_data: Val) -> Bytes {
+        Bytes::try_from_val(&e, &key_data).unwrap()
+    }
+
+    pub fn batch_canonicalize_key(e: Env, key_data: Vec<Val>) -> Vec<Bytes> {
+        Vec::from_iter(&e, key_data.iter().map(|key| Bytes::try_from_val(&e, &key).unwrap()))
+    }
+}
+
+fn create_signatures(e: &Env, verifier: &Address, agent_pubkey: &BytesN<32>, context_rule_id: u32) -> AuthPayload {
     let mut signers = Map::new(e);
-    // Delegated signer verification never reads this Bytes value (see
-    // `authenticate` in stellar_accounts::smart_account::storage): it
-    // routes to `agent_key.require_auth_for_args(...)` instead, a real,
-    // separate auth requirement `env.mock_all_auths()` satisfies below.
-    // Matches OpenZeppelin's own test convention exactly (`Bytes::new(e)`),
-    // not a shortcut invented for this file.
-    signers.set(Signer::Delegated(agent_key.clone()), Bytes::new(e));
+    let key_data = Bytes::from_slice(e, &agent_pubkey.to_array());
+    // The mock verifier accepts any sig_data unconditionally, so this can be
+    // empty: `authenticate`'s External arm forwards it as-is to the
+    // verifier's own `verify`, never inspects it itself.
+    signers.set(Signer::External(verifier.clone(), key_data), Bytes::new(e));
     AuthPayload {
         signers,
         context_rule_ids: soroban_sdk::Vec::from_array(e, [context_rule_id]),
@@ -59,11 +81,13 @@ fn check_auth_succeeds_for_a_call_to_the_registered_contract() {
     let e = Env::default();
     e.mock_all_auths();
 
-    let agent_key = Address::generate(&e);
+    let verifier = e.register(MockVerifierContract, ());
+    let agent_pubkey = BytesN::from_array(&e, &[1u8; 32]);
     let upto_settlement = Address::generate(&e);
+    let asset = Address::generate(&e);
     let account_id = e.register(
         AgentSmartAccount,
-        (agent_key.clone(), upto_settlement.clone()),
+        (verifier.clone(), agent_pubkey.clone(), upto_settlement.clone(), asset),
     );
 
     let rule = e.as_contract(&account_id, || smart_account::get_context_rule(&e, 0));
@@ -73,7 +97,7 @@ fn check_auth_succeeds_for_a_call_to_the_registered_contract() {
     );
 
     let ctx = context(upto_settlement, symbol_short!("settle"), vec![&e]);
-    let signatures = create_signatures(&e, &agent_key, rule.id);
+    let signatures = create_signatures(&e, &verifier, &agent_pubkey, rule.id);
     let payload_hash = digest(&e);
 
     let result: Result<(), SmartAccountError> = e.as_contract(&account_id, || {
@@ -86,6 +110,59 @@ fn check_auth_succeeds_for_a_call_to_the_registered_contract() {
 }
 
 #[test]
+fn check_auth_succeeds_for_the_nested_asset_transfer_alongside_settle() {
+    // A real settle() call presents __check_auth with TWO contexts in one
+    // invocation (the top-level settle call, and the nested SEP-41
+    // transfer()), see this module's own doc for why. Both must validate
+    // together against context_rule_ids aligned by index to auth_contexts,
+    // matching stellar-accounts' own do_check_auth_multiple_contexts_success
+    // convention.
+    let e = Env::default();
+    e.mock_all_auths();
+
+    let verifier = e.register(MockVerifierContract, ());
+    let agent_pubkey = BytesN::from_array(&e, &[1u8; 32]);
+    let upto_settlement = Address::generate(&e);
+    let asset = Address::generate(&e);
+    let account_id = e.register(
+        AgentSmartAccount,
+        (verifier.clone(), agent_pubkey.clone(), upto_settlement.clone(), asset.clone()),
+    );
+
+    let settle_rule = e.as_contract(&account_id, || smart_account::get_context_rule(&e, 0));
+    let transfer_rule = e.as_contract(&account_id, || smart_account::get_context_rule(&e, 1));
+    assert_eq!(
+        transfer_rule.context_type,
+        ContextRuleType::CallContract(asset.clone())
+    );
+
+    let settle_ctx = context(upto_settlement, symbol_short!("settle"), vec![&e]);
+    let transfer_ctx = context(asset, symbol_short!("transfer"), vec![&e]);
+
+    let mut signers = Map::new(&e);
+    let key_data = Bytes::from_slice(&e, &agent_pubkey.to_array());
+    signers.set(Signer::External(verifier, key_data), Bytes::new(&e));
+    let signatures = AuthPayload {
+        signers,
+        context_rule_ids: soroban_sdk::Vec::from_array(&e, [settle_rule.id, transfer_rule.id]),
+    };
+    let payload_hash = digest(&e);
+
+    let result: Result<(), SmartAccountError> = e.as_contract(&account_id, || {
+        AgentSmartAccount::__check_auth(
+            e.clone(),
+            payload_hash,
+            signatures,
+            vec![&e, settle_ctx, transfer_ctx],
+        )
+    });
+    assert!(
+        result.is_ok(),
+        "both the settle call and its nested asset transfer must be authorized together"
+    );
+}
+
+#[test]
 fn check_auth_rejects_a_call_to_a_different_contract() {
     // The core claim of this whole contract: an agent key wrapped in this
     // account cannot authorize spending through anything except the one
@@ -93,15 +170,20 @@ fn check_auth_rejects_a_call_to_a_different_contract() {
     let e = Env::default();
     e.mock_all_auths();
 
-    let agent_key = Address::generate(&e);
+    let verifier = e.register(MockVerifierContract, ());
+    let agent_pubkey = BytesN::from_array(&e, &[1u8; 32]);
     let upto_settlement = Address::generate(&e);
-    let account_id = e.register(AgentSmartAccount, (agent_key.clone(), upto_settlement));
+    let asset = Address::generate(&e);
+    let account_id = e.register(
+        AgentSmartAccount,
+        (verifier.clone(), agent_pubkey.clone(), upto_settlement, asset),
+    );
 
     let rule = e.as_contract(&account_id, || smart_account::get_context_rule(&e, 0));
 
     let some_other_contract = Address::generate(&e);
     let ctx = context(some_other_contract, symbol_short!("transfer"), vec![&e]);
-    let signatures = create_signatures(&e, &agent_key, rule.id);
+    let signatures = create_signatures(&e, &verifier, &agent_pubkey, rule.id);
     let payload_hash = digest(&e);
 
     // do_check_auth panics on a context/rule mismatch rather than returning
@@ -127,16 +209,21 @@ fn check_auth_rejects_an_unrecognized_signer() {
     let e = Env::default();
     e.mock_all_auths();
 
-    let agent_key = Address::generate(&e);
-    let stranger = Address::generate(&e);
+    let verifier = e.register(MockVerifierContract, ());
+    let agent_pubkey = BytesN::from_array(&e, &[1u8; 32]);
+    let stranger_pubkey = BytesN::from_array(&e, &[2u8; 32]);
     let upto_settlement = Address::generate(&e);
-    let account_id = e.register(AgentSmartAccount, (agent_key, upto_settlement.clone()));
+    let asset = Address::generate(&e);
+    let account_id = e.register(
+        AgentSmartAccount,
+        (verifier.clone(), agent_pubkey, upto_settlement.clone(), asset),
+    );
 
     let rule = e.as_contract(&account_id, || smart_account::get_context_rule(&e, 0));
 
     let ctx = context(upto_settlement, symbol_short!("settle"), vec![&e]);
     // A signature keyed to a signer the account never registered.
-    let signatures = create_signatures(&e, &stranger, rule.id);
+    let signatures = create_signatures(&e, &verifier, &stranger_pubkey, rule.id);
     let payload_hash = digest(&e);
 
     // See the panic-vs-Result note in check_auth_rejects_a_call_to_a_different_contract.

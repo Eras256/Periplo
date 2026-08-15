@@ -1344,6 +1344,96 @@ report, first contact with this maintainer. Open, unresolved as of
 this writing; the live cross-contract settlement transaction for this
 scenario remains blocked on whatever the answer turns out to be.
 
+### `Signer::External` retried in place of `Signer::Delegated`, and ruled out as the differentiator
+
+Reviewing `stellar_accounts::smart_account::storage::authenticate`'s two
+arms side by side (`Delegated` needs a second, nested, hand-constructed
+auth entry; `External` verifies a raw Ed25519 signature via one
+cross-contract call, entirely inside the account's own single entry) was
+a real, motivated reason to retry with `External`, not a guess. The
+retry was built completely, not half-attempted:
+
+- `contracts/agent-verifier` (new crate): a deployable Ed25519 `Verifier`
+  wrapping `stellar_accounts::verifiers::ed25519`, five unit tests with
+  real signatures (genuine accept, wrong-key rejection, tampered-message
+  rejection, both canonicalization paths). Deployed to `stellar:testnet`
+  at `CAG4XLOGOBQUKRV4QESCYDJHY5IPTINTC64XDXF5EHA5GXACVVRA6TU3`.
+- `contracts/agent-smart-account` rewritten for `Signer::External`, and
+  given a *second* `ContextRule`: a real `settle()` call presents
+  `__check_auth` with two contexts in one invocation (the top-level
+  `settle`, and the nested SEP-41 `transfer` it makes to pull the
+  buyer's funds), each needing its own matching
+  `ContextRuleType::CallContract`. Four unit tests pass, including one
+  proving both contexts validate together against `context_rule_ids`
+  aligned by index, matching `stellar-accounts`' own
+  `do_check_auth_multiple_contexts_success` convention. Redeployed at
+  `CA3LQLUJWT3GIRIGFIRKLO73CLLOWY7TKTFFOB5VCSYHARGHNVEPSZEB`, scoped to
+  the Phase 6b `UptoSettlement` instance
+  (`CDJY6YLHORR5WYCJM5OQZQZ5SBGBMFZZFRHSIMKEQ2N2KNX237K2B42Q`) and the
+  test asset.
+- The `Signer::External` ScVal encoding used to sign was checked against
+  ground truth, not assumed correct: `get_context_rule(0)`'s real,
+  on-chain, already-encoded `Signer::External` value was pulled via a
+  live simulation and diffed byte-for-byte against this build's own
+  `spec.nativeToUdt(...)` output for the same logical value. Identical.
+
+A real, signed `settle()` transaction was submitted through the
+two-context smart account:
+[`9cc42fde13834730b4c6d031a7be9562f6dc7080f91d8c2daefa6413c51640c0`](https://stellar.expert/explorer/testnet/tx/9cc42fde13834730b4c6d031a7be9562f6dc7080f91d8c2daefa6413c51640c0)
+(ledger 4148611). **It failed on-chain**, the identical trap as before
+(`HostError: Error(Auth, InvalidAction)`, `VM call trapped:
+UnreachableCodeReached` inside `__check_auth`). Soroban's atomicity
+guarantee held: a failed invocation rolls back completely, confirmed by
+re-reading balances after the fact, not just trusting the "no error"
+absence, so nothing was lost beyond the network fee.
+
+Isolated once more against the same minimal `probe` contract from the
+`Signer::Delegated` round (single context this time, the simplest
+possible construction): the identical trap.
+
+**Conclusion, stated plainly: `Signer::Delegated` vs. `Signer::External`
+is ruled out as the actual differentiator for this build's own
+construction.** Both signer types trap identically here, which means the
+two external implementations that work with `External` elsewhere don't
+automatically transfer, something else in this build's own transaction
+construction still differs from theirs, not yet found. The Signer
+encoding itself is now proven correct by direct on-chain comparison, so
+that specific piece is no longer a live suspect.
+
+### One more isolation round: `Client.from(...).methodName()` vs. building `AssembledTransaction` directly
+
+The one remaining structural difference between this build's construction
+and the pattern used by every outside reference point consulted:
+this build calls the generated `Client.from({contractId,
+...}).methodName(...)` convenience wrapper throughout, never
+`AssembledTransaction.build({contractId, method, args, ...})` directly.
+`Client`'s generated methods are documented to delegate to
+`AssembledTransaction.build` underneath, so this was not expected to
+matter, but it was the one remaining untested variable after ruling out
+signer type, encoding method, nonce reuse, nested-entry presence, SDK
+version alignment, and target-contract complexity.
+
+Retried once, against the same minimal `probe` contract, everything else
+held constant: `probe.ping({caller: smart_account})` built via
+`AssembledTransaction.build(...)` directly instead of
+`Client.from(...).ping(...)`, same `Signer::External` construction, same
+`authorizeEntry` signing. **Identical trap**
+(`HostError: Error(Auth, InvalidAction)`, `VM call trapped:
+UnreachableCodeReached` inside `__check_auth`). `Client.from` vs. direct
+`AssembledTransaction.build` is now also ruled out.
+
+This closes this diagnostic round, per its own stated scope: seven
+specific hypotheses tested and ruled out (hand-built vs. spec-driven
+encoding, nonce reuse, nested-entry presence, `AuthPayload` content,
+`soroban-sdk` version alignment, target-contract complexity, signer type
+`Delegated` vs. `External`), plus signer encoding independently confirmed
+byte-correct against live on-chain state, plus the transaction-building
+API surface itself (`Client.from` vs. `AssembledTransaction.build`). The
+trap remains unexplained. Further attempts, if warranted, get their own
+separately-scoped investigation rather than continuing to stack onto this
+one; `OpenZeppelin/stellar-contracts#839` carries the full picture as of
+this update.
+
 ## `routeTemplate` for opaque-origin schemes: deliberately left unbuilt, on a reviewer's own reasoning
 
 `x402-foundation/x402#3138`'s fix (the opaque-origin canonical-URL
