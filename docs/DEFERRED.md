@@ -1208,6 +1208,41 @@ all) instead of `Signer::Delegated`, or a working example from
 OpenZeppelin directly, since their own documentation names this exact
 gap without supplying one.
 
+### The `soroban-sdk ^26.1` vs `27.x` mismatch was tested directly as a cause of the trap, and ruled out
+
+Before treating the trap above as a real, independent problem worth an
+upstream issue, the most obvious simpler explanation was checked
+directly rather than assumed away: the already-documented `soroban-sdk`
+version mismatch between the published `stellar-accounts` crate
+(`^26.1`) and `upto-settlement` (`27.0.5`).
+
+`agent-smart-account` was rebuilt against `stellar-contracts`' own
+unreleased `main` branch (commit `fbfde388e1b72afa93d6b1c922067879b20e81db`,
+which already pins `soroban-sdk 27.0.2`) instead of the published
+`0.7.2` crate, resolving to `soroban-sdk 27.0.6`, the same major.minor
+line as `upto-settlement`'s `27.0.5`. All three unit tests still passed
+unchanged. A fresh instance was deployed to testnet
+(`CB3XXKZLHTTTJEZF6URNVK66E5JAEBYRO2VMRP6JO3SYPCV4GAA7MNN2`) with the
+same `agent_key`/`upto_settlement` constructor arguments as the original,
+and the exact same auth-entry construction (spec-driven `AuthPayload`
+encoding, the `auth_digest = sha256(signature_payload ++
+xdr(context_rule_ids))` derivation confirmed against `do_check_auth`'s
+own source, both entries built via `authorizeEntry`/`authorizeInvocation`)
+was retried against it.
+
+The trap was identical: the same `HostError: Error(Auth, InvalidAction)`,
+the same `VM call trapped: UnreachableCodeReached` inside `__check_auth`.
+Version alignment changed nothing. The experiment was reverted
+(`agent-smart-account` back to the published `stellar-accounts@0.7.2` /
+`soroban-sdk@26.1.1` pin, no permanent change), since a git dependency
+on an unreleased, movable branch is less reproducible than a published
+crate version and bought nothing once the hypothesis came back negative.
+
+The `^26.1` vs `27.x` mismatch stands as a real, independently worth
+recording environment finding (see above), but it is now confirmed, not
+assumed, to be a separate thing from the `__check_auth` trap, not its
+cause.
+
 ## `routeTemplate` for opaque-origin schemes: deliberately left unbuilt, on a reviewer's own reasoning
 
 `x402-foundation/x402#3138`'s fix (the opaque-origin canonical-URL
