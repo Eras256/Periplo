@@ -145,9 +145,13 @@ user-facing surface right now.
     [`contracts/agent-smart-account`](contracts/agent-smart-account) (a
     real `ContextRule::CallContract`, not simulated) are built, tested,
     and deployed to `stellar:testnet`. There is still no real, signed
-    transaction where the smart account is `authorization.from`. See
-    `docs/DEFERRED.md`'s Phase 6b section for what was tried and the path
-    to closing it.
+    transaction where the smart account is `authorization.from`; after
+    exhausting independent isolation (version alignment, target-contract
+    complexity, both ruled out), filed a detailed diagnostic issue
+    against `OpenZeppelin/stellar-contracts`,
+    [#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
+    Still open, still blocked. See `docs/DEFERRED.md`'s Phase 6b section
+    for what was tried and the path to closing it.
 
 ## What Periplo is (planned)
 

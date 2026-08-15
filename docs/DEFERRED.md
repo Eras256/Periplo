@@ -1338,6 +1338,12 @@ upstream, at either the library or its own example level, which raises
 the odds this is a genuine, currently-untested gap rather than a
 misuse of a well-exercised path.
 
+**Filed:** [OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839),
+framed as a request for diagnostic help rather than a confirmed bug
+report, first contact with this maintainer. Open, unresolved as of
+this writing; the live cross-contract settlement transaction for this
+scenario remains blocked on whatever the answer turns out to be.
+
 ## `routeTemplate` for opaque-origin schemes: deliberately left unbuilt, on a reviewer's own reasoning
 
 `x402-foundation/x402#3138`'s fix (the opaque-origin canonical-URL
