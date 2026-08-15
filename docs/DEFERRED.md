@@ -1243,6 +1243,65 @@ recording environment finding (see above), but it is now confirmed, not
 assumed, to be a separate thing from the `__check_auth` trap, not its
 cause.
 
+### Isolated from `UptoSettlement` entirely: the trap reproduces identically against a trivial target contract
+
+The second simpler explanation checked before treating the trap as a
+real, independent problem: that it was specific to `UptoSettlement`'s
+own complexity (storage reads, nonce handling, the `budget` module),
+not to the smart-account/auth layer itself.
+
+A minimal `probe` contract was built with no storage, no nonce, and no
+business logic at all:
+
+```rust
+#![no_std]
+use soroban_sdk::{contract, contractimpl, Address, Env};
+#[contract]
+pub struct Probe;
+#[contractimpl]
+impl Probe {
+    pub fn ping(_env: Env, caller: Address) {
+        caller.require_auth();
+    }
+}
+```
+
+Deployed to testnet at
+`CCLBQEUKTDBJTMK7BYP2NGTGH5FF5HY5RJGOXWKGRTNUSFBH6S77A23H` (429 bytes,
+wasm hash `2bcc2ed52aab41eaf772a1d546ea65cf2ec04abfbdd4d0660881090692fa470b`).
+A fresh `agent-smart-account` instance, built from the published
+`stellar-accounts@0.7.2` crate (not the version-alignment experiment
+above), was deployed and scoped via `ContextRule::CallContract` to this
+`probe` contract instead of `UptoSettlement`:
+`CBQAYHHTFAYUL7OY7SCVP67LGTCMW77K6UUH6B5LRTUF52GCMNJICRG3` (wasm hash
+`7c9ed845a00a9ff7638c7b64bfaa089fed7a1f8d771772f6bbf9877d377a1ab7`).
+
+`probe.ping({caller: smart_account})` was simulated with the same
+two-entry auth tree used throughout this investigation: entry0 for the
+smart account via `authorizeEntry` with a spec-encoded `AuthPayload`
+signer callback, entry1 for the agent key via `authorizeInvocation`
+with the `auth_digest = sha256(signature_payload ++
+xdr(context_rule_ids))` derivation confirmed against `do_check_auth`'s
+own source.
+
+The trap was identical:
+
+```
+SIMULATION ERROR: HostError: Error(Auth, InvalidAction)
+...
+2: contract:CBQAYHHTF... topics:[error, Error(WasmVm, InvalidAction)]
+   data:["VM call trapped: UnreachableCodeReached", __check_auth]
+```
+
+Confirmed, not assumed: the trap does not depend on `UptoSettlement`,
+its storage, its nonce handling, or its budget-reconciliation logic. It
+reproduces against a target contract with a single line of body
+(`caller.require_auth()`), scoped through the exact same
+`ContextRule::CallContract` mechanism. This narrows the trap to the
+`stellar-accounts`/`__check_auth` machinery itself, or to how this
+build's client-side auth-entry construction feeds it, independent of
+anything specific to Periplo's own contract.
+
 ## `routeTemplate` for opaque-origin schemes: deliberately left unbuilt, on a reviewer's own reasoning
 
 `x402-foundation/x402#3138`'s fix (the opaque-origin canonical-URL
