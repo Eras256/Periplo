@@ -125,34 +125,15 @@ user-facing surface right now.
   [stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655),
   open, awaiting a maintainer response.
 
-  The `upto` spec thread itself (below, [x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098))
-  went through the same evidence discipline as everything else here.
-  When a second PR ([#3134](https://github.com/x402-foundation/x402/pull/3134),
-  by [Iam0TI](https://github.com/Iam0TI) via
-  [0d1026/Rialto](https://github.com/0d1026/Rialto)) proposed a different
-  `upto` mechanism against the same spec file, we ran an honest
-  comparison instead of defending our own design: pulled real
-  `fee_charged` numbers from both projects' own settled testnet
-  transactions, confirming the alternative design settles roughly 25 to
-  30 percent cheaper, and decoded the raw XDR of its cited transactions
-  ourselves before citing them as fact in a spec change, rather than
-  trusting the PR description. Checking our own catalog implementation
-  against that same spec text also surfaced three real gaps of our own
-  (no `upto` support in `/supported` yet, no
-  `GET /discovery/*` routes at all, a dedupe key that isn't
-  `extra`-aware), recorded at
-  [docs/DEFERRED.md](https://github.com/Eras256/Periplo/blob/main/docs/DEFERRED.md#upto-profile-discrimination-three-real-implementation-gaps-found-responding-to-external-review-not-self-discovered),
-  not fixed yet. `#3098` now documents both profiles, credited by name,
-  rather than leaving two competing specs for maintainers to arbitrate.
-  Since then, two more independent implementers have engaged the same
-  thread rather than opening a third: one confirmed the same
-  profile-discrimination requirement we found from a different angle,
-  and another, building the discovery side specifically, raised real
-  requirements the settlement side alone would never surface, how a
-  catalog should price a metered listing, how a budget filter should
-  treat one, and how to rank by settled value instead of raw call
-  count. We responded to both with verified, additive findings, not
-  advocacy for our own design.
+  The `upto` spec thread itself (below,
+  [x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098))
+  went through the same evidence discipline as everything else here: an
+  honest comparison against a competing design rather than defending our
+  own, real fee numbers and independently-verified transaction XDR rather
+  than trusting a PR description, and self-checks against external review
+  that turned up four real gaps in our own code, not fixed yet. Full
+  chronological writeup, with links to every thread and finding, in
+  [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md).
 
   The facilitator reports the outcome through the `EXTENSION-RESPONSES`
   header: `{"bazaar":{"status":"success"}}`, or
