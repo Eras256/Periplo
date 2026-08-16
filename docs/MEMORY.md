@@ -890,3 +890,67 @@ loose ends from shipping `contracts/upto-settlement`.
   explicitly deferred rather than chased, named directly as the kind of
   scope sprawl this project has already documented as its own failure
   mode. Wait for the prescreen result before deciding on another round.
+  **Superseded 2026-08-16** (see below): the submission is locked with no
+  self-serve revision, so generating real, dated, verifiable evidence in
+  the public repo remains worthwhile for as long as review is pending, not
+  a one-time push that stops at submission.
+
+## 2026-08-16: the `upto` devlog, a governance fact-check, and a real fix in the skill pack's own repo
+
+Consolidated the `upto` spec-convergence narrative, previously told twice
+in README.md (once in detail, once as summary) plus scattered across
+`#3098`/`#3134`/`stellar/x402-stellar#72`, into
+[`docs/UPTO-CONVERGENCE.md`](UPTO-CONVERGENCE.md): one chronological
+writeup with links to every real thread and finding. README.md's own
+section now points to it instead of repeating it, cutting roughly 28
+lines of duplicated narrative down to 9.
+
+Checked a specific governance claim against its primary source before
+relying on it for anything: whether x402-foundation/x402 has a
+"Governing Board" with a Stellar Development Foundation seat, floated as
+a possible channel for a stalled, twice-LGTM'd PR (`#3138`). Read the
+project's actual Technical Charter (it operates as "x402, a Series of LF
+Projects, LLC") and `TSC.md` directly rather than trusting a
+characterization of either: exactly three Participating Organizations
+hold Technical Steering Committee seats (Coinbase, Cloudflare, Stripe),
+no SDF anywhere in either document, and no separate Governing Board
+structure of any kind exists, the TSC is the sole technical governance
+body. This corrected an unverified claim that had been repeated across
+`CLAUDE.md`, `docs/SKILLS.md`, and this project's own internal notes
+without ever being checked against the primary source. No action was
+taken on `#3138` as a result of the false channel; the real evidence
+already on record (`#3098`, `#3121`/`#3138`, `#839`,
+`#3169`/`#1655`/`#3172`) stands regardless, unaffected by this correction.
+
+Also checked, honestly, whether Periplo's own testnet had accumulated
+real usage worth reporting anywhere: the catalog held exactly one row (a
+Phase 4 test fixture, the known `null/...` URL from `#3121`, not organic
+traffic), and the fee-sponsor account's entire transaction history was
+five transactions, all matching demo scripts already in this repo, none
+after 2026-08-14. Recorded as a clean negative rather than left unstated
+or worked around: nothing real to publish yet, and nothing was fabricated
+or projected to fill the gap. Consistent with this project's own
+"README/doc claims need a link, a test, or a hash" rule.
+
+Investigating the discovery mechanism behind the `stellar-build` skill
+pack this project's own tooling uses (`docs/SKILLS.md`) turned up a real
+bug in a different, adjacent repository: `stellar/stellar-dev-skill`'s
+own public skill index. `skills.stellar.org/llms.txt` (an agent-fetchable
+index, per the llmstxt.org convention) linked 27 of its 28 community-skill
+entries to GitHub's rendered HTML page (`content-type: text/html`)
+instead of the raw markdown an agent actually needs to fetch, verified
+live against the deployed file, not just the source. Root cause:
+`site/README.md`'s own contribution guide had the wrong URL shape baked
+into its own example, directly beneath the correct instruction in prose,
+plausibly explaining why 27 separate contributors made the identical
+mistake independently rather than one contributor's isolated typo. Fixed
+with a PR rather than stopping at an issue: all 27 URLs rewritten to
+`raw.githubusercontent.com`, the guide's own example corrected alongside
+its prose, and a new static CI check
+(`site/scripts/check-ecosystem-links.mjs`) added against the same class
+of mistake recurring, each verified locally (build, lint, the new check
+script tested both passing and failing) before anything was pushed.
+Opened as
+[stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103),
+open as of this writing, added to `README.md` alongside the other five
+upstream findings.

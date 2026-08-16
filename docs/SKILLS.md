@@ -103,3 +103,19 @@ used so far: direct `WebFetch`/registry/live-endpoint checks (see
 `docs/DEFERRED.md` and `conformance/baseline/` for what that produced in
 Phase 0). Whoever runs the next interactive session should complete the
 sign-in so later phases can call `search`/`execute` directly instead.
+
+## The skill pack's own repo: a real bug found and fixed, 2026-08-16
+
+This file documents skill *usage*, but the pack itself
+(`stellar/stellar-dev-skill`, confirmed as the real source via
+`~/.claude/plugins/known_marketplaces.json`, not assumed from the
+directory name) turned out to have a genuine bug in its own public skill
+index. 27 of the 28 community-skill entries in
+`skills.stellar.org/llms.txt` linked to GitHub's rendered HTML page
+instead of the raw markdown an agent needs to fetch, root-caused to the
+pack's own `site/README.md` contribution guide having the wrong URL shape
+in its own example. Fixed with a PR, not just an issue:
+[stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103),
+open as of this writing. Full detail in `docs/MEMORY.md`'s 2026-08-16
+entry and `README.md`'s `apps/facilitator` bullet, same evidence
+discipline as every other upstream finding this project has filed.
