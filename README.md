@@ -125,6 +125,22 @@ user-facing surface right now.
   [stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655),
   open, awaiting a maintainer response.
 
+  Investigating the discovery mechanism behind the `stellar-build` skill
+  pack this project's own tooling uses (see `docs/SKILLS.md`) turned up a
+  bug in a different, adjacent repository: `stellar/stellar-dev-skill`,
+  the site behind the pack's public skill index. 27 of 28 community-skill
+  entries in its `llms.txt` (an agent-fetchable index, per the llmstxt.org
+  convention) linked to GitHub's rendered HTML page instead of the raw
+  markdown, verified live against the deployed `skills.stellar.org/llms.txt`,
+  not just the source. Root-caused to the repo's own contribution guide:
+  its own example for adding a new entry used the wrong URL shape directly
+  beneath the prose describing the correct one, which likely explains why
+  27 of 28 contributors made the same mistake independently. Fixed with a
+  PR rather than just an issue: all 27 URLs, the contribution guide's
+  example, and a new CI check preventing the mistake from recurring. Filed
+  as [stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103),
+  open, awaiting a maintainer response.
+
   The `upto` spec thread itself (below,
   [x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098))
   went through the same evidence discipline as everything else here: an
