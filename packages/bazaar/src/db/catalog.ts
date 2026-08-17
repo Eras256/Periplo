@@ -52,15 +52,29 @@ export interface CatalogResourceInput {
   readonly embedding?: readonly number[] | null;
 }
 
+/**
+ * `extra.uptoProfile` (spec: `#3098`'s `scheme_upto_stellar.md`) is the
+ * wire-level discriminator between conformant `upto` profiles (`contract`
+ * vs. `stateless`, see `docs/UPTO-CONVERGENCE.md`). Folded into the key
+ * unconditionally, not just when `scheme === "upto"`: including it is
+ * always safe (a scheme without a profile, like `exact`, has no
+ * `uptoProfile` and the key degrades to the pre-fix shape exactly), and
+ * scoping the check to one scheme name would silently regress the moment
+ * a second scheme adopts the same discriminator field. Previously found:
+ * two `accepts` entries differing only in `extra.uptoProfile` hashed to
+ * the same key and silently overwrote each other, see `docs/DEFERRED.md`'s
+ * "three real implementation gaps" section.
+ */
 function dedupeKey(entry: CatalogAcceptsEntry): string {
-  return `${entry.scheme}|${entry.network}|${entry.asset}|${entry.payTo}`;
+  const uptoProfile = typeof entry.extra?.uptoProfile === "string" ? entry.extra.uptoProfile : "";
+  return `${entry.scheme}|${entry.network}|${entry.asset}|${entry.payTo}|${uptoProfile}`;
 }
 
 /**
  * Merges a new `accepts` entry into whatever the existing row already has,
- * replacing any prior entry with the same (scheme, network, asset, payTo)
- * rather than accumulating duplicates across repeated payments for the same
- * option.
+ * replacing any prior entry with the same (scheme, network, asset, payTo,
+ * uptoProfile) rather than accumulating duplicates across repeated
+ * payments for the same option.
  */
 export function mergeAccepts(
   existing: readonly unknown[],
