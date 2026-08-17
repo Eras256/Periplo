@@ -43,7 +43,11 @@ if (!FEE_SPONSOR_SECRET || !BUYER_SECRET || !SELLER_PUBLIC || !ASSET_ADDRESS || 
   process.exit(1);
 }
 
-async function getBalance(facilitator: Keypair, contractId: string, account: string): Promise<bigint> {
+async function getBalance(
+  facilitator: Keypair,
+  contractId: string,
+  account: string
+): Promise<bigint> {
   // Read-only: build against the token's own real spec (same Client.from
   // pattern used against UptoSettlement elsewhere in this repo) and call
   // balance() via simulation only, never signed or submitted.
@@ -55,7 +59,9 @@ async function getBalance(facilitator: Keypair, contractId: string, account: str
     signTransaction: facilitator,
   });
   const result = await (
-    tokenClient as unknown as { balance: (args: { id: string }, opts?: Record<string, unknown>) => Promise<any> }
+    tokenClient as unknown as {
+      balance: (args: { id: string }, opts?: Record<string, unknown>) => Promise<any>;
+    }
   ).balance({ id: account });
   return BigInt(result.result ?? result);
 }
@@ -117,8 +123,16 @@ async function main(): Promise<void> {
   console.log({ ...authorization, nonce: nonce.toString("hex") });
   console.log(`\nSettling with actual_amount = 0 (zero-settlement: full refund, no charge).`);
 
-  const buyerBalanceBefore = await getBalance(facilitator, ASSET_ADDRESS as string, buyer.publicKey());
-  const sellerBalanceBefore = await getBalance(facilitator, ASSET_ADDRESS as string, SELLER_PUBLIC as string);
+  const buyerBalanceBefore = await getBalance(
+    facilitator,
+    ASSET_ADDRESS as string,
+    buyer.publicKey()
+  );
+  const sellerBalanceBefore = await getBalance(
+    facilitator,
+    ASSET_ADDRESS as string,
+    SELLER_PUBLIC as string
+  );
 
   const tx = await buildAndSettle(server, facilitator, buyer, authorization, actualAmount);
   if ((tx.simulation as any)?.error) {
@@ -128,15 +142,27 @@ async function main(): Promise<void> {
 
   await tx.signAuthEntries({ address: buyer.publicKey(), signAuthEntry: buyer });
 
-  console.log("\nSubmitting zero-settlement (facilitator is transaction source and sponsors the fee)...");
+  console.log(
+    "\nSubmitting zero-settlement (facilitator is transaction source and sponsors the fee)..."
+  );
   const sent = await tx.signAndSend();
   const hash = sent.sendTransactionResponse?.hash ?? (sent as any).getTransactionResponse?.txHash;
   console.log(`\nSETTLED (zero) on stellar:testnet — transaction hash: ${hash}`);
   console.log(`https://stellar.expert/explorer/testnet/tx/${hash}`);
 
-  console.log("\n=== Verifying balances against real contract state (not just the printed result) ===");
-  const buyerBalanceAfter = await getBalance(facilitator, ASSET_ADDRESS as string, buyer.publicKey());
-  const sellerBalanceAfter = await getBalance(facilitator, ASSET_ADDRESS as string, SELLER_PUBLIC as string);
+  console.log(
+    "\n=== Verifying balances against real contract state (not just the printed result) ==="
+  );
+  const buyerBalanceAfter = await getBalance(
+    facilitator,
+    ASSET_ADDRESS as string,
+    buyer.publicKey()
+  );
+  const sellerBalanceAfter = await getBalance(
+    facilitator,
+    ASSET_ADDRESS as string,
+    SELLER_PUBLIC as string
+  );
   console.log(`Buyer balance before: ${buyerBalanceBefore}, after: ${buyerBalanceAfter}`);
   console.log(`Seller balance before: ${sellerBalanceBefore}, after: ${sellerBalanceAfter}`);
   console.log(
@@ -158,17 +184,21 @@ async function main(): Promise<void> {
       const errText = JSON.stringify((replayTx.simulation as any).error);
       console.log(`Replay simulation rejected: ${errText}`);
       console.log(
-        errText.includes("Error(Contract, #6)") || errText.toLowerCase().includes("authorizationconsumed")
+        errText.includes("Error(Contract, #6)") ||
+          errText.toLowerCase().includes("authorizationconsumed")
           ? "CONFIRMED: nonce was consumed by the zero-settlement, replay rejected as AuthorizationConsumed (error code 6)."
           : "WARNING: replay was rejected but not clearly for AuthorizationConsumed — inspect the error above."
       );
     } else {
-      console.log("WARNING: replay simulation did not fail — nonce reuse was not rejected. Investigate before closing the gate.");
+      console.log(
+        "WARNING: replay simulation did not fail — nonce reuse was not rejected. Investigate before closing the gate."
+      );
     }
   } catch (error) {
     console.log(`Replay attempt threw: ${(error as Error).message}`);
     console.log(
-      (error as Error).message.includes("#6") || (error as Error).message.toLowerCase().includes("authorizationconsumed")
+      (error as Error).message.includes("#6") ||
+        (error as Error).message.toLowerCase().includes("authorizationconsumed")
         ? "CONFIRMED: nonce was consumed by the zero-settlement, replay rejected as AuthorizationConsumed (error code 6)."
         : "WARNING: replay was rejected but the reason does not clearly say AuthorizationConsumed — inspect the message above."
     );

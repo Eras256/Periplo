@@ -26,7 +26,15 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { Keypair, hash, nativeToScVal, authorizeEntry, rpc, xdr, Address as SdkAddress } from "@stellar/stellar-sdk";
+import {
+  authorizeEntry,
+  hash,
+  Keypair,
+  nativeToScVal,
+  rpc,
+  Address as SdkAddress,
+  xdr,
+} from "@stellar/stellar-sdk";
 import { Client as ContractClient } from "@stellar/stellar-sdk/contract";
 
 const RPC_URL = "https://soroban-testnet.stellar.org";
@@ -51,7 +59,11 @@ if (!FEE_SPONSOR_SECRET || !BUYER_SECRET || !AGENT_SECRET || !SELLER_PUBLIC || !
   process.exit(1);
 }
 
-async function getBalance(facilitator: Keypair, contractId: string, account: string): Promise<bigint> {
+async function getBalance(
+  facilitator: Keypair,
+  contractId: string,
+  account: string
+): Promise<bigint> {
   const tokenClient = await ContractClient.from({
     contractId,
     networkPassphrase: NETWORK_PASSPHRASE,
@@ -60,7 +72,9 @@ async function getBalance(facilitator: Keypair, contractId: string, account: str
     signTransaction: facilitator,
   });
   const result = await (
-    tokenClient as unknown as { balance: (args: { id: string }, opts?: Record<string, unknown>) => Promise<any> }
+    tokenClient as unknown as {
+      balance: (args: { id: string }, opts?: Record<string, unknown>) => Promise<any>;
+    }
   ).balance({ id: account });
   return BigInt(result.result ?? result);
 }
@@ -86,7 +100,8 @@ async function fundSmartAccount(server: rpc.Server, buyer: Keypair, amount: bigi
     throw new Error(`funding simulation failed: ${JSON.stringify(tx.simulation.error)}`);
   }
   const sent = await tx.signAndSend();
-  const fundHash = sent.sendTransactionResponse?.hash ?? (sent as any).getTransactionResponse?.txHash;
+  const fundHash =
+    sent.sendTransactionResponse?.hash ?? (sent as any).getTransactionResponse?.txHash;
   console.log(`Funded. tx: ${fundHash}`);
 }
 
@@ -107,7 +122,11 @@ async function main(): Promise<void> {
   const expirationLedger = currentLedger + 20;
   const nonce = randomBytes(32);
 
-  const smartAccountBalanceBefore = await getBalance(facilitator, ASSET_ADDRESS as string, SMART_ACCOUNT_ID);
+  const smartAccountBalanceBefore = await getBalance(
+    facilitator,
+    ASSET_ADDRESS as string,
+    SMART_ACCOUNT_ID
+  );
   console.log(`Smart account balance before: ${smartAccountBalanceBefore}`);
   if (smartAccountBalanceBefore < maxAmount) {
     await fundSmartAccount(server, buyer, maxAmount * 2n);
@@ -183,7 +202,9 @@ async function main(): Promise<void> {
   });
   const spec = (smartAccountClient as any).spec;
 
-  console.log("\nSigning the smart account's single auth entry (Signer::External, one cross-contract verify call)...");
+  console.log(
+    "\nSigning the smart account's single auth entry (Signer::External, one cross-contract verify call)..."
+  );
   const authorizedEntry = await authorizeEntry(
     smartAccountEntry,
     (preimage) => {
@@ -217,13 +238,22 @@ async function main(): Promise<void> {
 
   console.log("\nSubmitting (facilitator is transaction source and sponsors the fee)...");
   const sent = await tx.signAndSend();
-  const settleHash = sent.sendTransactionResponse?.hash ?? (sent as any).getTransactionResponse?.txHash;
+  const settleHash =
+    sent.sendTransactionResponse?.hash ?? (sent as any).getTransactionResponse?.txHash;
   console.log(`\nSETTLED on stellar:testnet — transaction hash: ${settleHash}`);
   console.log(`https://stellar.expert/explorer/testnet/tx/${settleHash}`);
 
   console.log("\n=== Verifying against real contract state ===");
-  const smartAccountBalanceAfter = await getBalance(facilitator, ASSET_ADDRESS as string, SMART_ACCOUNT_ID);
-  const sellerBalanceAfter = await getBalance(facilitator, ASSET_ADDRESS as string, SELLER_PUBLIC as string);
+  const smartAccountBalanceAfter = await getBalance(
+    facilitator,
+    ASSET_ADDRESS as string,
+    SMART_ACCOUNT_ID
+  );
+  const sellerBalanceAfter = await getBalance(
+    facilitator,
+    ASSET_ADDRESS as string,
+    SELLER_PUBLIC as string
+  );
   console.log(`Smart account balance after: ${smartAccountBalanceAfter}`);
   console.log(`Seller balance after: ${sellerBalanceAfter}`);
 }
