@@ -77,7 +77,7 @@ XDR directly, confirming one genuine partial settlement (`300,000` of a
 plus C-account/smart-wallet spec language that was missing from the
 original prose. `#3098` was marked ready for review once this landed.
 
-## Responding to external review: three real gaps in our own code
+## Responding to external review: three real gaps in our own code, two now closed
 
 [HeylmStoned's comment](https://github.com/x402-foundation/x402/pull/3134)
 on `#3134` raised a wire-level concern: with two conformant `upto` profiles,
@@ -86,11 +86,16 @@ spec already defines one (`extra.uptoProfile`), so we checked our own code
 against it rather than just the spec text, and found three real gaps, none
 previously recorded, full detail in
 [`docs/DEFERRED.md`](DEFERRED.md#upto-profile-discrimination-three-real-implementation-gaps-found-responding-to-external-review-not-self-discovered):
-`/supported` can't report `upto` in any form yet, there's no
+`/supported` couldn't report `upto` in any form, there was no
 `GET /discovery/resources` or `GET /discovery/search` route at all, and the
-catalog's `accepts` dedupe key isn't `extra`-aware, so two profiles for the
-same resource, network, asset, and `payTo` would silently overwrite each
-other rather than coexist. Not fixed yet.
+catalog's `accepts` dedupe key wasn't `extra`-aware, so two profiles for
+the same resource, network, asset, and `payTo` would silently overwrite
+each other rather than coexist. **Closed 2026-08-17, two of three:** both
+discovery routes now exist, reusing `@x402/extensions/bazaar`'s own wire
+types, and the dedupe key is `extra.uptoProfile`-aware, each with its own
+commit and tests. `/supported` still can't report `upto`, since that needs
+a real scheme implementation registered against `x402Facilitator`, not a
+wiring fix, scoped honestly in `docs/DEFERRED.md` rather than stubbed.
 
 ## Independent confirmation and a new requirement
 
@@ -107,8 +112,8 @@ opening a third:
   one, how to rank by settled value instead of raw call count. Checking our
   own catalog against that same point surfaced a fourth real gap, the same
   `extra`-unaware dedupe key above, from a different angle: two `upto`
-  profiles for the same resource collide in storage today, not just in
-  display.
+  profiles for the same resource collided in storage, not just in display.
+  Closed alongside the other dedupe-key fix above.
 
 We responded to both with verified, additive findings, not advocacy for our
 own design.
@@ -117,8 +122,11 @@ own design.
 
 No pending reply on either thread as of this writing. `#3098` is ready for
 review, waiting on maintainer direction on where the merged two-profile
-document should actually consolidate before a follow-up PR opens. The four
-implementation gaps above (`/supported`, `GET /discovery/*`, and the
-`extra`-aware dedupe key, found from two independent angles) are recorded
-but not fixed. Both are tracked as real, open, dated evidence, not resolved
-claims.
+document should actually consolidate before a follow-up PR opens. Of the
+four implementation gaps above, three are closed as of 2026-08-17
+(`GET /discovery/*`, and the `extra`-aware dedupe key, found from two
+independent angles), each with its own commit and tests. `/supported`
+still can't report `upto`, tracked honestly in `docs/DEFERRED.md` as
+needing a real scheme implementation, not a wiring fix. Real, dated
+evidence either way, not resolved-sounding claims without a link behind
+them.

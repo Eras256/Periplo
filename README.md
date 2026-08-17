@@ -147,8 +147,13 @@ user-facing surface right now.
   honest comparison against a competing design rather than defending our
   own, real fee numbers and independently-verified transaction XDR rather
   than trusting a PR description, and self-checks against external review
-  that turned up four real gaps in our own code, not fixed yet. Full
-  chronological writeup, with links to every thread and finding, in
+  that turned up four real gaps in our own code. Three closed since,
+  each with its own commit and tests: `GET /discovery/resources` and
+  `GET /discovery/search` now exist, and the catalog's dedupe key is
+  `extra.uptoProfile`-aware. `/supported` still can't report `upto`, since
+  that needs a real scheme implementation, not a wiring fix, scoped
+  honestly in `docs/DEFERRED.md` rather than stubbed. Full chronological
+  writeup, with links to every thread and finding, in
   [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md).
 
   The facilitator reports the outcome through the `EXTENSION-RESPONSES`

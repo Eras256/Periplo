@@ -1023,36 +1023,53 @@ required, shared `PaymentRequirements` field in `#3098`'s
 spec text, per the same standard this project holds every other capability
 claim to, three real gaps surfaced, none of them previously recorded:
 
-1. **`/supported` cannot report `upto` at all, in any form.**
+1. **`/supported` cannot report `upto` at all, in any form. Still open,
+   and it's the one gap that doesn't close with a small fix.**
    `apps/facilitator/src/core.ts` registers only `ExactStellarScheme`. Since
    `upto` isn't wired into the HTTP facilitator yet (already noted in this
    file's Phase 6 section), there is currently no `upto` kind to
-   discriminate a profile on in the first place.
-2. **No `GET /discovery/resources` or `GET /discovery/search` HTTP route
-   exists in `apps/facilitator` at all.** Grepped, zero hits. Even the
-   filters `docs/SPEC.md` §4 names (`type`, `payTo`, `network`,
-   `extensions`) are unimplemented, not just a `scheme`/profile dimension.
-   `packages/search/src/hybrid-search.ts`'s `HybridSearchParams` confirms
-   the same gap from the search side: `query`, `limit`, `offset`, and the
-   RRF weights only, no filter parameter of any kind.
-3. **`packages/bazaar/src/db/catalog.ts`'s `mergeAccepts` dedupe key is not
-   `extra`-aware, and this is a real data-loss risk, not just a missing
-   feature.** The key is `${scheme}|${network}|${asset}|${payTo}`. Two
-   `accepts` entries differing only in `extra.uptoProfile` hash to the same
-   key. Once `upto` cataloging exists, a facilitator advertising both
-   profiles for the same resource, network, asset, and `payTo` would have
-   one profile's entry silently overwritten by the other's on the next
-   payment, losing that listing rather than just failing to surface it.
+   discriminate a profile on in the first place. Closing this for real
+   needs a genuine `UptoStellarScheme` (verify/settle/getSigners/getExtra)
+   registered against `x402Facilitator`, mirroring `@x402/stellar`'s own
+   `exact` implementation against the deployed `UptoSettlement` contract's
+   two-signature flow (buyer `require_auth_for_args`, facilitator
+   `require_auth`, `docs/SPEC.md` §6's
+   `typescript/packages/mechanisms/stellar/src/upto/` target). That's a new
+   scheme implementation, not a wiring gap, and payment-critical code
+   deserves its own scoped pass rather than a rushed stub. Scoped honestly
+   here in preference to either skipping it silently or shipping something
+   undertested against real funds.
+2. **Closed 2026-08-17.** No `GET /discovery/resources` or
+   `GET /discovery/search` HTTP route existed in `apps/facilitator` at all
+   (grepped, zero hits; even the filters `docs/SPEC.md` §4 names, `type`,
+   `payTo`, `network`, `extensions`, were unimplemented, not just a
+   `scheme`/profile dimension). Both routes now exist:
+   `apps/facilitator/src/discovery-routes.ts`, reusing
+   `@x402/extensions/bazaar`'s own `DiscoveryResource`/
+   `DiscoveryResourcesResponse`/`SearchDiscoveryResourcesResponse` types
+   directly rather than redefining the wire shape, wired into `app.ts` and
+   covered by 12 new tests (`discovery-routes.test.ts`, plus route-level
+   tests in `app.test.ts`). `GET /discovery/search`'s filters apply as an
+   in-process post-filter over `hybridSearch`'s ranked rows, not a fifth SQL
+   parameter, since `periplo_hybrid_search` doesn't take them, documented as
+   a real, honest limitation in the module's own doc comment, not hidden.
+3. **Closed 2026-08-17.** `packages/bazaar/src/db/catalog.ts`'s
+   `mergeAccepts` dedupe key was not `extra`-aware, a real data-loss risk,
+   not just a missing feature: the key was
+   `${scheme}|${network}|${asset}|${payTo}`, so two `accepts` entries
+   differing only in `extra.uptoProfile` hashed to the same key and would
+   have silently overwritten each other. `dedupeKey` now folds in
+   `extra.uptoProfile` unconditionally (safe for every existing scheme: one
+   without a profile, like `exact`, degrades to the pre-fix key exactly),
+   with three new regression tests covering distinct profiles coexisting, a
+   same-profile entry still replacing rather than duplicating, and a missing
+   profile being treated as distinct from a present one.
 
-Not fixed yet. Recorded here first, deliberately, before any reply was
-drafted or posted, so the finding is on record independent of how the
-thread response reads. Fixing this needs real implementation work: wiring
-`upto` into `/supported` and `/verify`/`/settle` (already tracked as
-separate, not-yet-started work), building the `GET /discovery/*` routes
-with the filters spec §4 already names, extending them to filter on
-`extra.uptoProfile` once `upto` exists, and making `mergeAccepts` key on
-`extra.uptoProfile` when the scheme is `upto` so two profiles for the same
-resource coexist instead of colliding.
+Recorded here first, deliberately, before any reply was drafted or posted
+for #1-#3 originally, so the finding was on record independent of how the
+thread response read. #2 and #3 are shipped, with their own commits and
+tests, clickable rather than asserted. #1 remains open, honestly scoped
+above rather than stubbed.
 
 ## Phase 6b: additional evidence for `upto` on Stellar, not an SCF tranche deliverable
 
