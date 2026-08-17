@@ -62,6 +62,17 @@ user-facing surface right now.
   configured because no mainnet key exists yet. See
   [Deployment](#deployment-what-actually-runs) below for how it runs.
 
+  Beyond our own settlement scripts, the **official x402 e2e conformance
+  suite** (`x402-foundation/x402`'s own `e2e/`, not a Periplo-authored
+  equivalent) was run end to end against the live deployment above via its
+  documented `external-proxies` mechanism: real `typescript/http/axios`
+  client, real `typescript/http/express` server, real `/exact/stellar`
+  payment, verdict `✅ Test passed`. The settled transaction hash is
+  independently checked against Horizon, same standard as every other hash
+  in this README. Full transcript, setup, and a real gap found in the
+  suite's own client bootstrapping (not filed yet) in
+  [`docs/conformance/2026-08-17-x402-e2e-stellar-exact.md`](docs/conformance/2026-08-17-x402-e2e-stellar-exact.md).
+
   Reviewing `@x402/core`, the package this facilitator is built directly
   on, as part of a wider pass over the dependency (not triggered by
   anything breaking in our own deployment, which only ever registers a

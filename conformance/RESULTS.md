@@ -13,6 +13,7 @@ against.
 | 2026-08-07 | `stellar:testnet` | `exact` | [`83d2aa3b60b7f8332e68082e2ed1f3e1ff7f4e01f4b4d987d9fca5c6c9d89f33`](https://stellar.expert/explorer/testnet/tx/83d2aa3b60b7f8332e68082e2ed1f3e1ff7f4e01f4b4d987d9fca5c6c9d89f33) | [Horizon](https://horizon-testnet.stellar.org/transactions/83d2aa3b60b7f8332e68082e2ed1f3e1ff7f4e01f4b4d987d9fca5c6c9d89f33): `successful: true`, ledger `4023444` | Phase 3 gate. Full pipeline: `@x402/stellar`'s client-side `ExactStellarScheme` built and signed the payment; this repo's own facilitator core (`apps/facilitator`) called `verify()` then `settle()` on it, see `apps/facilitator/scripts/settle-demo.ts`. |
 | 2026-08-12 | `stellar:testnet` | `upto` | [`cc46374e34f70ff479ccf919d55df33d0bf1a05e1c7479fa8f90dac596c5d218`](https://stellar.expert/explorer/testnet/tx/cc46374e34f70ff479ccf919d55df33d0bf1a05e1c7479fa8f90dac596c5d218) | [Horizon](https://horizon-testnet.stellar.org/transactions/cc46374e34f70ff479ccf919d55df33d0bf1a05e1c7479fa8f90dac596c5d218): `successful: true`, ledger `4106753` | Phase 6 gate. `UptoSettlement` (`contracts/upto-settlement`) deployed to `CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`, WASM hash `3f4df3070459047e52a5514a4bd42f31888d100cce61914d8675534eb20dfe07`. A genuine **partial** settlement: buyer signed a `0.1 PTEST` ceiling, facilitator settled `0.04 PTEST`, see `apps/facilitator/scripts/upto-settle-demo.ts`. |
 | 2026-08-13 | `stellar:testnet` | `upto` | [`2138c0418a85e1bb29c2eab6cea6c76b3b0231d894450a35905053f36403d358`](https://stellar.expert/explorer/testnet/tx/2138c0418a85e1bb29c2eab6cea6c76b3b0231d894450a35905053f36403d358) | [Horizon](https://horizon-testnet.stellar.org/transactions/2138c0418a85e1bb29c2eab6cea6c76b3b0231d894450a35905053f36403d358): `successful: true`, ledger `4129203`, `fee_charged: 54875` stroops, source account the fee-sponsor | Phase 6b, zero-settlement. Same deployed contract as the row above. A genuine `actual_amount = 0` settlement: buyer signed a `0.05 PTEST` ceiling, facilitator settled `0`, confirmed via `/effects` that the full ceiling round-tripped back to the buyer and the seller's balance never moved, see `apps/facilitator/scripts/upto-settle-zero-demo.ts`. A same-nonce replay attempt immediately after was rejected on testnet with `Error(Contract, #6)` (`AuthorizationConsumed`), confirming the nonce is consumed even when nothing was charged. |
+| 2026-08-17 | `stellar:testnet` | `exact` | [`41277c14505a17f843a1f366b35314c6b12e6a14de40c30b589f161f7948f578`](https://stellar.expert/explorer/testnet/tx/41277c14505a17f843a1f366b35314c6b12e6a14de40c30b589f161f7948f578) | [Horizon](https://horizon-testnet.stellar.org/transactions/41277c14505a17f843a1f366b35314c6b12e6a14de40c30b589f161f7948f578): `successful: true`, ledger `4195035`, `fee_charged: 22973` stroops, source account the fee-sponsor | The official `x402-foundation/x402` e2e conformance suite (not a Periplo-authored equivalent), run end to end against the live `https://periplo-testnet.fly.dev` deployment via the suite's own `external-proxies` mechanism, real testnet USDC. Verdict `✅ Test passed`. Full transcript, setup, and a real gap found in the suite's own client bootstrapping in [`docs/conformance/2026-08-17-x402-e2e-stellar-exact.md`](../docs/conformance/2026-08-17-x402-e2e-stellar-exact.md). |
 
 **`stellar:pubnet`**: not yet attempted, no mainnet fee-sponsor key exists
 (none should, until real deployment; see `docs/DEFERRED.md`). Both networks
@@ -94,5 +95,15 @@ Checked directly against `apps/facilitator`'s own test suite (`pnpm test`,
   behavior: `200` (not `400`) for a malformed-but-well-shaped inner
   payload, with the failure reason carried in the JSON body
   (`invalidReason` / `errorReason`), never null.
-- The x402 e2e suite itself (Phase 8) has not been run, that's a
-  dedicated later phase, not implied by this table.
+- **Updated 2026-08-17**: the official x402 e2e suite itself has now been
+  run for real, once, for `exact` on `stellar:testnet`, against the live
+  deployment, see the settled-transactions table above and
+  [`docs/conformance/2026-08-17-x402-e2e-stellar-exact.md`](../docs/conformance/2026-08-17-x402-e2e-stellar-exact.md)
+  for the full transcript. This is real, dated evidence toward Phase 8,
+  not a claim that Phase 8's own gate (`docs/SPEC.md` §Phase 8) is met:
+  that gate needs **both** networks (`stellar:pubnet` has no fee-sponsor
+  key yet, `docs/DEFERRED.md`), a hash **per network, per scheme**, and
+  the run selecting Bazaar as an extension, none of which this single
+  `exact`/testnet pass alone satisfies. `upto` is not included either: it
+  isn't wired into `apps/facilitator`'s HTTP routes yet, so the suite has
+  no `upto` scenario to run against Periplo.
