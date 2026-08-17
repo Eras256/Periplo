@@ -67,10 +67,19 @@ user-facing surface right now.
   equivalent) was run end to end against the live deployment above via its
   documented `external-proxies` mechanism: real `typescript/http/axios`
   client, real `typescript/http/express` server, real `/exact/stellar`
-  payment, verdict `✅ Test passed`. The settled transaction hash is
-  independently checked against Horizon, same standard as every other hash
-  in this README. Full transcript, setup, and a real gap found in the
-  suite's own client bootstrapping (not filed yet) in
+  payment, verdict `✅ Test passed`. A same-day follow-up ran it again with
+  `--extensions=bazaar`, forwarding the facilitator's own
+  `/discovery/resources`/`/discovery/search` routes to the live deployment
+  too: the suite's own Discovery Validation step, which calls those routes
+  directly against the facilitator, confirmed the just-paid resource was
+  cataloged and discoverable, verdict `✅ Discovery Validation: PASSED`,
+  the strongest evidence of the two, since it's the exact capability this
+  RFP funds. Both settled transaction hashes are independently checked
+  against Horizon, same standard as every other hash in this README. A
+  real gap found in the suite's own client bootstrapping along the way is
+  filed as
+  [x402-foundation/x402#3187](https://github.com/x402-foundation/x402/issues/3187),
+  open. Full transcript and setup for both runs in
   [`docs/conformance/2026-08-17-x402-e2e-stellar-exact.md`](docs/conformance/2026-08-17-x402-e2e-stellar-exact.md).
 
   Reviewing `@x402/core`, the package this facilitator is built directly
