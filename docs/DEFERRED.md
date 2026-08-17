@@ -1526,22 +1526,31 @@ thin next to what an agent actually wants to do, discover and pay for
 an x402 service with no prior integration, which is what Phase 7
 exists to make possible. A sequencing decision, not an oversight.
 
-## Fly.io redeploy blocked: this session's CLI auth can't see `periplo-testnet`
+## Fly.io redeploy blocked, then resolved: this session's CLI auth couldn't see `periplo-testnet`
 
 The new `GET /discovery/resources`/`GET /discovery/search` routes and the
-repo-wide em-dash cleanup (both committed and pushed, `70b7c20`/`93df21e`/
-`d29f0fd`) are not live on `https://periplo-testnet.fly.dev` yet.
+repo-wide em-dash cleanup (committed and pushed, `70b7c20`/`93df21e`/
+`d29f0fd`) were not live on `https://periplo-testnet.fly.dev` at first.
 `fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator
--a periplo-testnet` fails with `Error: unauthorized`, and `fly status -a
-periplo-testnet` fails harder, `Could not find App "periplo-testnet"`, not
-just a permission denial. `fly auth whoami` confirms this session is
+-a periplo-testnet` failed with `Error: unauthorized`, and `fly status -a
+periplo-testnet` failed harder, `Could not find App "periplo-testnet"`, not
+just a permission denial. `fly auth whoami` confirmed this session was
 authenticated as `xvaiosx7@gmail.com`; `fly apps list` under that account
-does not include `periplo-testnet` at all (checked in the same session,
-same finding, both before and after this deploy attempt). The app was
-provisioned under a different Fly.io account or org than this session's
-CLI is authenticated against, a genuine credential gap, not a permissions
-bug to route around. Logged rather than worked around, per this project's
-own rule for a genuinely blocked, outward-facing action. The repo-side
-evidence (commits, tests, the routes' own test coverage) stands
-independently of the live deploy; whoever has the right Fly session should
-run the redeploy command above when convenient.
+did not include `periplo-testnet` at all. The app was provisioned under a
+different Fly.io account than that CLI session, a genuine credential gap.
+Logged rather than worked around, per this project's own rule for a
+genuinely blocked, outward-facing action.
+
+**Resolved the same day**: the project owner logged into the correct Fly
+account (`ticketsafes@gmail.com`, confirmed via `fly apps list` showing
+`periplo-testnet`) and the redeploy was run for real. `fly deploy` itself
+printed a false-positive warning ("app is not listening on the expected
+address... 0.0.0.0:8402"), not trusted at face value: verified live
+instead with real `curl` requests against all three routes.
+`GET /` returns the updated `endpoints` map (including the two new
+discovery routes) and the em-dash-free description; `GET /discovery/resources`
+returns the real single-row catalog with the correct wire shape;
+`GET /discovery/search?query=financial` returns a valid empty result
+(200, correct shape, no match for that specific query against the one
+real row, not an error). All three checked directly against the live
+service, not assumed from the deploy command's own success output.
