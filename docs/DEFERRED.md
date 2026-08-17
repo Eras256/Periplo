@@ -1525,3 +1525,23 @@ teach an agent. Today's surface is facilitator and Bazaar APIs only,
 thin next to what an agent actually wants to do, discover and pay for
 an x402 service with no prior integration, which is what Phase 7
 exists to make possible. A sequencing decision, not an oversight.
+
+## Fly.io redeploy blocked: this session's CLI auth can't see `periplo-testnet`
+
+The new `GET /discovery/resources`/`GET /discovery/search` routes and the
+repo-wide em-dash cleanup (both committed and pushed, `70b7c20`/`93df21e`/
+`d29f0fd`) are not live on `https://periplo-testnet.fly.dev` yet.
+`fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator
+-a periplo-testnet` fails with `Error: unauthorized`, and `fly status -a
+periplo-testnet` fails harder, `Could not find App "periplo-testnet"`, not
+just a permission denial. `fly auth whoami` confirms this session is
+authenticated as `xvaiosx7@gmail.com`; `fly apps list` under that account
+does not include `periplo-testnet` at all (checked in the same session,
+same finding, both before and after this deploy attempt). The app was
+provisioned under a different Fly.io account or org than this session's
+CLI is authenticated against, a genuine credential gap, not a permissions
+bug to route around. Logged rather than worked around, per this project's
+own rule for a genuinely blocked, outward-facing action. The repo-side
+evidence (commits, tests, the routes' own test coverage) stands
+independently of the live deploy; whoever has the right Fly session should
+run the redeploy command above when convenient.
