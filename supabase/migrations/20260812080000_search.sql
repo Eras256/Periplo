@@ -1,16 +1,16 @@
--- Phase 5 (spec docs/SPEC.md §5): hybrid retrieval — the RRF fusion
+-- Phase 5 (spec docs/SPEC.md §5): hybrid retrieval: the RRF fusion
 -- function, and correcting the embedding column's dimension.
 --
 -- Phase 2 pinned `embedding vector(512)` before an embedding model was
 -- chosen. Phase 5 chose fastembed's BGESmallENV15 (384-dim, see
 -- docs/DEFERRED.md for why: @x402-ecosystem-adjacent `@huggingface/
 -- transformers` was ruled out because it hard-depends on `sharp`, whose
--- prebuilt libvips binary is LGPL-3.0 — a hard deny under this project's
+-- prebuilt libvips binary is LGPL-3.0, a hard deny under this project's
 -- own licence-check policy, not a borderline call). Safe to alter in place:
 -- the column has been all NULL since Phase 2 (Phase 4 never wrote
 -- embeddings), so there is no data to migrate. The HNSW index must be
--- dropped before an ALTER COLUMN TYPE on a vector column and rebuilt after
--- — verified by running this migration against the real project, not
+-- dropped before an ALTER COLUMN TYPE on a vector column and rebuilt after,
+-- verified by running this migration against the real project, not
 -- assumed.
 drop index if exists resources_embedding_idx;
 alter table resources alter column embedding type vector(384);
@@ -25,11 +25,11 @@ create index if not exists resources_embedding_idx on resources using hnsw (embe
 -- `vector_ip_ops` index above): smaller = more similar, so ascending order
 -- is nearest-first, consistent with the other distance operators. Correct
 -- only because both query and document embeddings are L2-normalized before
--- storage — `<#>` on unnormalized vectors is not a valid similarity
+-- storage: `<#>` on unnormalized vectors is not a valid similarity
 -- ordering.
 --
 -- Each CTE is capped at `least(match_count * 5, 200)` candidates before
--- fusion — RRF only needs a bounded candidate window per side, not a full
+-- fusion: RRF only needs a bounded candidate window per side, not a full
 -- table scan, and 200 keeps the ranked-window cost predictable regardless
 -- of how large the catalog grows.
 create or replace function periplo_hybrid_search(

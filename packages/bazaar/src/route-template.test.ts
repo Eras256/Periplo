@@ -10,7 +10,7 @@ function nTimesReencoded(base: string, layers: number): string {
   return s;
 }
 
-describe("checkRouteTemplate — valid inputs", () => {
+describe("checkRouteTemplate: valid inputs", () => {
   it("accepts a plain root-relative path", () => {
     expect(checkRouteTemplate("/weather")).toEqual({ valid: true, reason: null });
   });
@@ -40,7 +40,7 @@ describe("checkRouteTemplate — valid inputs", () => {
   });
 });
 
-describe("checkRouteTemplate — type / shape rejection", () => {
+describe("checkRouteTemplate: type / shape rejection", () => {
   it("rejects a non-string (number)", () => {
     const result = checkRouteTemplate(42);
     expect(result.valid).toBe(false);
@@ -66,7 +66,7 @@ describe("checkRouteTemplate — type / shape rejection", () => {
   });
 });
 
-describe("checkRouteTemplate — naive and encoded traversal", () => {
+describe("checkRouteTemplate: naive and encoded traversal", () => {
   it("rejects unencoded '..' traversal", () => {
     const result = checkRouteTemplate("/../etc/passwd");
     expect(result.valid).toBe(false);
@@ -77,7 +77,7 @@ describe("checkRouteTemplate — naive and encoded traversal", () => {
     expect(checkRouteTemplate("/weather/../../etc/passwd").valid).toBe(false);
   });
 
-  it("rejects single percent-encoded traversal (%2e%2e) — the naive includes('..') bypass", () => {
+  it("rejects single percent-encoded traversal (%2e%2e), the naive includes('..') bypass", () => {
     const result = checkRouteTemplate("/%2e%2e/etc/passwd");
     expect(result.valid).toBe(false);
     expect(result.reason).toMatch(/traversal/i);
@@ -90,7 +90,7 @@ describe("checkRouteTemplate — naive and encoded traversal", () => {
   });
 
   it("rejects triple percent-encoded traversal, still within the decode bound", () => {
-    // Empirically needs 8 decode passes to stabilise — right at the bound,
+    // Empirically needs 8 decode passes to stabilise, right at the bound,
     // must still resolve (not hit the depth guard).
     const s = `/${nTimesReencoded("%2e%2e", 6)}/etc/passwd`;
     const result = checkRouteTemplate(s);
@@ -103,7 +103,7 @@ describe("checkRouteTemplate — naive and encoded traversal", () => {
   });
 });
 
-describe("checkRouteTemplate — backslash traversal", () => {
+describe("checkRouteTemplate: backslash traversal", () => {
   it("rejects literal backslash traversal", () => {
     const result = checkRouteTemplate("/foo/..\\..\\bar");
     expect(result.valid).toBe(false);
@@ -121,7 +121,7 @@ describe("checkRouteTemplate — backslash traversal", () => {
   });
 });
 
-describe("checkRouteTemplate — malformed percent-encoding", () => {
+describe("checkRouteTemplate: malformed percent-encoding", () => {
   it("rejects a trailing bare '%'", () => {
     const result = checkRouteTemplate("/foo%");
     expect(result.valid).toBe(false);
@@ -138,14 +138,14 @@ describe("checkRouteTemplate — malformed percent-encoding", () => {
 
   it("rejects an overlong / invalid UTF-8 percent-encoded sequence (%c0%ae%c0%ae)", () => {
     // A classic historical traversal bypass (overlong UTF-8 encoding of ".").
-    // decodeURIComponent throws on this — verified empirically, not assumed.
+    // decodeURIComponent throws on this, verified empirically, not assumed.
     const result = checkRouteTemplate("/%c0%ae%c0%ae/etc/passwd");
     expect(result.valid).toBe(false);
     expect(result.reason).toMatch(/malformed/i);
   });
 });
 
-describe("checkRouteTemplate — absolute URLs and protocol-relative paths", () => {
+describe("checkRouteTemplate: absolute URLs and protocol-relative paths", () => {
   it("rejects an absolute https:// URL", () => {
     const result = checkRouteTemplate("https://evil.example/x");
     expect(result.valid).toBe(false);
@@ -163,7 +163,7 @@ describe("checkRouteTemplate — absolute URLs and protocol-relative paths", () 
   });
 
   it("rejects the disguised protocol-relative path /%2f%2fevil.example (spec's required case)", () => {
-    // "/%2f%2fevil.example" decodes to "///evil.example" — only catchable
+    // "/%2f%2fevil.example" decodes to "///evil.example", only catchable
     // because validation runs on the fully-decoded form.
     const result = checkRouteTemplate("/%2f%2fevil.example");
     expect(result.valid).toBe(false);
@@ -177,7 +177,7 @@ describe("checkRouteTemplate — absolute URLs and protocol-relative paths", () 
   });
 });
 
-describe("checkRouteTemplate — null bytes and control characters", () => {
+describe("checkRouteTemplate: null bytes and control characters", () => {
   it("rejects a percent-encoded null byte", () => {
     const result = checkRouteTemplate("/foo%00bar");
     expect(result.valid).toBe(false);
@@ -199,9 +199,9 @@ describe("checkRouteTemplate — null bytes and control characters", () => {
   });
 });
 
-describe("checkRouteTemplate — percent-encoding depth bound", () => {
+describe("checkRouteTemplate: percent-encoding depth bound", () => {
   it("rejects encoding nested deep enough to exceed the decode bound", () => {
-    // Empirically needs 11 decode passes — past the 8-iteration bound.
+    // Empirically needs 11 decode passes, past the 8-iteration bound.
     const s = `/${nTimesReencoded("%2e%2e", 9)}/etc/passwd`;
     const result = checkRouteTemplate(s);
     expect(result.valid).toBe(false);
@@ -209,7 +209,7 @@ describe("checkRouteTemplate — percent-encoding depth bound", () => {
   });
 });
 
-describe("checkRouteTemplate — every rejection carries a non-null reason (spec §1)", () => {
+describe("checkRouteTemplate: every rejection carries a non-null reason (spec §1)", () => {
   it.each([
     42,
     null,

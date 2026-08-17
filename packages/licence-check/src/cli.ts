@@ -5,7 +5,7 @@ import { type ClassifiedPackage, checkPackages, type PackageLicenseInfo } from "
 /**
  * Real shape of `pnpm licenses list --json` output (verified against pnpm
  * 11.20.0): grouped by license string, each group listing packages that
- * share it. NOT per-version entries — `versions`/`paths` are arrays,
+ * share it. NOT per-version entries: `versions`/`paths` are arrays,
  * indexed in parallel when a package resolved to more than one version.
  */
 interface PnpmLicensesEntry {
@@ -19,7 +19,7 @@ type PnpmLicensesOutput = Record<string, PnpmLicensesEntry[]>;
 
 /**
  * `pnpm licenses list --json --prod` prints the plain-text line below
- * (not JSON) when the filtered dependency graph is empty — true today,
+ * (not JSON) when the filtered dependency graph is empty, true today,
  * since Phase 0 has no runtime "dependencies" anywhere in the workspace
  * yet. Treated as zero packages rather than a parse error.
  */
@@ -73,7 +73,7 @@ function main(): void {
   // findings as warnings. devDependencies (e.g. vitest -> vite ->
   // lightningcss, MPL-2.0) are never bundled into a deployed Periplo
   // service, and MPL-2.0's copyleft obligation is file-level (modify-and-
-  // distribute that file), not viral onto surrounding code — so an
+  // distribute that file), not viral onto surrounding code, so an
   // unmodified build/test tool doesn't create the risk spec §1 targets.
   // They're still worth a human's attention, so they're reported, not
   // silently dropped.
@@ -89,7 +89,7 @@ function main(): void {
 
   if (devOnlyDenied.length > 0) {
     console.warn(
-      `licence-check: ${devOnlyDenied.length} dev-only package(s) are copyleft-licensed but not shipped (build/test tooling only) — review, not blocking:`
+      `licence-check: ${devOnlyDenied.length} dev-only package(s) are copyleft-licensed but not shipped (build/test tooling only), review, not blocking:`
     );
     for (const pkg of devOnlyDenied) {
       console.warn(formatPackage(pkg));
@@ -106,7 +106,7 @@ function main(): void {
 
   if (!prodReport.ok) {
     console.error(
-      `licence-check: FAILED — ${prodReport.denied.length} denied (copyleft) package(s) in the shipped (production) dependency graph:`
+      `licence-check: FAILED: ${prodReport.denied.length} denied (copyleft) package(s) in the shipped (production) dependency graph:`
     );
     for (const pkg of prodReport.denied) {
       console.error(formatPackage(pkg));
@@ -116,7 +116,7 @@ function main(): void {
   }
 
   console.log(
-    `licence-check: OK — ${prodReport.packages.length} production package(s) checked, 0 denied. ` +
+    `licence-check: OK: ${prodReport.packages.length} production package(s) checked, 0 denied. ` +
       `(${allReport.packages.length} total incl. dev/build tooling.)`
   );
 }

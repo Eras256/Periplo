@@ -7,13 +7,13 @@ import type { FacilitatorCore } from "./core.js";
 
 /**
  * Tests the Hono HTTP layer in isolation, against a fake `FacilitatorCore`
- * (via `app.request()` — Hono's in-memory request simulation, no real
+ * (via `app.request()`, Hono's in-memory request simulation, no real
  * network or port). `core.test.ts` covers the real thing against live
  * testnet; this file covers "does the HTTP wiring do what it should
  * regardless of what the core returns."
  */
 
-/** Every JSON body this test suite reads back, loosely — just enough shape for the assertions below. */
+/** Every JSON body this test suite reads back, loosely, just enough shape for the assertions below. */
 interface TestResponseBody {
   status?: string;
   service?: string;
@@ -67,7 +67,7 @@ function fakeCore(overrides: Partial<FacilitatorCore> = {}): FacilitatorCore {
  * `GET /discovery/resources`'s route-level tests. `GET /discovery/search`
  * calls the real `embedQuery` before touching a client at all, so its
  * route-level coverage below stops at the pre-embedding short-circuits
- * (missing `query`, no `catalogClient`) — full ranking/response-shape
+ * (missing `query`, no `catalogClient`): full ranking/response-shape
  * behavior is `discovery-routes.test.ts`'s job, against an injected
  * embedding, so no test here loads the real `fastembed` model.
  */
@@ -275,7 +275,7 @@ describe("POST /settle", () => {
   });
 });
 
-describe("bazaar discovery extension — EXTENSION-RESPONSES header (spec Phase 4)", () => {
+describe("bazaar discovery extension: EXTENSION-RESPONSES header (spec Phase 4)", () => {
   /** A well-formed HTTP GET discovery extension, as a resource server would declare it. */
   function validExtension(): Record<string, unknown> {
     const extension = declareDiscoveryExtension({

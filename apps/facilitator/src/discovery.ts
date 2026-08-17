@@ -1,6 +1,6 @@
 /**
  * Automatic cataloging (spec §5 Phase 4): when a `PaymentPayload` carries
- * the bazaar discovery extension, validate it and catalog the resource —
+ * the bazaar discovery extension, validate it and catalog the resource,
  * no separate registration step. Built on `@x402/extensions/bazaar`
  * (the official extraction/validation logic for this wire extension,
  * matching spec §1's "do not reimplement" spirit applied beyond just
@@ -8,7 +8,7 @@
  *
  * One deliberate divergence from upstream, documented in `docs/INTEROP.md`:
  * `routeTemplate` is checked with `@periplo/bazaar`'s `checkRouteTemplate`
- * (Phase 1 — decode-fully-then-validate, bounded-repeated decoding) instead
+ * (Phase 1: decode-fully-then-validate, bounded-repeated decoding) instead
  * of `@x402/extensions/bazaar`'s `isValidRouteTemplate` (single decode
  * pass). A hostile `routeTemplate` here hard-rejects the whole extension
  * with a specific reason (spec Phase 4 gate); upstream's own
@@ -61,7 +61,7 @@ function extractParameters(rawExtension: Record<string, unknown>): Record<string
 
   if (inputType === "mcp") {
     // MCP: the argument schema is already data (not split into a separate
-    // "schema" sibling) — `info.input.inputSchema`.
+    // "schema" sibling), `info.input.inputSchema`.
     const inputSchema =
       infoInput && typeof infoInput === "object"
         ? (infoInput as Record<string, unknown>)["inputSchema"]
@@ -116,11 +116,11 @@ function toCatalogAccept(requirements: PaymentRequirements): CatalogAcceptsEntry
 /**
  * Extracts, validates, and (when a catalog client is configured) persists
  * the bazaar discovery extension declared on a payment. Returns `null`
- * when the payload declares no bazaar extension at all — callers should
+ * when the payload declares no bazaar extension at all, callers should
  * not emit an `EXTENSION-RESPONSES` header in that case (spec §4: the
  * header reports a cataloging *outcome*; there is none to report).
  *
- * `catalogClient: null` validates without persisting — used by tests and
+ * `catalogClient: null` validates without persisting, used by tests and
  * by any deployment that hasn't configured a catalog database (the
  * facilitator core itself has no hard Supabase dependency; only this
  * HTTP-layer cataloging step does).
@@ -164,7 +164,7 @@ export async function processBazaarExtension(
   }
 
   // extractDiscoveryInfo (v2 path) does `new URL(paymentPayload.resource?.url ?? "")` with
-  // no guard — an empty/missing resource.url throws rather than returning null. Caught here
+  // no guard: an empty/missing resource.url throws rather than returning null. Caught here
   // so a malformed payload rejects with a reason instead of 500ing the whole /verify or
   // /settle response (spec §1: the facilitator is a trust boundary; every rejection carries
   // a reason, nothing crashes on hostile or merely incomplete input).
@@ -172,7 +172,7 @@ export async function processBazaarExtension(
     return rejected("payload.resource.url is required to catalog a bazaar extension");
   }
 
-  // Already validated above — skip extractDiscoveryInfo's internal
+  // Already validated above, skip extractDiscoveryInfo's internal
   // (console.warn-only, reason-losing) validation pass.
   let discovered: DiscoveredResource | null;
   try {
@@ -191,12 +191,12 @@ export async function processBazaarExtension(
   }
 
   // `mcp:` is not a WHATWG "special scheme" (unlike http/https), so
-  // `new URL("mcp://tool/x").origin` is the opaque-origin string "null" —
+  // `new URL("mcp://tool/x").origin` is the opaque-origin string "null",
   // upstream's extractDiscoveryInfo builds its canonicalUrl as
   // `${url.origin}${url.pathname}`, which turns "mcp://tool/x" into
   // "null/x" for exactly the URL form spec §4 documents
   // (`mcp://tool/{toolName}`). Reconstructed directly from `toolName` here
-  // instead of trusting `discovered.resourceUrl` for MCP — found via the
+  // instead of trusting `discovered.resourceUrl` for MCP, found via the
   // real Supabase integration test, not assumed; see docs/INTEROP.md.
   //
   // This branches on discovery *type* (mcp vs http, upstream's own
@@ -235,7 +235,7 @@ export async function processBazaarExtension(
   // load/inference failure here should not stop a payment from being
   // cataloged. Left `undefined` (not `null`) on failure so a transient
   // error on a *repeat* payment doesn't clobber an embedding a prior,
-  // successful write already stored — `CatalogResourceInput.embedding`'s
+  // successful write already stored; `CatalogResourceInput.embedding`'s
   // doc comment in `packages/bazaar/src/db/catalog.ts` covers why the
   // undefined/null distinction matters at the upsert layer.
   let embedding: number[] | undefined;

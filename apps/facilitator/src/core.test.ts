@@ -4,17 +4,17 @@ import { loadStellarTestEnv } from "./test-env.js";
 
 /**
  * Integration tests against the REAL testnet fee-sponsor account and the
- * REAL Soroban RPC (no mocks) — `boot-safety.test.ts` already covers the
+ * REAL Soroban RPC (no mocks), `boot-safety.test.ts` already covers the
  * non-custodial check's logic with fakes; this file covers "does the
  * whole thing actually boot and talk to testnet." Skipped, not failed,
  * when `STELLAR_FEE_SPONSOR_SECRET`/`_PUBLIC` aren't configured (fork /
- * secrets-less environment) — same pattern as
+ * secrets-less environment), same pattern as
  * `packages/bazaar/src/db/resources.integration.test.ts`.
  */
 
 const env = loadStellarTestEnv();
 
-describe.skipIf(!env)("createFacilitatorCore — real testnet (spec Phase 3 gate)", () => {
+describe.skipIf(!env)("createFacilitatorCore: real testnet (spec Phase 3 gate)", () => {
   const { feeSponsorSecret } = env as NonNullable<typeof env>;
 
   it("boots successfully with a real, funded, fee-only testnet account", async () => {
@@ -39,7 +39,7 @@ describe.skipIf(!env)("createFacilitatorCore — real testnet (spec Phase 3 gate
     // the literal key the master spec (§2, §4) requires.
     expect(kind?.extra?.["areFeesSponsored"]).toBe(true);
 
-    // pubnet was never configured, so it must not be advertised —
+    // pubnet was never configured, so it must not be advertised:
     // "advertised support and reachable support" must match (spec §0).
     expect(supported.kinds.some((k) => k.network === "stellar:pubnet")).toBe(false);
   });
@@ -113,7 +113,7 @@ describe.skipIf(!env)("createFacilitatorCore — real testnet (spec Phase 3 gate
   });
 });
 
-describe("createFacilitatorCore — gating visibility", () => {
+describe("createFacilitatorCore: gating visibility", () => {
   it("documents why this suite is skipped when the testnet key isn't configured", () => {
     if (!env) {
       expect(env).toBeNull();

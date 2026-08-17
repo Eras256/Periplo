@@ -1,9 +1,9 @@
 /**
- * Node HTTP entrypoint — deployment path 1/2 (hosted / self-hosted, spec
+ * Node HTTP entrypoint: deployment path 1/2 (hosted / self-hosted, spec
  * §5 Phase 3). Everything that actually matters (verify/settle logic, the
  * boot-time non-custodial check) lives in `core.ts` and `app.ts`; this
  * file only wires environment variables to `createFacilitatorCore` and
- * binds a port via `@hono/node-server` (the official Hono Node adapter —
+ * binds a port via `@hono/node-server` (the official Hono Node adapter,
  * added specifically for this deployment, see docs/DEFERRED.md for why it
  * wasn't added earlier).
  */
@@ -33,7 +33,7 @@ function loadSigners(): FacilitatorCoreConfig["signers"] {
 
 /**
  * `null` (not a boot-time error) when `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`
- * aren't set — automatic cataloging (spec Phase 4) degrades to
+ * aren't set: automatic cataloging (spec Phase 4) degrades to
  * validate-without-persist rather than the whole facilitator refusing to
  * boot over an optional feature. The service-role key bypasses RLS
  * (spec §6) and must only ever come from an environment variable, never a
@@ -54,7 +54,7 @@ async function main(): Promise<void> {
 
   // Explicit 0.0.0.0: @hono/node-server's default hostname isn't
   // guaranteed reachable from outside the container in every environment
-  // (Fly's proxy flagged this once — worked anyway in practice, but no
+  // (Fly's proxy flagged this once, worked anyway in practice, but no
   // reason to rely on a default here).
   serve({ fetch: app.fetch, port: PORT, hostname: "0.0.0.0" }, (info) => {
     console.log(`Periplo facilitator listening on ${info.address}:${info.port}`);
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
 
   // Pre-warm the local embedding model (spec Phase 5) so the *first* real
   // payment carrying a bazaar extension isn't the request that pays for
-  // downloading/loading it — fire-and-forget, not awaited: a slow or
+  // downloading/loading it, fire-and-forget, not awaited: a slow or
   // failed warm-up must never delay accepting connections, and
   // `embedDocument`'s lazy singleton means a real request already in
   // flight just reuses this same load instead of starting a second one.
@@ -75,7 +75,7 @@ async function main(): Promise<void> {
 
 main().catch((error) => {
   // Includes CustodialKeyError from the boot-time non-custodial check
-  // (spec §1 constraint 3) — the process must refuse to start, and this
+  // (spec §1 constraint 3): the process must refuse to start, and this
   // is the top-level catch that actually makes it exit non-zero rather
   // than silently hang.
   console.error("Facilitator failed to start:", error);

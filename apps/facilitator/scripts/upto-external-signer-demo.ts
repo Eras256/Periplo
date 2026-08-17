@@ -1,5 +1,5 @@
 /**
- * Manual/occasional verification tool, NOT part of `pnpm test` — Phase 6b's
+ * Manual/occasional verification tool, NOT part of `pnpm test`: Phase 6b's
  * retry of the OpenZeppelin smart-account scenario with `Signer::External`
  * instead of `Signer::Delegated`. The first attempt (documented in full in
  * `docs/DEFERRED.md`'s Phase 6b section) never got past a
@@ -11,7 +11,7 @@
  * by side is what motivated this retry: `External` verifies a raw Ed25519
  * signature via one cross-contract call to a deployed `Verifier`
  * (`contracts/agent-verifier`), entirely inside this account's own single
- * `SorobanAuthorizationEntry` — no second, hand-constructed nested entry.
+ * `SorobanAuthorizationEntry`: no second, hand-constructed nested entry.
  *
  * `contracts/agent-smart-account` (redeployed for this retry) now installs
  * TWO context rules, not one: `settle()` pulls the buyer's funds with a
@@ -180,7 +180,7 @@ async function main(): Promise<void> {
     return SdkAddress.fromScAddress(creds.address().address()).toString() === SMART_ACCOUNT_ID;
   });
   if (!smartAccountEntry) {
-    throw new Error("no auth entry found for the smart account — unexpected");
+    throw new Error("no auth entry found for the smart account, unexpected");
   }
   const rootInvocation = smartAccountEntry.rootInvocation();
   const subInvocations = rootInvocation.subInvocations();
@@ -191,7 +191,7 @@ async function main(): Promise<void> {
   );
 
   // Fetch the smart account's own ContractSpec, live, to encode AuthPayload
-  // and Signer correctly — no hand-built XDR, no generated bindings checked
+  // and Signer correctly, no hand-built XDR, no generated bindings checked
   // into the repo.
   const smartAccountClient = await ContractClient.from({
     contractId: SMART_ACCOUNT_ID,
@@ -240,7 +240,7 @@ async function main(): Promise<void> {
   const sent = await tx.signAndSend();
   const settleHash =
     sent.sendTransactionResponse?.hash ?? (sent as any).getTransactionResponse?.txHash;
-  console.log(`\nSETTLED on stellar:testnet — transaction hash: ${settleHash}`);
+  console.log(`\nSETTLED on stellar:testnet: transaction hash: ${settleHash}`);
   console.log(`https://stellar.expert/explorer/testnet/tx/${settleHash}`);
 
   console.log("\n=== Verifying against real contract state ===");

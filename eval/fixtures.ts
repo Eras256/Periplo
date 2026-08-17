@@ -2,24 +2,24 @@
  * A fixed synthetic catalog (spec §5 Phase 5 gate). Two tiers, on purpose:
  *
  * 1. The original 20 resources, one per domain, spanning unrelated areas
- *    (weather vs. translate vs. currency, etc.) — easy true positives,
+ *    (weather vs. translate vs. currency, etc.), easy true positives,
  *    useful as a sanity floor but not a real test of discrimination,
  *    since there's only ever one plausible candidate per query.
  * 2. ~15 *clusters* of 2-4 near-duplicate resources each (weather vs.
  *    weather-forecast vs. air-quality vs. uv-index; currency vs.
- *    crypto-price vs. historical-fx-rates; and so on) — genuine hard
+ *    crypto-price vs. historical-fx-rates; and so on), genuine hard
  *    negatives, where a naive lexical or semantic match plausibly picks
  *    the *wrong* resource in the same domain. `golden.jsonl`'s queries
  *    against these clusters are what actually tests whether the ranker
  *    discriminates, not just whether it can find the one obvious answer
  *    among twenty unrelated options. Added after a review correctly
  *    pointed out that a near-perfect score on tier 1 alone is an
- *    overfitting signal, not evidence of good ranking — see
+ *    overfitting signal, not evidence of good ranking, see
  *    `docs/DEFERRED.md`.
  *
  * Each fixture's `description`/`parameters` shape matches exactly what
  * `apps/facilitator/src/discovery.ts` extracts from a real bazaar
- * extension — this file is the only place in the repo that constructs
+ * extension, this file is the only place in the repo that constructs
  * that shape by hand instead of from a real payment, since there's no
  * other way to get a fixed, reproducible catalog to grade queries against.
  */

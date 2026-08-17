@@ -4,10 +4,10 @@
  *
  * Two factories, deliberately not one configurable-by-flag function: the
  * anon client and the service-role client cross the RLS boundary
- * differently (spec §5 Phase 2 — "public-read; writes only via the
+ * differently (spec §5 Phase 2: "public-read; writes only via the
  * service role"), and callers should have to consciously pick which one
  * they're constructing rather than pass a role string that's easy to get
- * wrong. `createServiceRoleClient` is server-side only — the key it takes
+ * wrong. `createServiceRoleClient` is server-side only, the key it takes
  * bypasses RLS entirely and must never reach a browser bundle (spec §6).
  */
 
@@ -16,7 +16,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 // A `type` alias, deliberately not an `interface`: postgrest-js's generic
 // resolution checks `Row extends Record<string, unknown>` in a conditional
 // type, and a named `interface` does NOT satisfy that check the way a
-// `type` object literal does (verified empirically — an `interface` here
+// `type` object literal does (verified empirically, an `interface` here
 // silently collapses every `.from("resources")` query's inferred type to
 // `never` instead of erroring, which is a much more confusing failure than
 // a type error would have been). Keep this a `type`.
@@ -40,7 +40,7 @@ export type ResourceRow = {
 
 /**
  * The only columns that are NOT NULL with no default (see
- * supabase/migrations/*_resources.sql) — everything else is either
+ * supabase/migrations/*_resources.sql), everything else is either
  * DB-generated (id, last_updated, fts) or nullable (route_template,
  * tool_name, description, embedding) or has a DB default (parameters,
  * accepts, extensions), so it's fine to omit any of those on insert.
@@ -52,14 +52,14 @@ export type ResourceInsert = Pick<ResourceRow, ResourceRequiredInsertFields> &
 
 /**
  * Row shape `periplo_hybrid_search` returns (spec Phase 5,
- * `supabase/migrations/20260812080000_search.sql`) — everything from
+ * `supabase/migrations/20260812080000_search.sql`), everything from
  * `ResourceRow` except `id` (still a string, just not re-declared) and
  * `embedding` (never returned by the search function), plus the fused
  * RRF `score`.
  */
 export type HybridSearchRow = Omit<ResourceRow, "embedding">;
 
-// Also a `type`, not an `interface` — see the note on ResourceRow above;
+// Also a `type`, not an `interface`, see the note on ResourceRow above;
 // keeping the whole schema declared the same way avoids relearning this
 // the hard way if another nested type gets added later.
 export type Database = {
@@ -70,7 +70,7 @@ export type Database = {
         Insert: ResourceInsert;
         Update: Partial<ResourceRow>;
         // postgrest-js's GenericTable requires this even though the
-        // schema has no foreign keys today — verified against the
+        // schema has no foreign keys today, verified against the
         // installed @supabase/postgrest-js@2.112.2 types: omitting it (or
         // omitting Views/Functions below) makes .from() resolve to `never`
         // rather than erroring, which is a much more confusing failure.
@@ -83,7 +83,7 @@ export type Database = {
         Args: {
           search_query: string;
           // pgvector accepts a JSON-array string ("[0.1,0.2,...]") over
-          // PostgREST — there's no native array-of-float wire type for it.
+          // PostgREST, there's no native array-of-float wire type for it.
           query_embedding: string;
           match_count?: number;
           match_offset?: number;
@@ -106,7 +106,7 @@ export function createAnonClient(url: string, anonKey: string): SupabaseClient<D
 }
 
 /**
- * Bypasses RLS entirely. Server-side only — this is exactly the key
+ * Bypasses RLS entirely. Server-side only: this is exactly the key
  * spec §2's Phase 2 schema note and spec §6 warn against ever shipping to
  * a browser.
  */

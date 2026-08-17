@@ -15,7 +15,7 @@ function tryLoadDotEnvOnce(): void {
   try {
     process.loadEnvFile();
   } catch {
-    // No .env file (e.g. CI) — env vars are expected to be set directly.
+    // No .env file (e.g. CI): env vars are expected to be set directly.
   }
 }
 
@@ -36,7 +36,7 @@ export function loadStellarTestEnv(): StellarTestEnv | null {
   return { feeSponsorSecret, feeSponsorPublic };
 }
 
-/** Same shape as `packages/bazaar/src/db/test-env.ts`'s `SupabaseTestEnv` — duplicated rather
+/** Same shape as `packages/bazaar/src/db/test-env.ts`'s `SupabaseTestEnv`, duplicated rather
  * than imported so this test-only helper doesn't need to be part of `@periplo/bazaar`'s public
  * (production) API surface just to be reachable from this package's own integration tests. */
 export interface SupabaseTestEnv {

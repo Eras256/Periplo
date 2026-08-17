@@ -4,7 +4,7 @@
  * Constraint (master spec §1): Apache-2.0 project, operated as a network
  * service. No AGPL anywhere in the dependency path, and no other copyleft
  * license that would impose share-alike or source-disclosure obligations on
- * operators of this service (self-hosters included — see §3, deployment
+ * operators of this service (self-hosters included, see §3, deployment
  * path 2).
  *
  * Denials are matched by pattern against each individual identifier inside

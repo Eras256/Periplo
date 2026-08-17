@@ -3,7 +3,7 @@
 //! Fuzzes `settle`'s value-moving and time-bound logic across the full
 //! `i128` input space (amounts) and a realistic-but-generous slice of the
 //! `u32` ledger-sequence space, with authorization always granted
-//! (`mock_all_auths`) so every run reaches the arithmetic — the discrete
+//! (`mock_all_auths`) so every run reaches the arithmetic, the discrete
 //! auth-approval/rejection paths (missing buyer auth, missing facilitator
 //! auth, tampered recipient, wrong facilitator) are exhaustively covered by
 //! name in `src/test.rs` and across the full numeric range in
@@ -14,14 +14,14 @@
 //! coverage-guided values property tests wouldn't think to try.
 //!
 //! The buyer is minted an amount large enough that "insufficient balance"
-//! is never the reason a settlement fails — every rejection observed here
+//! is never the reason a settlement fails: every rejection observed here
 //! must be one of this contract's own typed `Error` variants, or the
 //! target panics deliberately so libFuzzer reports it as a finding.
 //!
 //! Ledger sequences are clamped to `0..REALISTIC_MAX_LEDGER`
-//! (~100M ledgers, ~16 years at 5s/ledger — already far beyond any
+//! (~100M ledgers, ~16 years at 5s/ledger, already far beyond any
 //! plausible deployment horizon). An earlier version of this harness fuzzed
-//! the raw `u32` range and found a panic at ledger ~4.29 billion — isolated
+//! the raw `u32` range and found a panic at ledger ~4.29 billion, isolated
 //! (see docs/DEFERRED.md) to `soroban-sdk`'s own test-contract registration
 //! running out of internal TTL headroom at that height, reproducible with
 //! *no* `UptoSettlement` code involved at all. Real Stellar is nowhere near
@@ -67,7 +67,7 @@ fuzz_target!(|input: FuzzInput| {
     let sac = env.register_stellar_asset_contract_v2(asset_admin);
     let asset = sac.address();
     // Fund `from` with exactly enough to cover any max_amount this
-    // iteration generated (abs() because max_amount may be negative — that
+    // iteration generated (abs() because max_amount may be negative, that
     // path is rejected long before the pull leg, so what matters is the
     // pull leg is never balance-limited when max_amount is positive).
     // checked_abs().unwrap_or(i128::MAX) only differs from plain abs() at
@@ -96,7 +96,7 @@ fuzz_target!(|input: FuzzInput| {
 
     match result {
         Ok(_) => {
-            // A reported success must mean every guard actually held —
+            // A reported success must mean every guard actually held:
             // never trust the return value alone.
             assert!(in_time_bounds, "settled outside the signed time window");
             assert!(in_ceiling, "settled an amount outside [0, max_amount]");
@@ -112,7 +112,7 @@ fuzz_target!(|input: FuzzInput| {
         Err(Ok(sdk_err)) => {
             // A typed rejection must be one of this contract's own seven
             // variants, and it must be the *correct* one for why this
-            // input was rejected — not just any error.
+            // input was rejected, not just any error.
             let known = [
                 Error::NotYetValid,
                 Error::Expired,
@@ -139,13 +139,13 @@ fuzz_target!(|input: FuzzInput| {
                 }
                 // A fresh env per iteration means a nonce can never
                 // already be consumed, and the balance invariant can
-                // never actually trip given the proportional mint above —
+                // never actually trip given the proportional mint above,
                 // reaching either here would itself be the finding.
                 //
                 // Phase 6b: this target never calls install_budget, so
                 // budget::reconcile is always a no-op (see budget.rs) and
                 // none of the three budget-related variants can occur
-                // either — reaching any of them here would itself be the
+                // either, reaching any of them here would itself be the
                 // finding, same as the two above.
                 Error::AuthorizationConsumed
                 | Error::BalanceInvariantViolated

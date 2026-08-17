@@ -1,6 +1,6 @@
 #![no_std]
 
-//! `AgentVerifier` — a deployable Ed25519 `Verifier` contract for Phase 6b's
+//! `AgentVerifier`: a deployable Ed25519 `Verifier` contract for Phase 6b's
 //! retry of the `agent-smart-account` scenario.
 //!
 //! `stellar_accounts::verifiers::ed25519` ships the verification logic as

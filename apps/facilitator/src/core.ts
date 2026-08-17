@@ -1,12 +1,12 @@
 /**
- * Facilitator core — importable as a library, not just runnable as a
+ * Facilitator core: importable as a library, not just runnable as a
  * service (spec §5 Phase 3, "the facilitator core must be importable as a
  * library, not only runnable as a service"). This is what makes all three
  * deployment paths first-class:
  *
- *   1. Hosted — `app.ts` wraps this in a Hono HTTP server.
- *   2. Self-hosted — same as (1), someone else runs it.
- *   3. Self-facilitation inside a resource server — a seller imports
+ *   1. Hosted: `app.ts` wraps this in a Hono HTTP server.
+ *   2. Self-hosted: same as (1), someone else runs it.
+ *   3. Self-facilitation inside a resource server: a seller imports
  *      `createFacilitatorCore` directly and calls `verify`/`settle` in
  *      process, no HTTP hop, no separately-operated facilitator at all.
  *
@@ -15,7 +15,7 @@
  * `@x402/stellar`'s `ExactStellarScheme`, which is where the per-payment
  * safety properties actually live (facilitator not the `from` address,
  * not a signer in a client auth entry, simulation emits only the expected
- * transfer — see that package's own doc comments). This module's job is
+ * transfer, see that package's own doc comments). This module's job is
  * wiring, plus the boot-time non-custodial check in `boot-safety.ts`,
  * which `@x402/stellar` has no reason to know about (it's an operational
  * constraint on the caller's key, not a wire-protocol concern).
@@ -30,12 +30,12 @@ import type {
 } from "@x402/core/types";
 import { createEd25519Signer, getHorizonClient } from "@x402/stellar";
 // NOT from the "@x402/stellar" main barrel: it re-exports the CLIENT
-// variant of ExactStellarScheme (same class name, different subpath —
+// variant of ExactStellarScheme (same class name, different subpath,
 // `./exact/client`). The facilitator variant that implements
 // SchemeNetworkFacilitator (verify/settle/getSigners/getExtra) lives at
 // this subpath instead. Importing the wrong one type-errors confusingly
 // (TypeScript reports it as missing ClientStellarSigner properties)
-// rather than pointing at the real cause — worth this comment so it's
+// rather than pointing at the real cause, worth this comment so it's
 // not "fixed" back to the barrel import later.
 import { ExactStellarScheme } from "@x402/stellar/exact/facilitator";
 import { type AccountLoader, assertNonCustodialSigner } from "./boot-safety.js";
@@ -46,7 +46,7 @@ export type StellarNetwork = (typeof STELLAR_NETWORKS)[number];
 export interface FacilitatorCoreConfig {
   /**
    * Fee-sponsor secret key per network. Only networks with a configured
-   * secret are registered and advertised in `/supported` — a facilitator
+   * secret are registered and advertised in `/supported`, a facilitator
    * that only has a testnet key should only claim testnet (spec §0's own
    * observation about the reference facilitator: advertised support and
    * reachable support must match).
@@ -72,7 +72,7 @@ function defaultLoadAccount(network: StellarNetwork): AccountLoader {
 
 /**
  * Builds the facilitator core. Async because it performs the boot-time
- * non-custodial check against every configured signer before returning —
+ * non-custodial check against every configured signer before returning,
  * per spec §1 constraint 3, there is no valid `FacilitatorCore` for a
  * misconfigured key, so construction itself is where that's enforced.
  */

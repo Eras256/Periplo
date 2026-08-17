@@ -30,7 +30,7 @@ describe("ndcgAt10", () => {
 
   it("only considers the first 10 results", () => {
     const manyIrrelevant = new Array(15).fill(0);
-    manyIrrelevant[12] = 3; // relevant item ranked 13th — outside top 10
+    manyIrrelevant[12] = 3; // relevant item ranked 13th, outside top 10
     expect(ndcgAt10(manyIrrelevant, [3])).toBe(0);
   });
 });

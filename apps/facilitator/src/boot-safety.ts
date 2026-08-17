@@ -5,7 +5,7 @@
  * This is deliberately NOT the same thing as `@x402/stellar`'s own
  * per-payment safety checks (facilitator not the `from` address, not a
  * signer in a client auth entry, simulation emits only the expected
- * transfer — all enforced inside `ExactStellarScheme` itself; see
+ * transfer, all enforced inside `ExactStellarScheme` itself; see
  * `core.ts`). Those guard each individual payment. This guards the
  * *operator's configuration*, once, before the facilitator serves any
  * traffic at all.
@@ -13,7 +13,7 @@
  * The concrete check: a fee-sponsor account exists only to pay Soroban
  * network fees. One holding any asset besides native XLM is a signal that
  * whoever configured it pointed a real funds-holding wallet at the
- * fee-sponsor role by mistake — exactly the misconfiguration this
+ * fee-sponsor role by mistake, exactly the misconfiguration this
  * constraint exists to catch before it matters.
  */
 
@@ -60,7 +60,7 @@ export async function assertNonCustodialSigner(
     const assets = nonNative.map(describeBalance).join(", ");
     throw new CustodialKeyError(
       `Refusing to boot: fee-sponsor account ${publicKey} on ${network} holds non-native ` +
-        `balance(s) (${assets}). A fee-sponsor key must hold ONLY XLM — spec §1 constraint 3 ` +
+        `balance(s) (${assets}). A fee-sponsor key must hold ONLY XLM: spec §1 constraint 3 ` +
         `requires it never be able to move user funds, and a key holding other assets is a ` +
         `misconfiguration signal, not proof of safety by itself, but reason enough to refuse.`
     );

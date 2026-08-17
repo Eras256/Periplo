@@ -13,7 +13,7 @@ import { loadSupabaseTestEnv } from "./test-env.js";
  * success header; a crafted hostile routeTemplate results in a rejected
  * header with a specific reason and no row"). The "header" half of the
  * gate is app.test.ts's job (fake core, no DB needed); this file is the
- * "row" half, which needs the real table. Skipped — not failed — without
+ * "row" half, which needs the real table. Skipped, not failed, without
  * Supabase credentials, same pattern as
  * `packages/bazaar/src/db/resources.integration.test.ts`.
  */
@@ -62,7 +62,7 @@ function mcpExtension(toolName: string): Record<string, unknown> {
   }) as unknown as Record<string, unknown>;
 }
 
-describe.skipIf(!env)("automatic cataloging — real Supabase (spec §5 Phase 4 gate)", () => {
+describe.skipIf(!env)("automatic cataloging: real Supabase (spec §5 Phase 4 gate)", () => {
   const { url, serviceRoleKey } = env as NonNullable<typeof env>;
   const service: SupabaseClient<Database> = createServiceRoleClient(url, serviceRoleKey);
 
@@ -186,7 +186,7 @@ describe.skipIf(!env)("automatic cataloging — real Supabase (spec §5 Phase 4 
     expect(result?.status).toBe("rejected");
     expect(result?.rejectedReason).toBeTruthy();
 
-    // No row under any interpretation of the URL — neither the raw origin
+    // No row under any interpretation of the URL, neither the raw origin
     // nor anything derived from the hostile template landed.
     const { data } = await service.from("resources").select("url").ilike("url", `${origin}%`);
     expect(data).toEqual([]);
@@ -226,7 +226,7 @@ describe.skipIf(!env)("automatic cataloging — real Supabase (spec §5 Phase 4 
   });
 });
 
-describe("automatic cataloging — gating visibility", () => {
+describe("automatic cataloging: gating visibility", () => {
   it("documents why this suite is skipped when Supabase credentials aren't configured", () => {
     if (!env) {
       expect(env).toBeNull();

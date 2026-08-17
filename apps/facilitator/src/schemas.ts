@@ -1,16 +1,16 @@
 /**
- * Zod schemas for the OUTER request envelope only — `{ x402Version,
- * paymentPayload, paymentRequirements }` — confirmed against the real
+ * Zod schemas for the OUTER request envelope only: `{ x402Version,
+ * paymentPayload, paymentRequirements }`, confirmed against the real
  * reference facilitator (`conformance/baseline/x402-org/verify-settle-malformed.md`)
  * and `@x402/core`'s `VerifyRequest`/`SettleRequest` types.
  *
  * Deliberately does NOT validate the mechanism-specific INNER payload
- * (`payload.transaction`, asset addresses, etc.) — the reference
+ * (`payload.transaction`, asset addresses, etc.), the reference
  * facilitator's own behavior (captured, not guessed) is to accept any
  * well-shaped envelope with `200` and report inner-payload problems as
  * `isValid: false` / `success: false` in the body, not as an HTTP 400.
  * `@x402/stellar`'s `ExactStellarScheme` is what actually validates the
- * inner payload (spec §1: don't reimplement verify/settle) — these
+ * inner payload (spec §1: don't reimplement verify/settle), these
  * schemas only guard the shape needed to safely call into it at all.
  */
 

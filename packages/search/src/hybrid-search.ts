@@ -1,7 +1,7 @@
 /**
  * Calls `periplo_hybrid_search` (the RRF fusion function,
  * `supabase/migrations/20260812080000_search.sql`). This module only knows
- * how to call it — the embedding for the query text is the caller's job
+ * how to call it: the embedding for the query text is the caller's job
  * (via `embedQuery`), so this stays testable against a fake client without
  * needing the model loaded.
  */
@@ -27,7 +27,7 @@ export async function hybridSearch(
 ): Promise<HybridSearchResult[]> {
   const { data, error } = await client.rpc("periplo_hybrid_search", {
     search_query: params.query,
-    // pgvector reads a JSON-array string over PostgREST — there's no
+    // pgvector reads a JSON-array string over PostgREST: there's no
     // native array-of-float wire type for it.
     query_embedding: JSON.stringify(params.queryEmbedding),
     match_count: params.limit ?? 20,

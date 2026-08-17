@@ -61,8 +61,8 @@ export interface DiscoveryRoutesDeps {
 
 /**
  * `GET /discovery/resources`: plain filtered listing, no ranking. Filters
- * `type`, `payTo`, `network`, `extensions`, `limit`, `offset` — exactly
- * the columns `supabase/migrations/20260807202307_resources.sql` already
+ * `type`, `payTo`, `network`, `extensions`, `limit`, `offset`, exactly the
+ * columns `supabase/migrations/20260807202307_resources.sql` already
  * indexes for this route (added ahead of this route's own build, per that
  * migration's own comment).
  */
@@ -105,14 +105,14 @@ export async function listDiscoveryResources(
 /**
  * `GET /discovery/search`: natural-language ranking via `packages/search`'s
  * hybrid RRF search. `periplo_hybrid_search` (the SQL side) doesn't take
- * type/payTo/network/extensions filters — see its signature in
- * `packages/bazaar/src/db/client.ts` — so those apply as an in-process
+ * type/payTo/network/extensions filters, see its signature in
+ * `packages/bazaar/src/db/client.ts`, so those apply as an in-process
  * post-filter over the ranked rows instead of a fifth SQL parameter. A
  * filtered response can therefore return fewer than `limit` results even
  * when more would exist unfiltered; `partialResults` reflects the
  * pre-filter SQL-side truncation only, since that's the only truncation
  * this function can actually detect. Cursor is an opaque base64-encoded
- * offset, not a keyset cursor — simplest honest choice given the spec's
+ * offset, not a keyset cursor, the simplest honest choice given the spec's
  * own "the server may ignore this" framing for pagination here.
  */
 export async function searchDiscoveryResources(

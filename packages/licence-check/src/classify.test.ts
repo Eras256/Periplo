@@ -14,7 +14,7 @@ describe("classifyLicense", () => {
     expect(classifyLicense("(MIT OR Apache-2.0)").verdict).toBe("allow");
   });
 
-  it("denies AGPL-3.0-or-later — the OpenZeppelin Relayer case named in spec §1", () => {
+  it("denies AGPL-3.0-or-later: the OpenZeppelin Relayer case named in spec §1", () => {
     const result = classifyLicense("AGPL-3.0-or-later");
     expect(result.verdict).toBe("deny");
     expect(result.reason).toMatch(/copyleft/i);

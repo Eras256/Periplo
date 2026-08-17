@@ -1,6 +1,6 @@
 /**
  * nDCG@10 and MRR (spec §5 Phase 5 gate). Pure functions over a ranked
- * list of grades — no DB, no embeddings — so these get fast unit tests
+ * list of grades, no DB, no embeddings, so these get fast unit tests
  * independent of `run.ts`'s live-Supabase orchestration.
  */
 

@@ -6,7 +6,7 @@ import { loadSupabaseTestEnv } from "./test-env.js";
 
 /**
  * Integration tests against the REAL Supabase project (spec Phase 2 gate:
- * "RLS policy tests pass"). Skipped — not failed — when credentials
+ * "RLS policy tests pass"). Skipped, not failed, when credentials
  * aren't available, so this suite degrades gracefully on a fork or an
  * environment without the repo's Supabase secrets, per docs/DEFERRED.md.
  *
@@ -25,7 +25,7 @@ function testUrl(): string {
   return `${TEST_URL_PREFIX}${randomUUID()}`;
 }
 
-describe.skipIf(!env)("resources table — RLS policy (spec §5 Phase 2 gate)", () => {
+describe.skipIf(!env)("resources table: RLS policy (spec §5 Phase 2 gate)", () => {
   // Non-null assertion is safe here: describe.skipIf(!env) means this
   // block never runs when env is null.
   const { url, anonKey, serviceRoleKey } = env as NonNullable<typeof env>;
@@ -113,7 +113,7 @@ describe.skipIf(!env)("resources table — RLS policy (spec §5 Phase 2 gate)", 
       .select();
 
     // PostgREST returns an empty result (not an RLS error) for an UPDATE
-    // that matches zero rows under RLS — the row is invisible to anon for
+    // that matches zero rows under RLS: the row is invisible to anon for
     // writes, so zero rows are affected rather than an explicit denial.
     expect(error).toBeNull();
     expect(data).toEqual([]);
@@ -204,7 +204,7 @@ describe.skipIf(!env)("resources table — RLS policy (spec §5 Phase 2 gate)", 
   });
 });
 
-describe("resources table — RLS suite gating", () => {
+describe("resources table: RLS suite gating", () => {
   it("documents why this suite is skipped when Supabase credentials aren't configured", () => {
     // This test always runs (even without credentials) so `pnpm test`
     // never silently reports "0 tests" for this file in an environment

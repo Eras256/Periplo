@@ -4,14 +4,14 @@
 -- Deliberately deviates from the spec's literal SQL in two places, both
 -- documented in docs/DEFERRED.md and verified against this project's real
 -- Postgres rather than assumed:
---   1. to_tsvector('english', text) — the two-argument form — is STABLE in
+--   1. to_tsvector('english', text), the two-argument form, is STABLE in
 --      PostgreSQL (the named text search configuration could theoretically
 --      change), not IMMUTABLE, so it cannot be used directly inside a
 --      GENERATED ALWAYS AS column, which requires IMMUTABLE. periplo_fts()
 --      below is the standard fix: wrap it in our own function and mark
 --      THAT immutable, which is a safe promise here because this project
 --      pins 'english' as a literal, not a variable.
---   2. unique (url, route_template, tool_name) — plain SQL UNIQUE treats
+--   2. unique (url, route_template, tool_name): plain SQL UNIQUE treats
 --      NULL as distinct from NULL, so two HTTP listings sharing the same
 --      (url, route_template) with tool_name NULL in both rows would NOT
 --      collide and could be inserted twice, silently defeating the
@@ -56,7 +56,7 @@ create index if not exists resources_fts_idx on resources using gin (fts);
 create index if not exists resources_embedding_idx on resources using hnsw (embedding vector_ip_ops);
 
 -- Not in the spec's literal SQL, added because GET /discovery/resources
--- (spec §4) filters on exactly these columns — plain btree indexes for
+-- (spec §4) filters on exactly these columns, plain btree indexes for
 -- equality filters, distinct from the retrieval indexes above.
 create index if not exists resources_network_idx on resources (network);
 create index if not exists resources_type_idx on resources (type);

@@ -1,12 +1,12 @@
 #![no_std]
 
-//! `UptoSettlement` — the Soroban contract behind the x402 `upto` scheme's
+//! `UptoSettlement`: the Soroban contract behind the x402 `upto` scheme's
 //! `contract` profile on Stellar. Full protocol writeup:
 //! `specs/schemes/upto/scheme_upto_stellar.md` in x402-foundation/x402#3098
 //! (open draft PR; this crate is the reference implementation named there).
 //!
 //! `upto` authorizes a transfer of **up to** a maximum amount, with the
-//! settled amount fixed only at settlement time — after the resource has
+//! settled amount fixed only at settlement time, after the resource has
 //! been consumed and metered, not when the buyer signs. A SEP-41 allowance
 //! (`approve`/`transfer_from`) cannot express this: it fails **recipient
 //! binding** (`transfer_from` lets the spender choose any `to`) and
@@ -29,7 +29,7 @@ use soroban_sdk::{
 /// independent of and tighter than the network's own storage-TTL ceiling
 /// (`state_archival.max_entry_ttl`; 3,110,400 ledgers on testnet, checked
 /// live against `stellar network settings --network testnet` rather than
-/// assumed — see docs/DEFERRED.md). x402 authorizations are meant to be
+/// assumed, see docs/DEFERRED.md). x402 authorizations are meant to be
 /// short-lived (`maxTimeoutSeconds` defaults to 60s, ~12 ledgers at
 /// 5s/ledger); a window even approaching a day is already outside normal
 /// use and worth rejecting outright rather than silently accepting whatever
@@ -37,7 +37,7 @@ use soroban_sdk::{
 pub const MAX_WINDOW_LEDGERS: u32 = 17_280; // ~1 day at 5s/ledger
 
 /// The struct the buyer signs. Every field is covered by
-/// `require_auth_for_args((authorization,))` — nothing here can be swapped
+/// `require_auth_for_args((authorization,))`: nothing here can be swapped
 /// after signing without invalidating the signature.
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -45,7 +45,7 @@ pub struct Authorization {
     /// Buyer. Authorizes this struct (not `actual_amount`) and the nested
     /// SEP-41 `transfer` sub-invocation for `max_amount`.
     pub from: Address,
-    /// MUST equal the resource server's `payTo` — this is what makes
+    /// MUST equal the resource server's `payTo`: this is what makes
     /// recipient binding hold: `to` comes from what the buyer signed, never
     /// from an argument a facilitator could supply independently.
     pub to: Address,
@@ -56,7 +56,7 @@ pub struct Authorization {
     pub valid_after_ledger: u32,
     pub deadline_ledger: u32,
     /// Single-use marker. MUST be a fresh, unpredictable 32 bytes per
-    /// authorization — a predictable nonce lets an observer pre-consume it,
+    /// authorization: a predictable nonce lets an observer pre-consume it,
     /// denying service to the real buyer.
     pub nonce: BytesN<32>,
     /// Binds settlement to one operator so an intercepted payload can't be
@@ -83,7 +83,7 @@ pub enum Error {
     AuthorizationConsumed = 6,
     /// Structural invariant, not a buyer/facilitator input error: the
     /// contract must never hold a balance across transactions. See
-    /// "Security considerations" in the spec — any implementation letting a
+    /// "Security considerations" in the spec: any implementation letting a
     /// balance persist has introduced custody this scheme is designed not
     /// to have.
     BalanceInvariantViolated = 7,
@@ -142,7 +142,7 @@ impl UptoSettlement {
         // of how the buyer's side was authorized. ---
         authorization.facilitator.require_auth();
 
-        // --- 2. Time bounds. Ledger sequences, never timestamps — see the
+        // --- 2. Time bounds. Ledger sequences, never timestamps, see the
         // module doc and the spec's "Ledger sequences, not timestamps"
         // section for why a fixed seconds-per-ledger assumption over long
         // horizons is explicitly disallowed. ---
@@ -182,7 +182,7 @@ impl UptoSettlement {
         // this point). extend_ttl(ttl, ttl) sizes the entry's TTL to cover
         // exactly deadline_ledger - ledger, bounded by MAX_WINDOW_LEDGERS
         // above, which is verified against the network's real TTL limits
-        // rather than assumed — see docs/DEFERRED.md. ---
+        // rather than assumed, see docs/DEFERRED.md. ---
         let key = DataKey::Nonce(authorization.nonce.clone());
         if env.storage().temporary().has(&key) {
             panic_with_error!(&env, Error::AuthorizationConsumed);
@@ -208,7 +208,7 @@ impl UptoSettlement {
         // entries commit to exact sub-invocation arguments, so this
         // contract cannot substitute a different destination or amount for
         // the pull leg even if it wanted to. Up to three transfers, all in
-        // this one transaction — no custody window between them. ---
+        // this one transaction, no custody window between them. ---
         let asset = TokenClient::new(&env, &authorization.asset);
         let this = env.current_contract_address();
         asset.transfer(&authorization.from, &this, &authorization.max_amount);
@@ -222,7 +222,7 @@ impl UptoSettlement {
 
         // A non-zero balance here means either a non-standard token (e.g.
         // fee-on-transfer) delivered less than requested, or an arithmetic
-        // mistake above — either way the settlement must not silently
+        // mistake above, either way the settlement must not silently
         // succeed with value stuck in the contract.
         if asset.balance(&this) != 0 {
             panic_with_error!(&env, Error::BalanceInvariantViolated);

@@ -6,9 +6,9 @@
  * and runs every query in `golden.jsonl` through the real hybrid search
  * RPC, computes nDCG@10 and MRR, and compares against the committed
  * baseline (`eval/baseline.json`). Exits non-zero if nDCG@10 regresses
- * more than 5% — the CI-blocking half of the gate.
+ * more than 5%, the CI-blocking half of the gate.
  *
- * Needs `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` — unlike the
+ * Needs `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`: unlike the
  * integration test suites elsewhere in this repo, this does NOT skip
  * gracefully without them: the Phase 5 gate is `pnpm eval` printing real
  * numbers on every release, not an optional suite.
@@ -65,13 +65,13 @@ function loadEnv(): { url: string; serviceRoleKey: string } {
   try {
     process.loadEnvFile();
   } catch {
-    // No .env file (CI) — env vars are expected to be set directly.
+    // No .env file (CI): env vars are expected to be set directly.
   }
   const url = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceRoleKey) {
     console.error(
-      "pnpm eval requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY — this gate does not skip without them (spec §5 Phase 5)."
+      "pnpm eval requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY: this gate does not skip without them (spec §5 Phase 5)."
     );
     process.exit(1);
   }
@@ -147,7 +147,7 @@ async function main(): Promise<void> {
     try {
       baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8")) as Baseline;
     } catch {
-      // No committed baseline yet — bootstrap it below.
+      // No committed baseline yet, bootstrap it below.
     }
 
     if (!baseline) {
@@ -155,7 +155,7 @@ async function main(): Promise<void> {
         BASELINE_PATH,
         `${JSON.stringify({ ndcg10: summary.ndcg10, mrr: summary.mrr }, null, 2)}\n`
       );
-      console.log(`\nNo baseline found — wrote ${BASELINE_PATH}. Commit it.`);
+      console.log(`\nNo baseline found: wrote ${BASELINE_PATH}. Commit it.`);
       return;
     }
 

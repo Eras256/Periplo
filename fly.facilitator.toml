@@ -2,8 +2,8 @@
 # Deploy from the repo root:
 #   fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator
 #
-# Only stellar:testnet is configured (STELLAR_FEE_SPONSOR_SECRET fly secret)
-# — periplo-mainnet is a separate app, deferred until a mainnet fee-sponsor
+# Only stellar:testnet is configured (STELLAR_FEE_SPONSOR_SECRET fly secret),
+# periplo-mainnet is a separate app, deferred until a mainnet fee-sponsor
 # key exists (docs/DEFERRED.md). Never both networks on one app: keeps the
 # blast radius of a testnet-key compromise from ever touching mainnet.
 
@@ -17,7 +17,7 @@ primary_region = "iad"
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 1 # never 0 — cold start breaks agent latency SLOs (spec §8)
+  min_machines_running = 1 # never 0, cold start breaks agent latency SLOs (spec §8)
   [http_service.concurrency]
     type = "requests"
     soft_limit = 200

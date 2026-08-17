@@ -11,11 +11,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     # Job-level (not step-level) so the eval step's `if:` below can check
-    # presence via the `env` context — the GitHub Actions schema does not
+    # presence via the `env` context, the GitHub Actions schema does not
     # allow referencing `secrets` directly inside an `if:` expression
     # (found via the editor's own workflow-file validator, not assumed;
     # this project has been burned by an unvalidated CI YAML assumption
-    # before — see the osv-scan history in docs/DEFERRED.md).
+    # before, see the osv-scan history in docs/DEFERRED.md).
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -34,10 +34,10 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Cache fastembed model (BGESmallENV15 — spec §5 Phase 5)
+      - name: Cache fastembed model (BGESmallENV15, spec §5 Phase 5)
         # Runners are fresh VMs with no persistent disk between runs, and
         # `packages/search/src/embed.ts` pins the cache dir to os.tmpdir()
-        # specifically to keep it out of the repo (see docs/DEFERRED.md) —
+        # specifically to keep it out of the repo (see docs/DEFERRED.md),
         # which also means it starts empty on every CI run unless restored
         # here. Without this, the Test and Search-relevance steps below
         # both depend on huggingface.co being reachable and fast on every
@@ -53,7 +53,7 @@ jobs:
       - name: Install dependencies
         # ONNXRUNTIME_NODE_INSTALL_CUDA=skip: onnxruntime-node's postinstall
         # (packages/search's local embedding pipeline, Phase 5) defaults to
-        # downloading a ~340MB CUDA provider binary on Linux/x64 installs —
+        # downloading a ~340MB CUDA provider binary on Linux/x64 installs,
         # this runner and the Fly deployment are both CPU-only, so it's
         # pure waste. Found by actually inspecting the installed size, not
         # assumed; see docs/DEFERRED.md.
@@ -71,18 +71,18 @@ jobs:
         # SUPABASE_*/STELLAR_FEE_SPONSOR_* secrets (job-level env above)
         # gate the Phase 2/3 integration suites
         # (packages/bazaar/src/db/resources.integration.test.ts,
-        # apps/facilitator/src/core.test.ts) — they're not set on PRs from
+        # apps/facilitator/src/core.test.ts), they're not set on PRs from
         # forks (GitHub doesn't expose repo secrets to those runs), so
         # those suites skip gracefully rather than failing; see
         # docs/DEFERRED.md.
         run: pnpm test
 
-      - name: Licence gate (no AGPL / copyleft transitive — spec §1)
+      - name: Licence gate (no AGPL / copyleft transitive, spec §1)
         run: pnpm licence-check
 
-      - name: Search relevance gate (nDCG@10 / MRR — spec §5 Phase 5)
+      - name: Search relevance gate (nDCG@10 / MRR, spec §5 Phase 5)
         # Unlike `pnpm test`'s Supabase-gated suites, this script does not
-        # skip gracefully on its own — pnpm eval hard-exits 1 without
+        # skip gracefully on its own: pnpm eval hard-exits 1 without
         # credentials, because the Phase 5 gate is "prints real numbers
         # and fails on regression," not an optional check. The `if:` here
         # is what actually degrades this to a skip on fork PRs (no repo
@@ -92,7 +92,7 @@ jobs:
         run: pnpm eval
 
   # contracts/upto-settlement (Phase 6) is a standalone Cargo/Rust
-  # project, not a pnpm workspace member — its own job, its own
+  # project, not a pnpm workspace member: its own job, its own
   # toolchain, no dependency on the `build` job above. Deliberately does
   # NOT deploy to testnet or run the cargo-fuzz target here: a testnet
   # deploy on every push would spend real fee-sponsor funds for no

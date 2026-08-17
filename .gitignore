@@ -36,7 +36,7 @@ pnpm-debug.log*
 # fly.io
 fly.toml.bak
 
-# fastembed's own default cache dir (packages/search, Phase 5) — pinned
+# fastembed's own default cache dir (packages/search, Phase 5), pinned
 # outside the repo in embed.ts, this is defense in depth in case something
 # ever runs with that override skipped.
 local_cache/

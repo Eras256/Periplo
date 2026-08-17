@@ -47,7 +47,7 @@ export function classifyLicense(license: string | null | undefined): {
   // Deny wins outright: if ANY branch of an OR/AND expression is copyleft,
   // treat the whole package as denied. We cannot assume a downstream
   // consumer (or Periplo itself, transitively) picked the permissive
-  // branch of a dual license — the safer default is to require an
+  // branch of a dual license, the safer default is to require an
   // unambiguous permissive grant.
   for (const term of terms) {
     const hit = DENIED_PATTERNS.find((pattern) => pattern.test(term));

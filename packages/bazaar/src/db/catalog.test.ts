@@ -4,7 +4,7 @@ import { type CatalogAcceptsEntry, mergeAccepts } from "./catalog.js";
 /**
  * Pure-logic unit tests for the `accepts` merge rule. The DB read/upsert
  * side of `upsertCatalogResource` is covered by the real integration test
- * (`resources.integration.test.ts` pattern) since it needs live Supabase —
+ * (`resources.integration.test.ts` pattern) since it needs live Supabase:
  * this file covers the part that doesn't.
  */
 

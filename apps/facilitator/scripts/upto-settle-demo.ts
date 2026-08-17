@@ -1,26 +1,26 @@
 /**
- * Manual/occasional verification tool, NOT part of `pnpm test` — the Phase 6
+ * Manual/occasional verification tool, NOT part of `pnpm test`: the Phase 6
  * gate's evidence generator. Against the REAL `UptoSettlement` contract
  * deployed to stellar:testnet (`contracts/upto-settlement`,
  * `UPTO_SETTLEMENT_CONTRACT_TESTNET`), this:
  *
  *   1. Builds and simulates a `settle` call for a genuine partial
  *      settlement (buyer signs a ceiling, facilitator settles less),
- *      printing the actual signed auth-entry structure from simulation —
+ *      printing the actual signed auth-entry structure from simulation,
  *      the direct evidence for spec assumption 1 (`require_auth_for_args`
  *      accepts a root tuple of `(authorization,)` while the SEP-41
  *      `transfer` rides as a sub-invocation for `max_amount`).
  *   2. Prints the simulation's real resource consumption against the
- *      network's live per-transaction ceilings — evidence for assumption 2
+ *      network's live per-transaction ceilings, evidence for assumption 2
  *      (pull → pay → refund fits Soroban's read/write/instruction/memory
  *      limits).
  *   3. Signs the buyer's auth entry, submits as the facilitator, and once
- *      settled, reads the deployed nonce entry's real TTL back from RPC —
+ *      settled, reads the deployed nonce entry's real TTL back from RPC,
  *      evidence for assumption 3 (`temporary()` TTL covers
  *      `deadline_ledger - current_ledger`).
  *
  * Each run submits a real testnet transaction and spends a small amount of
- * the test buyer's PTEST balance — the same reason `settle-demo.ts` (the
+ * the test buyer's PTEST balance, the same reason `settle-demo.ts` (the
  * `exact`-scheme equivalent) isn't wired into the default test suite.
  *
  * Usage (from repo root, after `nvm use 22`):
@@ -62,7 +62,7 @@ async function main(): Promise<void> {
   const maxAmount = 1_000_000n;
   const actualAmount = 400_000n;
   const validAfterLedger = currentLedger; // window is (deadline - valid_after), NOT (deadline - 0)
-  const deadlineLedger = currentLedger + 30; // ~150s at 5s/ledger — comfortably inside maxTimeoutSeconds' usual range
+  const deadlineLedger = currentLedger + 30; // ~150s at 5s/ledger, comfortably inside maxTimeoutSeconds' usual range
   const nonce = randomBytes(32);
 
   const authorization = {
@@ -80,7 +80,7 @@ async function main(): Promise<void> {
   console.log({ ...authorization, nonce: nonce.toString("hex") });
 
   // `Client.from` fetches the contract's spec live from the deployed WASM
-  // via RPC — no generated/pre-built bindings needed for this script to
+  // via RPC, no generated/pre-built bindings needed for this script to
   // stay reproducible from a clean checkout.
   const client = await ContractClient.from({
     contractId: CONTRACT_ID as string,
@@ -130,7 +130,7 @@ async function main(): Promise<void> {
     }
   }
   console.log(
-    "Root call's argCount === 1 confirms the signed tuple is (authorization,) only — " +
+    "Root call's argCount === 1 confirms the signed tuple is (authorization,) only, " +
       "actual_amount never appears in what require_auth_for_args covers."
   );
 
@@ -161,12 +161,12 @@ async function main(): Promise<void> {
   console.log("\nSubmitting (facilitator is transaction source and sponsors the fee)...");
   const sent = await tx.signAndSend();
   const hash = sent.sendTransactionResponse?.hash ?? (sent as any).getTransactionResponse?.txHash;
-  console.log(`\nSETTLED on stellar:testnet — transaction hash: ${hash}`);
+  console.log(`\nSETTLED on stellar:testnet: transaction hash: ${hash}`);
   console.log(`https://stellar.expert/explorer/testnet/tx/${hash}`);
 
   // --- Assumption 3: temporary() TTL covers the deadline window ---
   console.log("\n=== Assumption 3: nonce entry TTL ===");
-  // DataKey::Nonce(nonce) — a #[contracttype] tuple-variant enum serializes
+  // DataKey::Nonce(nonce): a #[contracttype] tuple-variant enum serializes
   // as the vec [Symbol("Nonce"), Bytes(nonce)]. Built explicitly rather than
   // via nativeToScVal's heuristics: a bare JS string defaults to scvString,
   // not the scvSymbol an enum discriminant actually needs.
@@ -186,10 +186,10 @@ async function main(): Promise<void> {
     console.log(
       liveUntil !== undefined && liveUntil >= deadlineLedger
         ? "CONFIRMED: TTL covers the full window to deadline_ledger."
-        : "WARNING: TTL does not cover deadline_ledger — investigate before closing the gate."
+        : "WARNING: TTL does not cover deadline_ledger, investigate before closing the gate."
     );
   } else {
-    console.log("Nonce entry not found — unexpected, investigate.");
+    console.log("Nonce entry not found: unexpected, investigate.");
   }
 }
 

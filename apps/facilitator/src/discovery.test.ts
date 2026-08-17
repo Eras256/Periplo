@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { processBazaarExtension } from "./discovery.js";
 
 /**
- * Unit tests against `processBazaarExtension` with `catalogClient: null` —
+ * Unit tests against `processBazaarExtension` with `catalogClient: null`,
  * validation/rejection logic only, no Supabase. The real write path
  * (catalog row appears / doesn't) is covered by
  * `discovery.integration.test.ts` (spec Phase 4 gate), matching the

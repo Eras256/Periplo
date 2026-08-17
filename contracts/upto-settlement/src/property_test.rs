@@ -2,7 +2,7 @@
 //! Property-based tests locking down the invariants the unit tests in
 //! `test.rs` check at fixed points. `proptest` generates the values;
 //! `SorobanArbitrary` (available under `testutils`) is what backs fuzzing
-//! with `cargo-fuzz` on contract types — this file runs under plain `cargo
+//! with `cargo-fuzz` on contract types: this file runs under plain `cargo
 //! test`, no nightly toolchain required, and is the CI-enforced regression
 //! net per the smart-contracts skill's fuzz-then-lock-in-as-proptest
 //! workflow.
@@ -19,7 +19,7 @@ proptest! {
     /// For any max_amount and any actual_amount within [0, max_amount], a
     /// single settlement moves exactly actual_amount to `to`, refunds
     /// exactly the remainder to `from`, and leaves the contract at zero
-    /// balance — regardless of how the ceiling and the charge are chosen.
+    /// balance, regardless of how the ceiling and the charge are chosen.
     #[test]
     fn settlement_conserves_value_for_any_amount_within_the_ceiling(
         max_amount in 0i128..=1_000_000_000i128,
@@ -69,7 +69,7 @@ proptest! {
 
     /// Any ledger strictly outside [valid_after_ledger, deadline_ledger] is
     /// rejected, and any ledger inside it (with a window at or under
-    /// MAX_WINDOW_LEDGERS) is accepted — the boundary is exact, not
+    /// MAX_WINDOW_LEDGERS) is accepted: the boundary is exact, not
     /// approximate, for the whole generated range.
     #[test]
     fn time_bounds_are_exact(
@@ -107,8 +107,8 @@ proptest! {
         prop_assert_eq!(result, Err(Ok(SdkError::from(Error::WindowTooLong))));
     }
 
-    /// Once a nonce is consumed, no second actual_amount value — including
-    /// zero, the maximum, or anything in between — can settle against it
+    /// Once a nonce is consumed, no second actual_amount value, including
+    /// zero, the maximum, or anything in between, can settle against it
     /// again.
     #[test]
     fn a_consumed_nonce_rejects_every_subsequent_actual_amount(
@@ -131,7 +131,7 @@ proptest! {
 /// Test-only helper: like `setup` in `test.rs`, but with an explicit
 /// current ledger (so time-bound properties can be checked at arbitrary
 /// ledgers, not just the fixed one `setup` pins) and snapshot capture
-/// disabled — each property runs hundreds of randomized cases, and a
+/// disabled: each property runs hundreds of randomized cases, and a
 /// snapshot per case is pure disk noise, not regression evidence worth
 /// keeping (see the doc comment on `test::setup_with_env`).
 pub(crate) fn setup_at(supply: i128, ledger: u32) -> Fixture {

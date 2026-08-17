@@ -7,7 +7,7 @@ use soroban_sdk::{symbol_short, testutils::Address as _, vec, Bytes, Map, TryFro
 /// `agent-smart-account` (soroban-sdk 26.1.1, to match the real published
 /// `stellar-accounts` crate) and `upto-settlement` (soroban-sdk 27.0.5, to
 /// match the live testnet protocol version Phase 6 was built and deployed
-/// against) cannot share a Rust `Env` type in the same test binary — that
+/// against) cannot share a Rust `Env` type in the same test binary: that
 /// would require importing both crates' incompatible soroban-sdk versions
 /// into one dependency graph, the exact conflict
 /// `contracts/upto-settlement/src/budget.rs`'s module doc documents finding
@@ -21,7 +21,7 @@ use soroban_sdk::{symbol_short, testutils::Address as _, vec, Bytes, Map, TryFro
 /// Client, since `__check_auth` is a host-invoked entry point the standard
 /// Client doesn't expose). This is the actually novel claim ("an agent key
 /// that can only spend through the settlement contract" is enforced, not
-/// just documented) — whether `UptoSettlement` correctly accepts a contract
+/// just documented): whether `UptoSettlement` correctly accepts a contract
 /// address as `authorization.from` is proven the stronger way: a real,
 /// cross-contract testnet transaction, recorded in
 /// `conformance/RESULTS.md`.

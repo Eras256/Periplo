@@ -1,7 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
-  # Not apps/* or packages/* — the eval harness (spec §5 Phase 5 gate)
+  # Not apps/* or packages/*: the eval harness (spec §5 Phase 5 gate)
   # lives at the repo root per docs/SPEC.md's own layout (`eval/golden.jsonl`,
   # not `packages/eval/src/golden.jsonl`), but still needs @periplo/bazaar
   # and @periplo/search as real workspace dependencies to seed and query

@@ -89,7 +89,7 @@ describe("softDropFields", () => {
     const raw = {
       description: "Current conditions by city",
       amount: 0,
-      routeTemplate: "/weather/{city}", // deliberately not covered by a rule here — see module doc
+      routeTemplate: "/weather/{city}", // deliberately not covered by a rule here, see module doc
     };
     const result = softDropFields(raw, [isNonEmptyString, isPositiveNumber]);
     expect(result.kept).toEqual({ description: "Current conditions by city" });

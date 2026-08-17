@@ -5,7 +5,7 @@
  * Deliberately separate from `client.ts` (client construction only) and
  * from `apps/facilitator/src/discovery.ts` (extraction + validation, which
  * lives in the facilitator app because it needs `@x402/extensions/bazaar`
- * and the wire-level `PaymentPayload`/`PaymentRequirements` types — this
+ * and the wire-level `PaymentPayload`/`PaymentRequirements` types: this
  * module only knows about the catalog's own shape, not the x402 wire
  * format, so it stays reusable by anything that already has a normalized
  * `CatalogResourceInput`).
@@ -15,7 +15,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, ResourceInsert, ResourceRow } from "./client.js";
 
 /**
- * One entry of a resource's `accepts` array — the payment option that was
+ * One entry of a resource's `accepts` array: the payment option that was
  * actually used for the request being cataloged. Mirrors `PaymentRequirements`
  * from `@x402/core/types`, kept as a local shape so this module doesn't need
  * to depend on `@x402/core` just for a type.
@@ -31,7 +31,7 @@ export interface CatalogAcceptsEntry {
 }
 
 export interface CatalogResourceInput {
-  /** Canonical resource URL — origin + routeTemplate for dynamic HTTP routes, origin + pathname otherwise, or `mcp://tool/{toolName}` for MCP. */
+  /** Canonical resource URL: origin + routeTemplate for dynamic HTTP routes, origin + pathname otherwise, or `mcp://tool/{toolName}` for MCP. */
   readonly url: string;
   readonly routeTemplate: string | null;
   readonly toolName: string | null;
@@ -43,7 +43,7 @@ export interface CatalogResourceInput {
   readonly extensionKeys: readonly string[];
   /**
    * Semantic embedding (spec Phase 5, `packages/search`) over the
-   * discovery text — `null` when the caller has no embedding pipeline
+   * discovery text, `null` when the caller has no embedding pipeline
    * configured, or when generating one failed. Cataloging never depends on
    * this: a resource with `embedding: null` is still fully cataloged and
    * findable by lexical search, just not by semantic search until a later
@@ -100,7 +100,7 @@ export function mergeAccepts(
 /**
  * Reads the existing row matching the catalog key (if any), merges the new
  * `accepts` entry into it, and upserts. The unique constraint is
- * `unique nulls not distinct (url, route_template, tool_name)` — Postgres's
+ * `unique nulls not distinct (url, route_template, tool_name)`: Postgres's
  * plain `UNIQUE` treats two NULLs as distinct, which would let two HTTP
  * listings sharing (url, route_template) with tool_name NULL both insert
  * instead of colliding, so the `.is()`/`.eq()` split below matters: a plain

@@ -9,8 +9,8 @@ use soroban_sdk::{
 };
 
 /// The generated `try_settle` returns the SDK's own `Error` (a contract
-/// panic's error code, wire-level), not this crate's `Error` enum directly
-/// — `settle` panics rather than returning `Result`, matching the spec's
+/// panic's error code, wire-level), not this crate's `Error` enum directly:
+/// `settle` panics rather than returning `Result`, matching the spec's
 /// reference pseudocode. This converts our typed variant into the shape
 /// `try_settle` actually returns, so assertions stay readable.
 fn rejected(
@@ -20,7 +20,7 @@ fn rejected(
 }
 
 /// One buyer, one recipient, one facilitator, one SEP-41 test asset (a
-/// randomly-issued Stellar Asset Contract instance — the real code path a
+/// randomly-issued Stellar Asset Contract instance, the real code path a
 /// deployed token exercises, not a hand-rolled mock token). `mint` credits
 /// the buyer with `supply` up front.
 ///
@@ -44,10 +44,10 @@ pub(crate) fn setup(supply: i128) -> Fixture {
     setup_with_env(env, supply)
 }
 
-/// Shared by `setup` above (default `Env`, snapshot capture on — these 21
+/// Shared by `setup` above (default `Env`, snapshot capture on: these 21
 /// fixed-point cases are the committed regression evidence the
 /// smart-contracts skill recommends keeping) and
-/// `property_test::setup_at` (snapshot capture off — proptest runs each
+/// `property_test::setup_at` (snapshot capture off: proptest runs each
 /// property hundreds of times with random inputs, and a snapshot per case
 /// is pure noise: an earlier version of this file left `test_snapshots/`
 /// at 1,557 files / 24MB before this split, never committed).
@@ -109,7 +109,7 @@ pub(crate) fn token(f: &Fixture) -> TokenClient<'_> {
 
 // ---------------------------------------------------------------------
 // Happy paths: full, partial, zero settlement. Each asserts the contract
-// holds a zero balance afterward — the invariant the spec's "Security
+// holds a zero balance afterward, the invariant the spec's "Security
 // considerations" section names explicitly.
 // ---------------------------------------------------------------------
 
@@ -179,7 +179,7 @@ fn settled_event_reports_actual_amount_not_maximum() {
     };
     // `events().all()` returns every contract's events for the whole
     // invocation, including the token's own `transfer` events from the
-    // pull/pay legs — filter down to this contract's own event.
+    // pull/pay legs. Filter down to this contract's own event.
     use soroban_sdk::{testutils::Events as _, Event as _};
     assert_eq!(
         f.env
@@ -217,7 +217,7 @@ fn rejects_negative_actual_amount() {
 fn rejects_negative_max_amount_via_the_ceiling_check() {
     // No separate max_amount >= 0 check exists; a negative ceiling is
     // rejected because actual_amount (already proven >= 0) always exceeds
-    // it. Documented in lib.rs — this test locks that reasoning in.
+    // it. Documented in lib.rs; this test locks that reasoning in.
     let f = setup(1_000);
     let a = auth(&f, -5, 0, 2_000, 1);
 
@@ -226,7 +226,7 @@ fn rejects_negative_max_amount_via_the_ceiling_check() {
 }
 
 // ---------------------------------------------------------------------
-// Time bounds (Core Property 2) — ledger sequences, not timestamps.
+// Time bounds (Core Property 2): ledger sequences, not timestamps.
 // ---------------------------------------------------------------------
 
 #[test]
@@ -286,7 +286,7 @@ fn accepts_window_exactly_at_the_contract_maximum() {
 }
 
 // ---------------------------------------------------------------------
-// Single use (Core Property 1) — nonce replay.
+// Single use (Core Property 1): nonce replay.
 // ---------------------------------------------------------------------
 
 #[test]
@@ -335,7 +335,7 @@ fn nonce_entry_ttl_covers_the_full_deadline_window() {
 }
 
 // ---------------------------------------------------------------------
-// Recipient binding (Core Property 3) — the decisive property a plain
+// Recipient binding (Core Property 3): the decisive property a plain
 // SEP-41 allowance fails. `to` must come only from what the buyer signed.
 // ---------------------------------------------------------------------
 
@@ -382,7 +382,7 @@ fn facilitator_cannot_redirect_funds_to_a_different_recipient() {
 }
 
 // ---------------------------------------------------------------------
-// Facilitator binding — settlement is bound to one named operator.
+// Facilitator binding: settlement is bound to one named operator.
 // ---------------------------------------------------------------------
 
 #[test]
@@ -454,7 +454,7 @@ fn a_third_party_cannot_settle_on_a_different_facilitators_behalf() {
 }
 
 // ---------------------------------------------------------------------
-// Auth tree shape — require_auth_for_args must exclude actual_amount.
+// Auth tree shape: require_auth_for_args must exclude actual_amount.
 // This is the core mechanism the whole scheme rests on: prove the buyer's
 // signature does *not* need to know actual_amount to be valid, by settling
 // two different actual_amounts under the identical authorization/mock.
@@ -467,7 +467,7 @@ fn one_signature_covers_any_actual_amount_up_to_the_maximum() {
     let high = auth(&f, 500, 0, 2_000, 2);
 
     // Same shape of signed data (a max_amount ceiling), two different
-    // settlement amounts decided only at settle time — exactly the point
+    // settlement amounts decided only at settle time, exactly the point
     // of require_auth_for_args((authorization,)) excluding actual_amount.
     client(&f).settle(&low, &1);
     client(&f).settle(&high, &500);
@@ -478,7 +478,7 @@ fn one_signature_covers_any_actual_amount_up_to_the_maximum() {
 
 // ---------------------------------------------------------------------
 // Phase 6b: budget reconciliation. A buyer with a reserved budget must be
-// charged against actual_amount, never max_amount — the whole point of the
+// charged against actual_amount, never max_amount, the whole point of the
 // feature is that the stock OpenZeppelin spending-limit policy can't do
 // this (see budget.rs), so this is the one place proving the reconciled
 // number is actually right, not just plausible.
@@ -504,7 +504,7 @@ fn budget_is_debited_by_actual_amount_not_max_amount() {
     client(&f).install_budget(&f.from, &1_000, &100);
 
     // max_amount (5,000) is far larger than the entire budget (1,000).
-    // Only settling for less than the budget can possibly succeed — this
+    // Only settling for less than the budget can possibly succeed: this
     // is the direct evidence the reconciliation is keyed on actual_amount.
     let a = auth(&f, 5_000, 0, 2_000, 1);
     client(&f).settle(&a, &300);

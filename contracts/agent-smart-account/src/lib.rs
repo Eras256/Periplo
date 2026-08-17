@@ -1,6 +1,6 @@
 #![no_std]
 
-//! `AgentSmartAccount` — Phase 6b's real OpenZeppelin `stellar-accounts`
+//! `AgentSmartAccount`: Phase 6b's real OpenZeppelin `stellar-accounts`
 //! integration: a smart account for an agent's key, scoped so it can only
 //! ever authorize calls to one specific contract (the deployed
 //! `UptoSettlement` instance), never anything else.
@@ -63,7 +63,7 @@
 //! See `contracts/upto-settlement/src/budget.rs`'s module doc: the stock
 //! `stellar_accounts::policies::spending_limit` policy reads the amount
 //! straight out of the `Context` a `settle` call presents, and that
-//! `Context`'s args are `(authorization,)` only, never `actual_amount` —
+//! `Context`'s args are `(authorization,)` only, never `actual_amount`,
 //! by design, the whole point of `require_auth_for_args` restricted to that
 //! tuple is keeping the real charge outside what gets signed. No policy
 //! attached at this layer can ever see the number a budget actually needs

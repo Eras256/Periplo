@@ -176,7 +176,7 @@ fn evict_expired(
 
 /// Reconciles `actual_amount` against `buyer`'s reserved budget, if one is
 /// installed. A no-op (returns immediately) when no budget exists for
-/// `buyer` — this is what makes budget enforcement strictly opt-in.
+/// `buyer`, this is what makes budget enforcement strictly opt-in.
 ///
 /// Called from `settle` after `actual_amount` is known and validated against
 /// `max_amount`, before any transfer moves funds, so a budget rejection
@@ -184,7 +184,7 @@ fn evict_expired(
 /// every other check in `settle` already follows.
 ///
 /// # Panics
-/// * [`Error::BudgetExceeded`] — if `actual_amount` would push the buyer's
+/// * [`Error::BudgetExceeded`]: if `actual_amount` would push the buyer's
 ///   spend in the current rolling window over their reserved limit. A
 ///   zero `actual_amount` never triggers this: spending nothing can't
 ///   exceed any positive budget, matching OpenZeppelin's own "a zero-amount

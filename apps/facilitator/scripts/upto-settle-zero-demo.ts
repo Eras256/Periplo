@@ -1,5 +1,5 @@
 /**
- * Manual/occasional verification tool, NOT part of `pnpm test` — Phase 6b's
+ * Manual/occasional verification tool, NOT part of `pnpm test`: Phase 6b's
  * zero-settlement evidence generator. Against the REAL `UptoSettlement`
  * contract already deployed to stellar:testnet for Phase 6
  * (`UPTO_SETTLEMENT_CONTRACT_TESTNET`, unchanged by Phase 6b), this proves
@@ -102,7 +102,7 @@ async function main(): Promise<void> {
   const currentLedger = latestLedger.sequence;
   console.log(`Current testnet ledger: ${currentLedger}`);
 
-  const maxAmount = 500_000n; // 0.05 PTEST ceiling — all of it should come back
+  const maxAmount = 500_000n; // 0.05 PTEST ceiling, all of it should come back
   const actualAmount = 0n;
   const validAfterLedger = currentLedger;
   const deadlineLedger = currentLedger + 30;
@@ -147,7 +147,7 @@ async function main(): Promise<void> {
   );
   const sent = await tx.signAndSend();
   const hash = sent.sendTransactionResponse?.hash ?? (sent as any).getTransactionResponse?.txHash;
-  console.log(`\nSETTLED (zero) on stellar:testnet — transaction hash: ${hash}`);
+  console.log(`\nSETTLED (zero) on stellar:testnet: transaction hash: ${hash}`);
   console.log(`https://stellar.expert/explorer/testnet/tx/${hash}`);
 
   console.log(
@@ -168,12 +168,12 @@ async function main(): Promise<void> {
   console.log(
     buyerBalanceAfter === buyerBalanceBefore
       ? "CONFIRMED: buyer balance unchanged, the full ceiling was refunded."
-      : "WARNING: buyer balance changed — investigate before closing the gate."
+      : "WARNING: buyer balance changed, investigate before closing the gate."
   );
   console.log(
     sellerBalanceAfter === sellerBalanceBefore
       ? "CONFIRMED: seller balance unchanged, zero actually charged."
-      : "WARNING: seller balance changed on a zero-settlement — investigate."
+      : "WARNING: seller balance changed on a zero-settlement, investigate."
   );
 
   console.log("\n=== Confirming the nonce is consumed even at actual_amount = 0 ===");
@@ -187,11 +187,11 @@ async function main(): Promise<void> {
         errText.includes("Error(Contract, #6)") ||
           errText.toLowerCase().includes("authorizationconsumed")
           ? "CONFIRMED: nonce was consumed by the zero-settlement, replay rejected as AuthorizationConsumed (error code 6)."
-          : "WARNING: replay was rejected but not clearly for AuthorizationConsumed — inspect the error above."
+          : "WARNING: replay was rejected but not clearly for AuthorizationConsumed, inspect the error above."
       );
     } else {
       console.log(
-        "WARNING: replay simulation did not fail — nonce reuse was not rejected. Investigate before closing the gate."
+        "WARNING: replay simulation did not fail: nonce reuse was not rejected. Investigate before closing the gate."
       );
     }
   } catch (error) {
@@ -200,7 +200,7 @@ async function main(): Promise<void> {
       (error as Error).message.includes("#6") ||
         (error as Error).message.toLowerCase().includes("authorizationconsumed")
         ? "CONFIRMED: nonce was consumed by the zero-settlement, replay rejected as AuthorizationConsumed (error code 6)."
-        : "WARNING: replay was rejected but the reason does not clearly say AuthorizationConsumed — inspect the message above."
+        : "WARNING: replay was rejected but the reason does not clearly say AuthorizationConsumed, inspect the message above."
     );
   }
 }

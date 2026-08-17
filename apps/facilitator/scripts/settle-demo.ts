@@ -7,7 +7,7 @@
  * `conformance/RESULTS.md` for the Phase 3 gate.
  *
  * Each run submits a real testnet transaction and spends a small amount
- * of the test buyer's PTEST balance — deliberately not wired into the
+ * of the test buyer's PTEST balance, deliberately not wired into the
  * default test suite for that reason. Phase 8 is where a repeatable,
  * CI-integrated version of this belongs (the actual x402 e2e conformance
  * suite, registered against both networks).
@@ -45,11 +45,11 @@ async function main(): Promise<void> {
     scheme: "exact",
     network: "stellar:testnet" as const,
     asset: ASSET_ADDRESS as string,
-    amount: "1000000", // 0.1 PTEST (7 decimals) — small, so the buyer's balance survives many re-runs
+    amount: "1000000", // 0.1 PTEST (7 decimals), small, so the buyer's balance survives many re-runs
     payTo: SELLER_PUBLIC as string,
     maxTimeoutSeconds: 300,
     // Required by the client scheme itself ("Exact scheme requires
-    // areFeesSponsored to be true" — found by running this, not guessed):
+    // areFeesSponsored to be true", found by running this, not guessed):
     // the client needs to know fees are sponsored so it doesn't try to
     // provision its own fee payment when building the transaction.
     extra: { areFeesSponsored: true },
@@ -64,7 +64,7 @@ async function main(): Promise<void> {
   console.log("verify result:", JSON.stringify(verifyResult, null, 2));
 
   if (!verifyResult.isValid) {
-    console.error("Verification failed — aborting before settle().");
+    console.error("Verification failed: aborting before settle().");
     process.exit(1);
   }
 
@@ -77,7 +77,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  console.log(`\nSETTLED on stellar:testnet — transaction hash: ${settleResult.transaction}`);
+  console.log(`\nSETTLED on stellar:testnet: transaction hash: ${settleResult.transaction}`);
   console.log(`https://stellar.expert/explorer/testnet/tx/${settleResult.transaction}`);
 }
 
