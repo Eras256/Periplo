@@ -1,3 +1,5 @@
+import type { Database } from "@periplo/bazaar";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
 import { describe, expect, it } from "vitest";
 import { createFacilitatorApp } from "./app.js";
@@ -58,6 +60,32 @@ function fakeCore(overrides: Partial<FacilitatorCore> = {}): FacilitatorCore {
     settle: async () => ({ success: true, transaction: "abc123", network: "stellar:testnet" }),
     ...overrides,
   };
+}
+
+/**
+ * Fake `.from("resources").select()...` chain, just enough for
+ * `GET /discovery/resources`'s route-level tests. `GET /discovery/search`
+ * calls the real `embedQuery` before touching a client at all, so its
+ * route-level coverage below stops at the pre-embedding short-circuits
+ * (missing `query`, no `catalogClient`) — full ranking/response-shape
+ * behavior is `discovery-routes.test.ts`'s job, against an injected
+ * embedding, so no test here loads the real `fastembed` model.
+ */
+function fakeCatalogClient(rows: unknown[] = [], total = rows.length): SupabaseClient<Database> {
+  const builder: Record<string, unknown> = {};
+  const chain =
+    () =>
+    (..._args: unknown[]) =>
+      builder;
+  builder.select = chain();
+  builder.order = chain();
+  builder.range = chain();
+  builder.eq = chain();
+  builder.contains = chain();
+  // biome-ignore lint/suspicious/noThenProperty: intentional, mirrors the real postgrest-js query builder, which is itself thenable so `await query` works with no trailing terminal call.
+  builder.then = (resolve: (v: { data: unknown; error: null; count: number }) => void) =>
+    resolve({ data: rows, error: null, count: total });
+  return { from: () => builder } as unknown as SupabaseClient<Database>;
 }
 
 const validRequestBody = {
@@ -366,5 +394,48 @@ describe("bazaar discovery extension — EXTENSION-RESPONSES header (spec Phase 
       body: JSON.stringify(requestBodyWithExtensions(validExtension())),
     });
     expect(res.headers.get("EXTENSION-RESPONSES")).toBeNull();
+  });
+});
+
+describe("GET /discovery/resources", () => {
+  it("returns 503 with a reason when no catalogClient is configured", async () => {
+    const app = createFacilitatorApp(fakeCore());
+    const res = await app.request("/discovery/resources");
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toBeTruthy();
+  });
+
+  it("returns the wire shape from a configured catalogClient", async () => {
+    const row = {
+      url: "https://seller.example/weather",
+      type: "http",
+      accepts: [{ scheme: "exact", network: "stellar:testnet", asset: "CASSET", amount: "1000" }],
+      extensions: [],
+      last_updated: "2026-08-07T12:00:00.000Z",
+      description: null,
+    };
+    const app = createFacilitatorApp(fakeCore(), { catalogClient: fakeCatalogClient([row], 1) });
+    const res = await app.request("/discovery/resources");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { x402Version?: number; items?: unknown[] };
+    expect(body.x402Version).toBe(2);
+    expect(body.items).toHaveLength(1);
+  });
+});
+
+describe("GET /discovery/search", () => {
+  it("returns 503 with a reason when no catalogClient is configured", async () => {
+    const app = createFacilitatorApp(fakeCore());
+    const res = await app.request("/discovery/search?query=weather");
+    expect(res.status).toBe(503);
+  });
+
+  it("returns 400 when query is missing, before touching the catalog", async () => {
+    const app = createFacilitatorApp(fakeCore(), { catalogClient: fakeCatalogClient() });
+    const res = await app.request("/discovery/search");
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toBeTruthy();
   });
 });

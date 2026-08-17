@@ -7,12 +7,14 @@
  */
 
 import type { Database } from "@periplo/bazaar";
+import { embedQuery } from "@periplo/search";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 import { BAZAAR } from "@x402/extensions/bazaar";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import type { FacilitatorCore } from "./core.js";
 import { processBazaarExtension } from "./discovery.js";
+import { listDiscoveryResources, searchDiscoveryResources } from "./discovery-routes.js";
 import { type VerifyOrSettleRequestBody, verifyOrSettleRequestSchema } from "./schemas.js";
 
 /**
@@ -186,6 +188,87 @@ export function createFacilitatorApp(
       }
     }
 
+    return c.json(result);
+  });
+
+  // Same "no hard dependency on a catalog database" posture as cataloging
+  // itself (discovery.ts): explicit 503 with a reason, not a silent empty
+  // 200, when no catalogClient is configured — an empty result set would
+  // misrepresent "nothing matched" as "nothing is cataloged here at all."
+  function requireCatalogClient(c: Context) {
+    if (!catalogClient) {
+      c.status(503);
+      return c.json({ error: "discovery is not configured on this facilitator" });
+    }
+    return null;
+  }
+
+  function parseIntParam(value: string | undefined): number | undefined {
+    if (value === undefined) return undefined;
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  // `exactOptionalPropertyTypes` (tsconfig.base.json) treats `key: undefined`
+  // as distinct from an omitted key, and both `ListDiscoveryResourcesParams`
+  // and `SearchDiscoveryResourcesParams` declare their optional fields the
+  // narrow way (`type?: string`, not `type?: string | undefined`) — so an
+  // absent query param has to become an omitted key, not a present
+  // `undefined` value, or the object literal doesn't typecheck against
+  // either param type.
+  // Returns `unknown`, not `T`: `T` would still say "key present, value
+  // possibly undefined" (inferred from the object literal at each call
+  // site), which `exactOptionalPropertyTypes` correctly refuses to accept
+  // where the target type says "key may be absent, never undefined" —
+  // callers cast to the real target type, the same boundary-cast pattern
+  // `toSdkTypes` above uses once the runtime shape is right but the
+  // static type needs a nudge.
+  function compact(obj: Record<string, unknown>): unknown {
+    return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+  }
+
+  app.get("/discovery/resources", async (c) => {
+    const notConfigured = requireCatalogClient(c);
+    if (notConfigured) return notConfigured;
+
+    const result = await listDiscoveryResources(
+      { client: catalogClient as SupabaseClient<Database> },
+      compact({
+        type: c.req.query("type"),
+        payTo: c.req.query("payTo"),
+        network: c.req.query("network"),
+        extensions: c.req.query("extensions"),
+        limit: parseIntParam(c.req.query("limit")),
+        offset: parseIntParam(c.req.query("offset")),
+      }) as Parameters<typeof listDiscoveryResources>[1]
+    );
+    return c.json(result);
+  });
+
+  app.get("/discovery/search", async (c) => {
+    const notConfigured = requireCatalogClient(c);
+    if (notConfigured) return notConfigured;
+
+    const query = c.req.query("query");
+    if (!query) {
+      c.status(400);
+      return c.json({ error: "query is required" });
+    }
+
+    const queryEmbedding = await embedQuery(query);
+    const result = await searchDiscoveryResources(
+      { client: catalogClient as SupabaseClient<Database> },
+      compact({
+        query,
+        type: c.req.query("type"),
+        payTo: c.req.query("payTo"),
+        network: c.req.query("network"),
+        extensions: c.req.query("extensions"),
+        limit: parseIntParam(c.req.query("limit")),
+        cursor: c.req.query("cursor"),
+      }) as Parameters<typeof searchDiscoveryResources>[1],
+      queryEmbedding
+    );
     return c.json(result);
   });
 
