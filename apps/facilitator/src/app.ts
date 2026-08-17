@@ -77,6 +77,8 @@ export function createFacilitatorApp(
         supported: "/supported",
         verify: "POST /verify",
         settle: "POST /settle",
+        discoveryResources: "GET /discovery/resources",
+        discoverySearch: "GET /discovery/search",
       },
       repository: "https://github.com/Eras256/Periplo",
     })
