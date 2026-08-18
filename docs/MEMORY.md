@@ -954,3 +954,80 @@ Opened as
 [stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103),
 open as of this writing, added to `README.md` alongside the other five
 upstream findings.
+
+## 2026-08-17: closing two of three `upto` gaps, a repo-wide em-dash pass, and the real x402 e2e conformance run
+
+Two of the three `upto` profile-discrimination gaps `docs/DEFERRED.md`
+records closed for real, each with its own commit and tests:
+`apps/facilitator/src/discovery-routes.ts` implements
+`GET /discovery/resources`/`GET /discovery/search` (neither existed at
+all before, reusing `@x402/extensions/bazaar`'s own wire types rather
+than redefining them), and `packages/bazaar/src/db/catalog.ts`'s dedupe
+key now folds in `extra.uptoProfile` unconditionally, closing the
+data-loss bug where two `upto` profiles for the same resource silently
+overwrote each other. The third (`/supported` reporting `upto`) stays
+open, scoped honestly as needing a real `UptoStellarScheme`
+implementation registered against `x402Facilitator`, not a wiring fix,
+rather than stubbed to look done.
+
+A repo-wide em-dash pass (2026-08-17, well past the earlier markdown-only
+passes) found 263 real occurrences across 53 files, almost entirely
+TypeScript/Rust code comments and config files no prior pass had ever
+touched, fixed per-sentence and verified script-side (each replacement
+asserted to match exactly once before writing). Also checked and fixed:
+a stale claim that a prior "461 instances in 15 files" figure had cited,
+which never reproduced under the project's own established, reliable
+counting method (the raw byte sequence, not the PCRE form already known
+to false-positive in this environment); the real number is what's
+recorded above.
+
+Checked all six standing upstream threads (`#3098`, `#3138`, `#3169`,
+`#3172`, `#1655`, `#839`) for anything pending on Periplo's side: nothing,
+five with no new maintainer response, one (`stellar-dev-skill#103`) with
+only an automated triage-bot acknowledgment. Did not comment on `#3098`/
+`#3138` to avoid pushing on two threads the same day one already had an
+unanswered question open.
+
+**The official `x402-foundation/x402` e2e conformance suite was run for
+real, twice, against the live `periplo-testnet.fly.dev` deployment**, via
+the suite's own documented `external-proxies` mechanism (a thin,
+dependency-free forwarding proxy, not a reimplementation): first for
+`exact` on `stellar:testnet` alone (verdict `✅ Test passed`, transaction
+`41277c14505a17f843a1f366b35314c6b12e6a14de40c30b589f161f7948f578`,
+independently checked against Horizon), then a same-day follow-up with
+`--extensions=bazaar` once the proxy was extended to also forward the two
+new discovery routes: a second real settled payment
+(`232a3f7cf09f5e9ca6afef313a4cbd91db2be8673383f56797088f7963ceef45`, also
+independently verified), followed by the suite's own Discovery Validation
+step confirming the just-paid resource was cataloged and discoverable via
+both `/discovery/resources` and `/discovery/search`, verdict
+`✅ Discovery Validation: PASSED`. Full transcripts in
+`docs/conformance/2026-08-17-x402-e2e-stellar-exact.md`. This is real,
+dated evidence toward `docs/SPEC.md`'s Phase 8 gate, explicitly not a
+completion claim: the gate needs both networks (`stellar:pubnet` has no
+fee-sponsor key yet) and a hash per network per scheme, neither of which
+one testnet/`exact` pass satisfies alone. A real gap found in the suite's
+own TypeScript client along the way (`createE2EClient()` eagerly derives
+EVM and SVM signers regardless of the `--families` scoping the CLI
+documents as supported) is filed as
+[x402-foundation/x402#3187](https://github.com/x402-foundation/x402/issues/3187).
+
+**A real process failure, corrected the same day, worth recording
+honestly rather than quietly fixing.** Mid-session, a background-task
+notification reported one specific wait command as "stopped" with "no
+completion record," from context that had already been summarized out of
+view. That was read as evidence the whole `--extensions=bazaar` run had
+never actually happened, and the true, already-verified Discovery
+Validation claim was reverted out of the README on that basis, without
+first checking whether the claimed evidence itself (a transaction hash)
+was real. It was: independently re-verified against Horizon (a genuine,
+successful, dated transaction matching every claimed detail) and against
+the live catalog endpoint itself (`https://periplo-testnet.fly.dev/discovery/resources`
+returning exactly the claimed resource count, right now, not from a
+cached report), both confirming the original claim was accurate all
+along. The incorrect revert was itself reverted once verified, with a
+commit explaining exactly what went wrong. The lesson, stated plainly for
+next time: an ambiguous background-task signal is not evidence a claim is
+false, only a prompt to go check the claim's own underlying evidence
+directly, the same standard this project already holds every other claim
+to, including its own prior work.

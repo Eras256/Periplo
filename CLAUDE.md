@@ -23,6 +23,9 @@ convergence story: `#3098`/`#3134`/`stellar/x402-stellar#72`, consolidated
 out of README.md so it isn't told twice),
 [`conformance/RESULTS.md`](conformance/RESULTS.md),
 [`conformance/baseline/`](conformance/baseline),
+[`docs/conformance/`](docs/conformance) (dated transcripts of the official
+`x402-foundation/x402` e2e suite run for real against the live
+deployment, not a Periplo-authored equivalent),
 [`packages/bazaar`](packages/bazaar), [`packages/search`](packages/search),
 [`eval/`](eval), [`supabase/`](supabase),
 [`apps/facilitator`](apps/facilitator), and
@@ -56,7 +59,14 @@ has the reasoning), pulled forward from Phase 10 at explicit request, not
 a sign the rest of Phase 10 is done. Redeploy with
 `fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator -a periplo-testnet`
 from the repo root; secrets are set via `fly secrets set -a periplo-testnet`,
-never in `fly.facilitator.toml`.
+never in `fly.facilitator.toml`. **The app lives under the
+`ticketsafes@gmail.com` Fly account, not whatever account a given `fly`
+CLI session happens to be logged into**: a session authenticated as a
+different account gets `Error: unauthorized` on deploy and can't even see
+`periplo-testnet` in `fly apps list`, found live, not assumed, when a
+redeploy failed this way and was only fixed by switching accounts
+(`docs/DEFERRED.md`). Verify with `fly auth whoami` /
+`fly apps list` before assuming a deploy will work.
 
 **Real Stellar testnet test fixtures exist for exercising a live payment**,
 not just `PTEST` (the self-issued token from Phase 3, since Circle's
@@ -247,12 +257,29 @@ boundary), and the outcome is reported via the `EXTENSION-RESPONSES` header
 regardless of whether a catalog client is configured. `packages/bazaar/src/db/catalog.ts`
 is the write path: reads the existing row (if any) by the
 `(url, route_template, tool_name)` key, merges the new payment option into
-`accepts` rather than duplicating rows, and upserts. Seller-facing docs
-(including per-parameter descriptions, the primary input to Phase 5's
-search ranking) are in [`docs/SELLERS.md`](docs/SELLERS.md). The `mcp://`
-canonical-URL bug documented in `docs/INTEROP.md` §2 is filed upstream as
+`accepts` rather than duplicating rows, and upserts. Its `dedupeKey` folds
+in `extra.uptoProfile` unconditionally (not just when `scheme === "upto"`),
+closing a real data-loss bug found responding to external review: two
+`accepts` entries differing only in `extra.uptoProfile` used to hash to
+the same key and silently overwrite each other, see
+`docs/UPTO-CONVERGENCE.md`. Seller-facing docs (including per-parameter
+descriptions, the primary input to Phase 5's search ranking) are in
+[`docs/SELLERS.md`](docs/SELLERS.md). The `mcp://` canonical-URL bug
+documented in `docs/INTEROP.md` §2 is filed upstream as
 [x402-foundation/x402#3121](https://github.com/x402-foundation/x402/issues/3121)
 (bug report, not a spec PR, see `CONTRIBUTING.md`'s scope for issues).
+`apps/facilitator/src/discovery-routes.ts` (added 2026-08-17) is
+`GET /discovery/resources`/`GET /discovery/search`, the two spec §4 routes
+that didn't exist at all before then: reuses `@x402/extensions/bazaar`'s
+own `DiscoveryResource`/`DiscoveryResourcesResponse`/
+`SearchDiscoveryResourcesResponse` types rather than redefining the wire
+shape, same principle as the write path above. Search filters
+(`type`/`payTo`/`network`/`extensions`) apply as an in-process post-filter
+over `hybridSearch`'s ranked rows, since `periplo_hybrid_search` doesn't
+take them as SQL parameters, documented as a real, honest limitation in
+the module's own doc comment. `/supported` still can't report `upto`,
+that needs a real `UptoStellarScheme` registered against
+`x402Facilitator`, not a wiring fix, tracked open in `docs/DEFERRED.md`.
 
 `packages/search` (Phase 5) is hybrid retrieval: lexical (`fts`/GIN, from
 Phase 2) fused with semantic (`embedding`/HNSW) via Reciprocal Rank Fusion.
@@ -408,7 +435,7 @@ own separately-scoped investigation.
 
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
-afterward, turned up five more real, independently verified upstream
+afterward, turned up six more real, independently verified upstream
 bugs, all filed, all still open as of this writing:
 [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169)
 (`isValidRouteTemplate`'s traversal/scheme-injection checks decode once,
@@ -420,19 +447,26 @@ an outstanding delegate signature),
 [x402-foundation/x402#3172](https://github.com/x402-foundation/x402/issues/3172)
 (`x402Facilitator.derivePattern()` silently drops wildcard coverage when
 one facilitator registers networks from more than one CAIP-2 namespace),
-and [stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103)
+[stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103)
 (27 of 28 `ECOSYSTEM_CARDS` entries in the `stellar-build` skill pack's own
 site linked to GitHub's HTML blob page instead of raw markdown in the
 agent-facing `llms.txt`, root-caused to the site's own contribution guide
 using the wrong URL shape in its own example; fixed with a PR, not just an
 issue, filed against `docs/SKILLS.md`'s own skill-pack repo rather than a
-dependency Periplo ships), alongside the earlier `mcp://` canonical-URL
-bug (#3121, fix at #3138, open, LGTM'd twice, blocked only on maintainer
-merge). Each was verified directly against the real published package
-before filing, not asserted from reading the source alone; severity was
-calibrated honestly in every case (none of the five is a security
-vulnerability, all fail closed or degrade functionally, stated as such in
-the issue itself). Two adjacent projects' repos
+dependency Periplo ships), and
+[x402-foundation/x402#3187](https://github.com/x402-foundation/x402/issues/3187)
+(the e2e conformance suite's own TypeScript client eagerly derives EVM and
+SVM signers regardless of the `--families` scoping the CLI documents as
+supported, so a single-family run against a non-EVM/SVM network crashes
+unless unrelated-network credentials are set anyway; found running the
+real conformance pass in `docs/conformance/`, not from reading the harness
+cold), alongside the earlier `mcp://` canonical-URL bug (#3121, fix at
+#3138, open, LGTM'd twice, blocked only on maintainer merge). Each was
+verified directly against the real published package before filing, not
+asserted from reading the source alone; severity was calibrated honestly
+in every case (none of the six is a security vulnerability, all fail
+closed or degrade functionally, stated as such in the issue itself). Two
+adjacent projects' repos
 (`Vellar-Wallet/vellar-facilitator`, `Ithaca-Labs/openx402`) were read for
 architectural understanding only, during the #839 investigation, and
 explicitly excluded from every later bug-hunting round; both are direct
@@ -478,6 +512,23 @@ later: it flags dozens of files with no real em dash at all. Use the raw
 byte sequence instead, `grep -rl $'\xe2\x80\x94' --include="*.md" .`,
 confirmed to match the same three files the verbatim-quote exception
 above names and nothing else.
+
+**2026-08-17: a much larger pass than any of the above, and outside
+markdown entirely.** The prior passes were scoped to `.md` files; a
+repo-wide `grep -rl $'\xe2\x80\x94' .` (no `--include` filter) found 263
+real occurrences across 53 files, almost all in TypeScript/Rust code
+comments and a handful of config files (`.gitignore`, `.env.example`,
+`fly.facilitator.toml`, `supabase/config.toml`, `.github/workflows/ci.yml`,
+`pnpm-workspace.yaml`), a register this project's em-dash discipline had
+never actually reached before. Also corrected two live, user-facing
+strings caught in the same sweep: `GET /`'s `description` field and
+`packages/licence-check`'s own CLI output. Fixed the same way as every
+prior pass, verified per-instance via a script asserting each exact-match
+replacement occurs exactly once before writing, not a blind regex sweep.
+Final state confirmed via the real GitHub Contents API (not
+`raw.githubusercontent.com`, which caches and gave a false "nothing
+changed" reading once): 4 occurrences across 3 files, the same
+whawk46-verbatim-quote exception named above, untouched.
 
 `conformance/baseline/` holds real, captured HTTP transcripts (not
 reconstructed from documentation) against the public reference facilitator
