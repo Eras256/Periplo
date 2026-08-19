@@ -312,58 +312,11 @@ this repository is built against.
 
 The **Facilitator**, the automatic-cataloging edge into **Bazaar**,
 **Search**, and the **`UptoSettlement`** contract are all real and
-deployed. Bazaar here means the catalog itself, backed by Supabase, not
-the node's full future scope. See "What's real right now" above and
-[Deployment](#deployment-what-actually-runs). The Hub is still planned,
-and the facilitator does not call `UptoSettlement` yet: the contract
-itself is deployed and settled a real transaction
-(`conformance/RESULTS.md`), but wiring `upto` into `/verify`/`/settle`'s
-HTTP routes (the TypeScript client/facilitator package mirroring
-`@x402/stellar`'s `exact` implementation) is separate, not-yet-started
-work, tracked in `docs/DEFERRED.md`. Solid borders below mark what runs
-today; dashed borders and edges mark what does not.
-
-```mermaid
-flowchart LR
-    subgraph Agent["Buyer / agent runtime"]
-        MCP["MCP client\n(any MCP host, e.g. Claude Desktop)"]
-        Client["x402 client\n(@x402/fetch)"]
-    end
-
-    subgraph Periplo["Periplo"]
-        Facilitator["Facilitator\napps/facilitator\nverify / settle / supported"]
-        Bazaar["Bazaar catalog\npackages/bazaar"]
-        Search["Search\npackages/search\nlexical + semantic + RRF"]
-        MCPServer["MCP discovery server\npackages/mcp\nsearch_services / call_paid_service"]
-        Hub["Developer hub\napps/hub"]
-    end
-
-    subgraph Stellar["Stellar"]
-        RPC["Soroban RPC"]
-        Upto["UptoSettlement contract\ncontracts/upto-settlement"]
-    end
-
-    DB[("Supabase / Postgres\npgvector + full-text")]
-
-    Seller["Resource server\n(paid HTTP / MCP endpoint)"]
-
-    Client -->|"402 Payment Required"| Seller
-    Client -->|verify / settle| Facilitator
-    MCP -.->|search_services / call_paid_service| MCPServer
-    MCPServer -.-> Search
-    MCPServer -.-> Facilitator
-    Search --> DB
-    Bazaar --> DB
-    Facilitator -->|"automatic cataloging\n(PaymentPayload + discovery extension)"| Bazaar
-    Facilitator --> RPC
-    Facilitator -.->|upto scheme| Upto
-    Hub --> Bazaar
-    Hub --> Facilitator
-
-    classDef planned stroke-dasharray: 5 5
-    class Hub planned
-    class MCPServer planned
-```
+deployed. The Hub and the MCP discovery server are still planned, and
+the facilitator does not call `UptoSettlement` yet from its own HTTP
+routes. Full diagram and a component-by-component walkthrough, moved to
+its own file rather than duplicated here, in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Verify it yourself
 
@@ -392,11 +345,12 @@ are in [`docs/DEFERRED.md`](docs/DEFERRED.md).
 
 `apps/facilitator` is live on Fly.io, `stellar:testnet` only, at
 **https://periplo-testnet.fly.dev**. It runs on 1 machine
-(`shared-cpu-1x`, 512MB, region `iad`). The machine auto-stops when idle
-and auto-starts on request, configured by `auto_stop_machines` and
-`auto_start_machines` in
-[`fly.facilitator.toml`](fly.facilitator.toml). No `periplo-mainnet` app
-exists yet: there is no mainnet fee-sponsor key to back one.
+(`shared-cpu-1x`, 512MB, region `iad`), kept running continuously, not
+scaled to zero when idle: `fly.facilitator.toml` sets
+`min_machines_running = 1` deliberately, so the one machine never stops,
+because a cold start would break the interactive verify/settle latency
+spec §8 asks for. No `periplo-mainnet` app exists yet: there is no
+mainnet fee-sponsor key to back one.
 
 ```bash
 fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator -a periplo-testnet
@@ -451,3 +405,16 @@ old at check time; `soroban-sdk`, held at the version the already-deployed
 - [`docs/INTEROP.md`](docs/INTEROP.md): where Periplo's bazaar extension
   handling diverges from the canonical `@x402/extensions/bazaar`
   implementation, and why (Phase 4).
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): the system diagram and
+  a plain-English explanation of the stack.
+- [`docs/DECENTRALIZATION.md`](docs/DECENTRALIZATION.md): why the catalog
+  is off-chain by design, and what "decentralized" actually means here
+  (replicability, not on-chain storage).
+- [`docs/INFRASTRUCTURE.md`](docs/INFRASTRUCTURE.md): what runs where,
+  who pays for it today, and the honest state of who pays after the
+  grant (not yet decided).
+- [`docs/MAINTENANCE.md`](docs/MAINTENANCE.md): how conformance is kept
+  current as the upstream wire spec evolves, traced against this
+  project's real history, not promised in the abstract.
+- [`docs/PRIVACY.md`](docs/PRIVACY.md): what Periplo collects (nothing
+  personal, checked directly against the running code) and why.
