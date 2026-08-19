@@ -199,7 +199,8 @@ user-facing surface right now.
   before, one correct row after, confirmed by re-querying the table, not
   from the migration's own reported success.
 
-  We then cataloged one real, externally reachable resource for the
+  We then cataloged one real, externally reachable resource
+  (https://periplo-testnet.fly.dev/demo/temperature-convert) for the
   first time: `apps/facilitator/src/demo-resource.ts`, a genuinely
   payment-gated temperature-conversion endpoint (self-facilitation, built
   on `@x402/hono`, `@x402/core`, and `@x402/stellar`, the same
