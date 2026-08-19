@@ -1,5 +1,10 @@
 # Listing a Stellar service on the Bazaar
 
+This guide covers the hosted path: pointing your own resource server's
+facilitator client at Periplo's deployed facilitator. Running the
+facilitator logic yourself, inside your own process, with no external
+operator at all, is a different path, `docs/SELF-FACILITATION.md`.
+
 Automatic cataloging is spec `docs/SPEC.md` §5, Phase 4. A resource server
 gets listed in Periplo's Bazaar the moment a buyer completes a payment
 carrying the `bazaar` discovery extension. **There is no separate

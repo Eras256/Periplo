@@ -56,7 +56,9 @@ user-facing surface right now.
   [`conformance/RESULTS.md`](conformance/RESULTS.md), with the hash
   checked independently against Horizon. It is importable as a library,
   with no HTTP hop required, for self-facilitation inside a resource
-  server. It also ships as a Hono app for hosted or self-hosted use. **It
+  server, walked through end to end (a real, working example, not just
+  described) in [`docs/SELF-FACILITATION.md`](docs/SELF-FACILITATION.md).
+  It also ships as a Hono app for hosted or self-hosted use. **It
   is live at https://periplo-testnet.fly.dev**: try `GET /`,
   `GET /health`, or `GET /supported` directly. `stellar:pubnet` is not
   configured because no mainnet key exists yet. See
@@ -443,6 +445,9 @@ old at check time; `soroban-sdk`, held at the version the already-deployed
   the competitive landscape. Regenerate it before relying on it.
 - [`docs/SELLERS.md`](docs/SELLERS.md): how a resource server lists a
   Stellar service on the Bazaar (Phase 4).
+- [`docs/SELF-FACILITATION.md`](docs/SELF-FACILITATION.md): running the
+  facilitator inside your own resource server, no external operator at
+  all (deployment path 3, spec §5).
 - [`docs/INTEROP.md`](docs/INTEROP.md): where Periplo's bazaar extension
   handling diverges from the canonical `@x402/extensions/bazaar`
   implementation, and why (Phase 4).
