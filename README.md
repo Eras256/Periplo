@@ -185,6 +185,39 @@ user-facing surface right now.
   reason. [`docs/SELLERS.md`](docs/SELLERS.md) is the seller-facing
   how-to, including per-parameter descriptions, which search ranking now
   reads.
+
+  Real external QA (2026-08-19) found two dead rows already live in the
+  catalog: an opaque-origin bug's `null/...` URL, and an unrelated
+  unreachable `localhost` URL from local testing, both cataloged before a
+  write-time check ever existed. Every search query returned one of the
+  two regardless of relevance, making ranking quality unjudgeable from
+  outside. Fixed with a write-time gate, `checkCatalogUrl`, enforced
+  inside `upsertCatalogResource` itself rather than only at the one call
+  site that produced the opaque-origin bug, so it covers both bug classes
+  and any future one that writes a URL the same way. A real one-time
+  backfill against the live Supabase project followed: two bad rows
+  before, one correct row after, confirmed by re-querying the table, not
+  from the migration's own reported success.
+
+  We then cataloged one real, externally reachable resource for the
+  first time: `apps/facilitator/src/demo-resource.ts`, a genuinely
+  payment-gated temperature-conversion endpoint (self-facilitation, built
+  on `@x402/hono`, `@x402/core`, and `@x402/stellar`, the same
+  "do not reimplement the wire protocol" discipline as the rest of this
+  project), deployed to the live facilitator. Real settlement:
+  [`dde62ac5e67730a0751052a2dafc67dffc595df20bacbae9aaa1c758081deaea`](https://stellar.expert/explorer/testnet/tx/dde62ac5e67730a0751052a2dafc67dffc595df20bacbae9aaa1c758081deaea),
+  Horizon-verified, and the resource is confirmed discoverable through
+  `GET /discovery/search?query=temperature+conversion` against the live
+  deployment, not just asserted. Two more real bugs turned up deploying
+  it: `@hono/node-server` derives a request's scheme purely from
+  `socket.encrypted`, with no `X-Forwarded-Proto` awareness, which is
+  always false behind Fly's TLS-terminating proxy, fixed with an explicit
+  `resource` URL on the route config rather than patching proxy
+  internals; and `@x402/stellar`'s inherited 50,000-stroop fee ceiling
+  was too low for real testnet Soroban fees that day (about 72,000
+  stroops, confirmed against Horizon's own fee stats), fixed with a
+  configurable ceiling on the deployed facilitator. Full writeup in
+  `CLAUDE.md`'s Architecture section.
 - [`packages/search`](packages/search) is hybrid retrieval: Postgres
   `tsvector`/GIN for lexical matching, pgvector/HNSW for semantic
   matching, fused with Reciprocal Rank Fusion. Embeddings come from
