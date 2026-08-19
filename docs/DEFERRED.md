@@ -1597,3 +1597,52 @@ Horizon-verified, recorded in `conformance/RESULTS.md`. The catalog now
 holds `https://periplo-testnet.fly.dev/demo/temperature-convert`,
 confirmed via `GET /discovery/resources` against the live deployment, not
 just from the script's own printed success output.
+
+## `docs/SPEC.md` §11's pre-submission dependency re-verification ran 8 days late, not before submitting
+
+Spec §11 is explicit: "before submission, re-verify each pinned version
+and state the verification date in the README." The manifest was
+verified once, 2026-08-07, four days before the actual 2026-08-11
+submission, and the required second pass never happened before
+submitting. README's own "Dependency versions" section said so plainly,
+in its own words, for the full 8 days after submission until this was
+caught: "That pass has not happened yet." A real, unforced miss against
+the project's own stated requirement, not something the panel would need
+to find on its own.
+
+**Run for real 2026-08-19**, prompted by an external audit against this
+project's own `docs/SPEC.md` §13 checklist. Every pinned package
+re-checked against the live npm registry / crates.io, not assumed
+current from memory. Real findings, not a clean bill of health rubber-
+stamped: `pnpm` moved two minor versions (11.20.0 → 11.22.0), several
+patch/minor bumps across `vitest`/`@biomejs/biome`/`hono`/`@types/node`/
+`tsx`/`@supabase/supabase-js`, all applied and the full gate re-run green
+after (`pnpm run ci`, 218 tests). This caught a real, separate bug along
+the way: `eval/package.json` had its own stale `@supabase/supabase-js`
+pin that the workspace's other packages didn't share, producing a type
+mismatch (`protected supabaseUrl` on two nominally different classes)
+only visible once the version actually diverged across the workspace,
+not caught by any single package's own typecheck in isolation.
+
+Two packages deliberately were not bumped to the literal latest
+available, both judgment calls made and stated, not silent gaps:
+`@x402/core`'s family stayed at 2.22.0 rather than the actual latest
+2.23.0, held back specifically because `pnpm`'s own `minimumReleaseAge`
+supply-chain policy flagged 2.23.0 as under 24 hours old at check time,
+with no changelog available to review what changed in the package this
+project's real (if testnet-only) fee-sponsor signs through; and
+`soroban-sdk` stayed at 27.0.5 rather than 27.0.6 (a plain patch bump),
+because the already-deployed `UptoSettlement` contract was built and
+verified against 27.0.5 specifically, and bumping the source pin without
+redeploying would leave the repo and the live contract mismatched, while
+redeploying a new instance is a bigger action than a version bump and
+wasn't asked for. Full reasoning and the corrected `stellar-xdr` table
+entry (was `28.0.0`, a value that was wrong from the start, not drifted;
+the real, transitively-resolved version is `27.0.0`, confirmed by
+reading `Cargo.lock` directly) are in `docs/SPEC.md` §2.
+
+Deliberately not redeployed to `periplo-testnet.fly.dev` as part of this
+pass: the live facilitator keeps running against the previously pinned
+`@x402/core` family until a real redeploy is asked for separately, same
+"local change and a live redeploy are two different actions" boundary
+already applied elsewhere in this file.

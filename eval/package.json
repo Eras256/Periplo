@@ -8,6 +8,6 @@
   "dependencies": {
     "@periplo/bazaar": "workspace:*",
     "@periplo/search": "workspace:*",
-    "@supabase/supabase-js": "2.112.2"
+    "@supabase/supabase-js": "2.112.3"
   }
 }

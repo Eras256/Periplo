@@ -415,11 +415,16 @@ enforced in CI by `packages/licence-check`.
 ## Dependency versions
 
 Pinned versions and their live-registry verification dates are tracked
-in the build spec's manifest and re-checked incrementally per phase. See
-[`docs/DEFERRED.md`](docs/DEFERRED.md) for the current verification
-status. A full re-verification pass, with dates stated here, is required
-before submission under spec §11. That pass has not happened yet, since
-most pinned packages are not yet introduced into the codebase.
+in the build spec's manifest ([`docs/SPEC.md` §2](docs/SPEC.md#2-verified-dependency-manifest))
+and re-checked incrementally per phase. First verified 2026-08-07;
+**re-verified 2026-08-19**, the full pass spec §11 requires before
+submission, done 8 days after the actual 2026-08-11 submission rather
+than before it. `docs/SPEC.md` §2 has the full table and the reasoning
+behind the two versions deliberately not bumped to the latest available
+(`@x402/core`'s family, held back one release for being under 24 hours
+old at check time; `soroban-sdk`, held at the version the already-deployed
+`UptoSettlement` contract was actually built against). See
+[`docs/DEFERRED.md`](docs/DEFERRED.md) for why the first pass ran late.
 
 ## Documentation
 

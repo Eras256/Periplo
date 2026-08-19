@@ -114,30 +114,61 @@ Violating any of these invalidates the work.
 
 ## 2. Verified dependency manifest
 
-Versions confirmed against the npm registry and crates.io on **2026-08-07**. Pin
-these. If a version has moved, update it and note the change in the commit body.
-Do not silently drift.
+Versions confirmed against the npm registry and crates.io on **2026-08-07**,
+**re-verified 2026-08-19** (§11's pre-submission pass, done 8 days late, see
+`docs/DEFERRED.md`). Pin these. If a version has moved, update it and note
+the change in the commit body. Do not silently drift.
 
 | Package | Version | Licence |
 | --- | --- | --- |
-| `pnpm` | 11.20.0 | MIT |
+| `pnpm` | 11.22.0 | MIT |
 | `typescript` | 7.0.2 | Apache-2.0 |
-| `vitest` | 4.1.10 | MIT |
+| `vitest` | 4.1.11 | MIT |
 | `@playwright/test` | 1.62.1 | Apache-2.0 |
-| `@biomejs/biome` | 2.5.7 | MIT OR Apache-2.0 |
+| `@biomejs/biome` | 2.5.9 | MIT OR Apache-2.0 |
 | `zod` | 4.4.3 | MIT |
-| `hono` | 4.13.0 | MIT |
-| `@types/node` | 26.1.2 | MIT |
-| `tsx` | 4.23.9 | MIT |
-| `@x402/core` · `@x402/stellar` · `@x402/hono` · `@x402/fetch` | 2.21.0 | Apache-2.0 |
+| `hono` | 4.13.3 | MIT |
+| `@types/node` | 26.2.0 | MIT |
+| `tsx` | 4.23.12 | MIT |
+| `@x402/core` · `@x402/stellar` · `@x402/hono` | 2.22.0 | Apache-2.0 |
+| `@x402/fetch` | 2.23.0 | Apache-2.0 |
 | `@stellar/stellar-sdk` | 16.2.0 | Apache-2.0 |
 | `@modelcontextprotocol/sdk` | 1.30.0 | MIT |
-| `@supabase/supabase-js` | 2.112.2 | MIT |
-| `next` | 16.3.0 | MIT |
+| `@supabase/supabase-js` | 2.112.3 | MIT |
+| `next` | 16.3.1 | MIT |
 | `react` | 19.2.8 | MIT |
 | `tailwindcss` | 4.3.3 | MIT |
 | `soroban-sdk` (crate) | 27.0.5 | Apache-2.0 |
-| `stellar-xdr` (crate) | 28.0.0 | Apache-2.0 |
+| `stellar-xdr` (crate) | 27.0.0 | Apache-2.0 |
+
+**2026-08-19 re-verification notes, real deviations from a blind bump, not
+silent drift:**
+- `@x402/core`/`@x402/stellar`/`@x402/hono` are pinned to **2.22.0**, not the
+  actual latest (2.23.0, published 2026-08-18, less than 24 hours old at
+  verification time): `pnpm`'s own `minimumReleaseAge` supply-chain check
+  flagged 2.23.0 for exactly this reason. This is the real trust-critical
+  dependency the deployed fee-sponsor signs through; bypassing that check to
+  grab a release published the day before, with no changelog available to
+  review what changed, was judged riskier than the two extra weeks of real
+  usage 2.22.0 already has. Revisit once 2.23.0 clears a reasonable age.
+- `soroban-sdk` stays at **27.0.5**, not the actual latest (27.0.6, a plain
+  patch bump): the deployed `UptoSettlement` contract
+  (`CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`) was built and
+  verified against 27.0.5 specifically (wasm hash cross-checked live against
+  stellar.expert). The contract has no upgrade mechanism, so bumping the
+  source pin without redeploying would leave source and the live contract
+  mismatched; redeploying a new instance is a bigger, outward-facing decision
+  than a version bump, held for explicit confirmation rather than done here.
+- `stellar-xdr`'s table entry is corrected from `28.0.0` to **27.0.0**: it
+  was never a direct pin, it's resolved transitively by whatever
+  `soroban-sdk` version is actually used, confirmed by reading
+  `contracts/upto-settlement/Cargo.lock` directly rather than assumed. The
+  original `28.0.0` entry was wrong from the start, not a drift.
+- `next`/`react`/`tailwindcss`/`@modelcontextprotocol/sdk`/`@playwright/test`:
+  re-checked live, `next` moved (16.3.0 → 16.3.1), the rest didn't. None are
+  installed anywhere in the codebase yet (Phase 7/9 haven't started), so
+  there is nothing to test the bump against; the table reflects the current
+  registry latest for whenever they are introduced.
 
 **Node ≥ 22. pnpm workspaces. TypeScript strict, `noUncheckedIndexedAccess`,
 `exactOptionalPropertyTypes`.** Biome for lint/format (not ESLint + Prettier).

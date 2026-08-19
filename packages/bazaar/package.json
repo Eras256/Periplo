@@ -11,6 +11,6 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.112.2"
+    "@supabase/supabase-js": "2.112.3"
   }
 }
