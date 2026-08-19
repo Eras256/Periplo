@@ -57,6 +57,27 @@ export interface DemoResourceConfig {
   readonly payTo: string;
   readonly assetAddress: string;
   readonly network: "stellar:testnet" | "stellar:pubnet";
+  /**
+   * The real, externally-reachable base URL this deployment is actually
+   * served from (e.g. `https://periplo-testnet.fly.dev`), used to build an
+   * explicit `resource` for the route config rather than letting the SDK
+   * derive one from the request.
+   *
+   * Load-bearing, not cosmetic: `@hono/node-server` derives a request's
+   * scheme purely from `request.socket.encrypted` (confirmed by reading
+   * its own source, `dist/index.mjs`), with no `X-Forwarded-Proto`
+   * awareness at all. Behind Fly's TLS-terminating proxy the container
+   * only ever sees a plain-HTTP socket, so the SDK's own request-derived
+   * `resource.url` comes out as `http://...` -- reachable in practice
+   * (Fly 301-redirects `http://` to `https://`, confirmed live), but not
+   * the canonical URL, and exactly the class of "technically resolves but
+   * isn't the real address" problem this whole round exists to fix.
+   * `RouteConfig.resource` (checked directly in
+   * `x402HTTPResourceServer.ts`: `routeConfig.resource ||
+   * enrichedContext.adapter.getUrl()`) takes precedence over the SDK's own
+   * adapter-derived URL when set, which is what this is for.
+   */
+  readonly baseUrl: string;
 }
 
 const TEMPERATURE_UNITS = ["celsius", "fahrenheit", "kelvin"] as const;
@@ -155,6 +176,7 @@ export function mountDemoResource(
         price: { amount: "1000", asset: config.assetAddress },
         maxTimeoutSeconds: 300,
       },
+      resource: `${config.baseUrl}${ROUTE_PATH}`,
       description:
         "Converts a temperature value between Celsius, Fahrenheit, and Kelvin. Real " +
         "arithmetic, not a canned response: the result reflects the actual value/from/to " +

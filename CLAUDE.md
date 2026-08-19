@@ -270,24 +270,56 @@ verify/settle path). `@x402/hono` is a new outside-manifest addition
 extension is registered on the resource server: it's wired explicitly via
 an `onAfterSettle` hook calling the same `processBazaarExtension` the
 hosted `/settle` route already calls. Tested in-process
-(`demo-resource.test.ts`, a fake `FacilitatorCore`, six cases including
+(`demo-resource.test.ts`, a fake `FacilitatorCore`, seven cases including
 the x402 v2 wire detail that the `PaymentRequired` payload travels in the
 `payment-required` response header, not the body, and that a verified
 payment's own `PAYMENT-SIGNATURE` header, not `X-PAYMENT`, is what v2
 actually uses, confirmed against the real upstream client rather than
-assumed) and `pnpm run ci` green throughout (217 tests). **Not yet
-deployed or exercised for real**, a genuinely open item, not silently
-dropped: the same Fly.io account gap `docs/DEFERRED.md` already documents
-once (`periplo-testnet` lives under `ticketsafes@gmail.com`, this
-session's `fly` CLI resolves to a different account) blocked it again.
-`apps/facilitator/scripts/demo-resource-settle.ts` is written and
-typechecked, ready to run the moment the account is switched and the
-route is deployed: a real signed testnet payment against the actual
-deployed URL (deliberately not `core.settle()` in-process and not Hono's
-in-memory `app.request()`, which defaults `resource.url` to
-`http://localhost/...`, confirmed empirically, exactly the class of bug
-this whole round exists to fix). See `docs/DEFERRED.md`'s "Fly.io
-redeploy blocked again" entry for the exact remaining steps.
+assumed) and `pnpm run ci` green throughout (218 tests).
+
+**Deployed and exercised for real, 2026-08-19, two more real bugs found
+along the way, both fixed before the settlement that finally worked.**
+First, the same Fly.io account gap `docs/DEFERRED.md` already documents
+once recurred (`periplo-testnet` lives under `ticketsafes@gmail.com`,
+this session's `fly` CLI needed re-authenticating), resolved the same way
+as before. Second, once deployed, `GET /demo/temperature-convert`'s own
+402 challenge reported `resource.url` as `http://periplo-testnet.fly.dev/...`,
+wrong scheme: `@hono/node-server` derives a request's scheme purely from
+`request.socket.encrypted` (read directly from its own source, no
+`X-Forwarded-Proto` awareness at all), which is always false behind
+Fly's TLS-terminating proxy. Reachable in practice (Fly 301-redirects
+`http://` to `https://`, confirmed live) but not the canonical URL, the
+same class of "resolves but isn't the real address" problem this whole
+round exists to fix, just one layer further down the stack than the
+opaque-origin bug above. Fixed with `DemoResourceConfig.baseUrl`, an
+explicit, deployment-known base URL passed as `RouteConfig.resource`
+(`x402HTTPResourceServer.ts`'s own `routeConfig.resource ||
+adapter.getUrl()`, checked directly in the SDK's source), which takes
+precedence over the SDK's own request-derived URL, sidestepping the
+proxy-detection problem entirely rather than patching Node server
+internals. Regression-covered in `demo-resource.test.ts`.
+
+Third, the first two real settlement attempts against the live deployment
+both failed with `invalid_exact_stellar_payload_fee_exceeds_maximum`,
+not a bug in this round's own code: real testnet Soroban resource fees
+for a plain SAC transfer were running about 72,000 stroops that day
+(`fee_stats.fee_charged.p95` on Horizon: `75,739`), above
+`@x402/stellar`'s own inherited default ceiling of 50,000 stroops, a
+value this project had never consciously chosen for current network
+conditions. Not specific to the demo route either: `/verify`/`/settle`
+share the exact same `ExactStellarScheme` config and would hit the same
+ceiling under the same conditions. Fixed by adding
+`MAX_TRANSACTION_FEE_STROOPS` (`serve.ts`), set to 200,000 stroops
+(0.02 XLM, trivial against the fee-sponsor's ~10,000 XLM testnet
+balance) on the deployed facilitator. `apps/facilitator/scripts/demo-resource-settle.ts`
+then settled for real: transaction
+[`dde62ac5e6...`](https://stellar.expert/explorer/testnet/tx/dde62ac5e67730a0751052a2dafc67dffc595df20bacbae9aaa1c758081deaea),
+Horizon-verified (`fee_charged: 56757`, source account the fee-sponsor,
+matching `STELLAR_FEE_SPONSOR_PUBLIC` exactly), recorded in
+`conformance/RESULTS.md`. The catalog now holds the resource at
+`https://periplo-testnet.fly.dev/demo/temperature-convert`, confirmed via
+`GET /discovery/resources`, the first genuinely externally-reachable
+entry the catalog has ever had.
 
 Seller-facing docs (including per-parameter
 descriptions, the primary input to Phase 5's search ranking) are in

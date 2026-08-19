@@ -19,6 +19,7 @@ const DEMO_CONFIG = {
   payTo: "GDEMOPAYEE",
   assetAddress: "CDEMOASSET",
   network: "stellar:testnet" as const,
+  baseUrl: "https://demo-resource-test.example",
 };
 
 function fakeCore(overrides: Partial<FacilitatorCore> = {}): FacilitatorCore {
@@ -82,6 +83,19 @@ describe("GET /demo/temperature-convert: unpaid request", () => {
     const res = await app.request("/demo/temperature-convert?value=100&from=celsius&to=fahrenheit");
     const paymentRequired = readPaymentRequired(res);
     expect(paymentRequired.extensions?.bazaar).toBeTruthy();
+  });
+
+  it("uses the configured baseUrl for resource.url, not whatever the request adapter would derive", async () => {
+    // Regression coverage for a real bug found deploying this to Fly:
+    // @hono/node-server derives a request's scheme purely from
+    // `socket.encrypted`, which is always false behind Fly's
+    // TLS-terminating proxy, so an SDK-derived resource.url would come
+    // out as http://... in production. RouteConfig.resource (set from
+    // config.baseUrl) bypasses that entirely.
+    const app = createFacilitatorApp(fakeCore(), { demoResource: DEMO_CONFIG });
+    const res = await app.request("/demo/temperature-convert?value=100&from=celsius&to=fahrenheit");
+    const paymentRequired = readPaymentRequired(res);
+    expect(paymentRequired.resource.url).toBe(`${DEMO_CONFIG.baseUrl}/demo/temperature-convert`);
   });
 });
 

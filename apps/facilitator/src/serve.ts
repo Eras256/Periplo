@@ -55,7 +55,11 @@ function loadCatalogClient(): SupabaseClient<Database> | null {
  * `scripts/settle-demo.ts` already uses, reused here rather than adding a
  * second set of secrets for the same purpose. Optional the same way the
  * catalog client is: a deployment without them serves the facilitator
- * alone, unchanged.
+ * alone, unchanged. `DEMO_RESOURCE_BASE_URL` defaults to this project's
+ * one real deployment (`https://periplo-testnet.fly.dev`) rather than
+ * requiring it as a third secret for the only environment that currently
+ * needs it; see `demo-resource.ts`'s `DemoResourceConfig.baseUrl` doc
+ * comment for why an explicit base URL matters at all (not cosmetic).
  */
 function loadDemoResourceConfig(): DemoResourceConfig | null {
   const payTo = process.env.STELLAR_TEST_SELLER_PUBLIC;
@@ -63,11 +67,40 @@ function loadDemoResourceConfig(): DemoResourceConfig | null {
   if (!payTo || !assetAddress) {
     return null;
   }
-  return { payTo, assetAddress, network: "stellar:testnet" };
+  const baseUrl = process.env.DEMO_RESOURCE_BASE_URL ?? "https://periplo-testnet.fly.dev";
+  return { payTo, assetAddress, network: "stellar:testnet", baseUrl };
+}
+
+/**
+ * `undefined` (library default, 50_000 stroops) unless `MAX_TRANSACTION_FEE_STROOPS`
+ * is set. Found necessary live, not assumed: real testnet Soroban resource
+ * fees for a plain SAC transfer are currently running ~72,000 stroops
+ * (confirmed against `https://horizon-testnet.stellar.org/fee_stats`,
+ * `fee_charged.p95` = 75,739 the same day), above the library's own
+ * default ceiling, so `ExactStellarScheme` was rejecting real payments
+ * with `invalid_exact_stellar_payload_fee_exceeds_maximum` before this
+ * override existed, not specific to any one route: `/verify`/`/settle`
+ * would have hit the exact same ceiling under the same network
+ * conditions. Still a real, enforced safety ceiling (spec §1 constraint
+ * 3's "sponsors network fees only" doesn't mean unbounded), just raised
+ * to match reality instead of an inherited default nobody had reason to
+ * pick for this network's current conditions.
+ */
+function loadMaxTransactionFeeStroops(): number | undefined {
+  const raw = process.env.MAX_TRANSACTION_FEE_STROOPS;
+  if (!raw) {
+    return undefined;
+  }
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 async function main(): Promise<void> {
-  const core = await createFacilitatorCore({ signers: loadSigners() });
+  const maxTransactionFeeStroops = loadMaxTransactionFeeStroops();
+  const core = await createFacilitatorCore({
+    signers: loadSigners(),
+    ...(maxTransactionFeeStroops !== undefined ? { maxTransactionFeeStroops } : {}),
+  });
   const app = createFacilitatorApp(core, {
     catalogClient: loadCatalogClient(),
     demoResource: loadDemoResourceConfig(),

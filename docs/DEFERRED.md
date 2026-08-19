@@ -1555,7 +1555,7 @@ returns the real single-row catalog with the correct wire shape;
 real row, not an error). All three checked directly against the live
 service, not assumed from the deploy command's own success output.
 
-## Fly.io redeploy blocked again, same recurring gap: real external QA fix (2026-08-19), not yet deployed
+## Fly.io redeploy blocked again, same recurring gap: real external QA fix (2026-08-19), resolved same day
 
 The write-time URL gate, the `null/*`/`localhost` backfill migration, and
 `apps/facilitator/src/demo-resource.ts` (the one real, externally-reachable
@@ -1575,19 +1575,25 @@ lives under `ticketsafes@gmail.com` specifically. Logged rather than
 routed around, per this project's own rule for a genuinely blocked,
 outward-facing action; not attempting to hunt for a workaround credential.
 
-**What still needs a human, in order, once the correct Fly account is
-active in this session's `fly` CLI:**
-1. `fly secrets set -a periplo-testnet STELLAR_TEST_SELLER_PUBLIC=... STELLAR_TEST_ASSET_ADDRESS=...`
-   (the real values already live in this repo's local `.env`, not new
-   secrets, just not yet set on Fly, since nothing deployed needed them
-   before this).
-2. `fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator -a periplo-testnet`.
-3. Run `apps/facilitator/scripts/demo-resource-settle.ts` (mirrors
-   `settle-demo.ts`'s pattern: a real signed testnet payment, this time
-   against `https://periplo-testnet.fly.dev/demo/temperature-convert`
-   itself, not `core.settle()` in-process, specifically so the cataloged
-   `resource.url` reflects the real deployed host rather than whatever
-   base an in-process test harness would use).
-4. Re-query the live catalog to confirm the new row, record the
-   transaction hash in `conformance/RESULTS.md` alongside the existing
-   entries, same evidence standard.
+**Resolved the same day**: the user re-logged into the correct Fly account
+(`ticketsafes@gmail.com`, confirmed via `fly auth whoami` and `fly apps
+list` showing `periplo-testnet`) and asked to finish the deploy. All four
+steps above were run for real, in order, and hit two further real bugs
+along the way (both root-caused and fixed before the settlement that
+finally worked, both written up in full in CLAUDE.md's Architecture
+section rather than duplicated here): the demo route's own `resource.url`
+came out `http://...` instead of `https://...` behind Fly's
+TLS-terminating proxy (`@hono/node-server` has no `X-Forwarded-Proto`
+awareness, confirmed by reading its source), fixed with an explicit
+`DemoResourceConfig.baseUrl` overriding the SDK's request-derived URL;
+and the first two real settlement attempts failed with
+`invalid_exact_stellar_payload_fee_exceeds_maximum`, real testnet Soroban
+fees (~72,000 stroops that day) exceeding `@x402/stellar`'s inherited
+50,000-stroop default ceiling, fixed with a new
+`MAX_TRANSACTION_FEE_STROOPS=200000` Fly secret. The real settlement that
+finally succeeded: transaction
+[`dde62ac5e6...`](https://stellar.expert/explorer/testnet/tx/dde62ac5e67730a0751052a2dafc67dffc595df20bacbae9aaa1c758081deaea),
+Horizon-verified, recorded in `conformance/RESULTS.md`. The catalog now
+holds `https://periplo-testnet.fly.dev/demo/temperature-convert`,
+confirmed via `GET /discovery/resources` against the live deployment, not
+just from the script's own printed success output.
