@@ -14,6 +14,7 @@ import { embedDocument } from "@periplo/search";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createFacilitatorApp } from "./app.js";
 import { createFacilitatorCore, type FacilitatorCoreConfig } from "./core.js";
+import type { DemoResourceConfig } from "./demo-resource.js";
 
 const PORT = Number(process.env.PORT ?? 8402);
 
@@ -48,9 +49,29 @@ function loadCatalogClient(): SupabaseClient<Database> | null {
   return createServiceRoleClient(url, serviceRoleKey);
 }
 
+/**
+ * `null` unless both `STELLAR_TEST_SELLER_PUBLIC` and
+ * `STELLAR_TEST_ASSET_ADDRESS` are set: the same real testnet fixtures
+ * `scripts/settle-demo.ts` already uses, reused here rather than adding a
+ * second set of secrets for the same purpose. Optional the same way the
+ * catalog client is: a deployment without them serves the facilitator
+ * alone, unchanged.
+ */
+function loadDemoResourceConfig(): DemoResourceConfig | null {
+  const payTo = process.env.STELLAR_TEST_SELLER_PUBLIC;
+  const assetAddress = process.env.STELLAR_TEST_ASSET_ADDRESS;
+  if (!payTo || !assetAddress) {
+    return null;
+  }
+  return { payTo, assetAddress, network: "stellar:testnet" };
+}
+
 async function main(): Promise<void> {
   const core = await createFacilitatorCore({ signers: loadSigners() });
-  const app = createFacilitatorApp(core, { catalogClient: loadCatalogClient() });
+  const app = createFacilitatorApp(core, {
+    catalogClient: loadCatalogClient(),
+    demoResource: loadDemoResourceConfig(),
+  });
 
   // Explicit 0.0.0.0: @hono/node-server's default hostname isn't
   // guaranteed reachable from outside the container in every environment

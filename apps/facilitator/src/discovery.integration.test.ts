@@ -192,6 +192,31 @@ describe.skipIf(!env)("automatic cataloging: real Supabase (spec §5 Phase 4 gat
     expect(data).toEqual([]);
   });
 
+  it("a resource.url on localhost is rejected with a specific reason and produces no row (real bad entry found by external QA)", async () => {
+    // Same shape as the real bad entry (http://localhost:4022/exact/stellar,
+    // cataloged 2026-08-17), a fresh port/path per run rather than the
+    // literal string: that exact URL may still legitimately exist as a
+    // pre-migration row in the live table depending on backfill timing,
+    // and this test must prove rejection on its own, not lean on that row
+    // being absent.
+    const resourceUrl = `http://localhost:${4000 + Math.floor(Math.random() * 1000)}/exact/stellar`;
+    const payload: PaymentPayload = {
+      x402Version: 2,
+      resource: { url: resourceUrl },
+      accepted: baseRequirements,
+      payload: {},
+      extensions: httpExtension(),
+    };
+
+    const result = await processBazaarExtension(payload, baseRequirements, service);
+
+    expect(result?.status).toBe("rejected");
+    expect(result?.rejectedReason).toMatch(/local host/i);
+
+    const { data } = await service.from("resources").select("url").eq("url", resourceUrl);
+    expect(data).toEqual([]);
+  });
+
   it("a repeated payment for the same resource merges into accepts instead of duplicating the row", async () => {
     const resourceUrl = `${TEST_URL_PREFIX}/repeat-${randomUUID()}`;
     const payload: PaymentPayload = {

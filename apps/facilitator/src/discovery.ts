@@ -20,6 +20,7 @@ import {
   type CatalogAcceptsEntry,
   checkRouteTemplate,
   type Database,
+  InvalidCatalogUrlError,
   upsertCatalogResource,
 } from "@periplo/bazaar";
 import { buildDiscoveryText, embedDocument } from "@periplo/search";
@@ -247,17 +248,31 @@ export async function processBazaarExtension(
     );
   }
 
-  await upsertCatalogResource(catalogClient, {
-    url: catalogUrl,
-    routeTemplate: catalogRouteTemplate,
-    toolName,
-    type,
-    description,
-    parameters,
-    accept: toCatalogAccept(paymentRequirements),
-    extensionKeys: Object.keys(rawExtensions),
-    ...(embedding !== undefined ? { embedding } : {}),
-  });
+  try {
+    await upsertCatalogResource(catalogClient, {
+      url: catalogUrl,
+      routeTemplate: catalogRouteTemplate,
+      toolName,
+      type,
+      description,
+      parameters,
+      accept: toCatalogAccept(paymentRequirements),
+      extensionKeys: Object.keys(rawExtensions),
+      ...(embedding !== undefined ? { embedding } : {}),
+    });
+  } catch (error) {
+    // The write-time URL gate (packages/bazaar/src/catalog-url.ts),
+    // enforced inside upsertCatalogResource itself: reported as a normal
+    // rejection, same as every other bazaar-extension validation failure
+    // above, rather than propagating and 500ing an otherwise-successful
+    // /verify or /settle response over a cataloging concern. Any other
+    // error (a real database failure) is not this class of problem and
+    // still propagates, unchanged from before this check existed.
+    if (error instanceof InvalidCatalogUrlError) {
+      return rejected(error.reason);
+    }
+    throw error;
+  }
 
   return { status: "success" };
 }

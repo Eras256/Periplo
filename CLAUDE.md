@@ -208,6 +208,87 @@ closing a real data-loss bug found responding to external review: two
 the same key and silently overwrite each other, see
 `docs/UPTO-CONVERGENCE.md`.
 
+**Two real, dead-catalog-entry bugs found by external QA (2026-08-19),
+both fixed with a code gate plus a real backfill, not just documentation.**
+The live catalog held exactly two rows, both unreachable: `url =
+"null/financial_analysis_da8703fa-2ee7-4922-aed5-b8cee63b908c"` (cataloged
+2026-08-11, the opaque-origin bug above, predating the reconstruction fix
+in this file, which only ever applied to writes made after it landed) and
+`url = "http://localhost:4022/exact/stellar"` (cataloged 2026-08-17, a
+plain unreachable local host from local dev/conformance testing, not an
+opaque-origin problem at all, no code path had ever validated it). The
+practical effect, confirmed directly by the tester: every query against
+`GET /discovery/search` returned one of these two dead URLs regardless of
+relevance, making ranking quality genuinely unjudgeable from outside.
+Root-caused and fixed two ways: `packages/bazaar/src/catalog-url.ts`'s
+`checkCatalogUrl` is now enforced inside `upsertCatalogResource` itself
+(not just at the one call site that produced the opaque-origin bug), so
+it catches both bug classes regardless of which code path writes a URL,
+rejecting `null/*`, non-http(s)/mcp schemes, and local hosts (`localhost`,
+`127.0.0.1`, `*.local`); a rejection throws `InvalidCatalogUrlError`,
+which `apps/facilitator/src/discovery.ts` catches and converts into the
+same `{ status: "rejected", rejectedReason }` outcome every other
+bazaar-extension validation failure already produces, rather than 500ing
+an otherwise-successful `/verify` or `/settle` response over a cataloging
+concern. `supabase/migrations/20260819120000_backfill_bad_catalog_urls.sql`
+is the one-time backfill for what the gate couldn't retroactively touch.
+It rewrites a recoverable `null/*` row to its correct
+`mcp://tool/{toolName}` form when `tool_name` is present, the exact fix
+applied to the real `financial_analysis_da8703fa-...` row (its `id`
+unchanged after `supabase db push`, confirming it was rewritten in place
+rather than replaced, verified by re-querying the live table). It deletes
+anything left that the gate would now reject, including the real
+`localhost:4022` row, confirmed deleted the same way. Real evidence, not
+asserted: 2 bad rows before the migration, 1 correct row after, both
+counts read directly off the live Supabase project via its REST API, not
+from the migration's own reported success. Test coverage:
+`packages/bazaar/src/catalog-url.test.ts` (pure),
+`packages/bazaar/src/db/catalog.test.ts` (proves the gate runs before any
+database call, via a client whose `.from()` throws if reached), and a new
+case in `apps/facilitator/src/discovery.integration.test.ts` (a real
+`localhost` `resource.url` against the live Supabase project produces a
+`rejected` result and no row). External QA credited without a name here
+deliberately, unlike whawk46 elsewhere in this repo: whawk46's own GitHub
+handle already appears publicly on the issues being quoted, this
+tester's name reached this session only through a private conversation
+with no indication they want it in a public repo, so it stays unnamed
+unless they say otherwise.
+
+The same tester's report also named the actual practical effect: an empty
+or dead-URL-only catalog means Bazaar's ranking quality can't be evaluated
+by anyone outside the build. `apps/facilitator/src/demo-resource.ts` is
+the fix, one real, payment-gated resource (temperature-unit conversion,
+real arithmetic, not a canned response) built on `@x402/hono`'s
+`paymentMiddleware` + `@x402/core/server`'s `x402ResourceServer` +
+`@x402/stellar/exact/server`'s `ExactStellarScheme` (self-facilitation,
+spec §5 Phase 3's deployment path 3, sharing this same process's
+`FacilitatorCore`, so `apps/facilitator` never reimplements the 402/
+settlement wire protocol just because this route isn't the hosted
+verify/settle path). `@x402/hono` is a new outside-manifest addition
+(Apache-2.0, flagged per working rule 6, same treatment as
+`@hono/node-server`). Cataloging is not automatic just because the bazaar
+extension is registered on the resource server: it's wired explicitly via
+an `onAfterSettle` hook calling the same `processBazaarExtension` the
+hosted `/settle` route already calls. Tested in-process
+(`demo-resource.test.ts`, a fake `FacilitatorCore`, six cases including
+the x402 v2 wire detail that the `PaymentRequired` payload travels in the
+`payment-required` response header, not the body, and that a verified
+payment's own `PAYMENT-SIGNATURE` header, not `X-PAYMENT`, is what v2
+actually uses, confirmed against the real upstream client rather than
+assumed) and `pnpm run ci` green throughout (217 tests). **Not yet
+deployed or exercised for real**, a genuinely open item, not silently
+dropped: the same Fly.io account gap `docs/DEFERRED.md` already documents
+once (`periplo-testnet` lives under `ticketsafes@gmail.com`, this
+session's `fly` CLI resolves to a different account) blocked it again.
+`apps/facilitator/scripts/demo-resource-settle.ts` is written and
+typechecked, ready to run the moment the account is switched and the
+route is deployed: a real signed testnet payment against the actual
+deployed URL (deliberately not `core.settle()` in-process and not Hono's
+in-memory `app.request()`, which defaults `resource.url` to
+`http://localhost/...`, confirmed empirically, exactly the class of bug
+this whole round exists to fix). See `docs/DEFERRED.md`'s "Fly.io
+redeploy blocked again" entry for the exact remaining steps.
+
 Seller-facing docs (including per-parameter
 descriptions, the primary input to Phase 5's search ranking) are in
 [`docs/SELLERS.md`](docs/SELLERS.md). The `mcp://` canonical-URL bug

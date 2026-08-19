@@ -12,7 +12,28 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { checkCatalogUrl } from "../catalog-url.js";
 import type { Database, ResourceInsert, ResourceRow } from "./client.js";
+
+/**
+ * Thrown by `upsertCatalogResource` when `input.url` fails
+ * `checkCatalogUrl`, before any database call. Distinguished from the
+ * plain `Error`s this module throws for a failed read/write so a caller
+ * (`apps/facilitator/src/discovery.ts`) can convert this specific case
+ * into a normal `{ status: "rejected", rejectedReason }` outcome, the same
+ * treatment every other bazaar-extension validation failure already gets,
+ * rather than letting an invalid resource URL 500 an otherwise-successful
+ * `/verify` or `/settle` response.
+ */
+export class InvalidCatalogUrlError extends Error {
+  readonly reason: string;
+
+  constructor(reason: string) {
+    super(`Invalid catalog url: ${reason}`);
+    this.name = "InvalidCatalogUrlError";
+    this.reason = reason;
+  }
+}
 
 /**
  * One entry of a resource's `accepts` array: the payment option that was
@@ -105,11 +126,25 @@ export function mergeAccepts(
  * listings sharing (url, route_template) with tool_name NULL both insert
  * instead of colliding, so the `.is()`/`.eq()` split below matters: a plain
  * `.eq("route_template", null)` is not the same query PostgREST-side.
+ *
+ * Validates `input.url` via `checkCatalogUrl` before any database call
+ * (throws `InvalidCatalogUrlError` if it fails): this is the write-time
+ * gate the catalog's own data quality depends on, enforced here rather
+ * than only at whichever call site happens to construct the URL, so it
+ * catches a bad URL regardless of which code path produced it. See
+ * `catalog-url.ts` for why this exists (real bad entries found by
+ * external QA, documented in CLAUDE.md's Architecture section).
  */
 export async function upsertCatalogResource(
   client: SupabaseClient<Database>,
   input: CatalogResourceInput
 ): Promise<void> {
+  const urlCheck = checkCatalogUrl(input.url);
+  if (!urlCheck.valid) {
+    // Non-null whenever `valid` is false, checkCatalogUrl's own contract.
+    throw new InvalidCatalogUrlError(urlCheck.reason as string);
+  }
+
   let query = client.from("resources").select("accepts").eq("url", input.url);
   query =
     input.routeTemplate === null

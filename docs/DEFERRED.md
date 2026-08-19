@@ -1554,3 +1554,40 @@ returns the real single-row catalog with the correct wire shape;
 (200, correct shape, no match for that specific query against the one
 real row, not an error). All three checked directly against the live
 service, not assumed from the deploy command's own success output.
+
+## Fly.io redeploy blocked again, same recurring gap: real external QA fix (2026-08-19), not yet deployed
+
+The write-time URL gate, the `null/*`/`localhost` backfill migration, and
+`apps/facilitator/src/demo-resource.ts` (the one real, externally-reachable
+demo resource, spec'd in CLAUDE.md's Architecture section) are all built,
+tested (`pnpm run ci` green, 217 tests), and typechecked. The backfill
+migration itself already ran for real against the live Supabase project
+(confirmed by re-querying the table). What's still blocked: getting
+`demo-resource.ts` actually deployed to `https://periplo-testnet.fly.dev`
+and running a real settled payment against it, the same "cataloging only
+counts once it happens for real, not just once the code exists" standard
+this project holds everything else to.
+
+Blocked the same exact way as the entry above, same root cause recurring:
+`fly auth whoami` in this session resolves to `xvaiosx7@gmail.com`, `fly
+secrets list -a periplo-testnet` fails `unauthorized`, `periplo-testnet`
+lives under `ticketsafes@gmail.com` specifically. Logged rather than
+routed around, per this project's own rule for a genuinely blocked,
+outward-facing action; not attempting to hunt for a workaround credential.
+
+**What still needs a human, in order, once the correct Fly account is
+active in this session's `fly` CLI:**
+1. `fly secrets set -a periplo-testnet STELLAR_TEST_SELLER_PUBLIC=... STELLAR_TEST_ASSET_ADDRESS=...`
+   (the real values already live in this repo's local `.env`, not new
+   secrets, just not yet set on Fly, since nothing deployed needed them
+   before this).
+2. `fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator -a periplo-testnet`.
+3. Run `apps/facilitator/scripts/demo-resource-settle.ts` (mirrors
+   `settle-demo.ts`'s pattern: a real signed testnet payment, this time
+   against `https://periplo-testnet.fly.dev/demo/temperature-convert`
+   itself, not `core.settle()` in-process, specifically so the cataloged
+   `resource.url` reflects the real deployed host rather than whatever
+   base an in-process test harness would use).
+4. Re-query the live catalog to confirm the new row, record the
+   transaction hash in `conformance/RESULTS.md` alongside the existing
+   entries, same evidence standard.

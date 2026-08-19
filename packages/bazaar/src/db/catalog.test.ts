@@ -1,5 +1,13 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-import { type CatalogAcceptsEntry, mergeAccepts } from "./catalog.js";
+import {
+  type CatalogAcceptsEntry,
+  type CatalogResourceInput,
+  InvalidCatalogUrlError,
+  mergeAccepts,
+  upsertCatalogResource,
+} from "./catalog.js";
+import type { Database } from "./client.js";
 
 /**
  * Pure-logic unit tests for the `accepts` merge rule. The DB read/upsert
@@ -77,5 +85,65 @@ describe("mergeAccepts", () => {
     const existing = [entry({ scheme: "upto", extra: { uptoProfile: "contract" } })];
     const result = mergeAccepts(existing, entry({ scheme: "upto" }));
     expect(result).toHaveLength(2);
+  });
+});
+
+/**
+ * `upsertCatalogResource` rejecting an invalid `url` (real bad entries
+ * found by external QA, see `catalog-url.ts`). Covers only that the check
+ * runs, and runs BEFORE any database interaction: a `client.from()` that
+ * throws if ever called proves rejection happens pre-emptively, not just
+ * that a real write eventually fails. The DB-write half (a rejected url
+ * leaves no row) is covered by the real integration test in
+ * `apps/facilitator/src/discovery.integration.test.ts`, which needs a live
+ * Supabase project this pure unit file deliberately doesn't.
+ */
+describe("upsertCatalogResource: rejects an invalid url before touching the database", () => {
+  function poisonedClient(): SupabaseClient<Database> {
+    return {
+      from() {
+        throw new Error("upsertCatalogResource must reject before calling client.from()");
+      },
+    } as unknown as SupabaseClient<Database>;
+  }
+
+  function input(url: string): CatalogResourceInput {
+    return {
+      url,
+      routeTemplate: null,
+      toolName: null,
+      type: "http",
+      description: null,
+      parameters: {},
+      accept: entry(),
+      extensionKeys: [],
+    };
+  }
+
+  it("rejects the real bad entry shape (null/*) with InvalidCatalogUrlError", async () => {
+    await expect(
+      upsertCatalogResource(poisonedClient(), input("null/financial_analysis_x"))
+    ).rejects.toBeInstanceOf(InvalidCatalogUrlError);
+  });
+
+  it("rejects a non-http(s)/mcp scheme", async () => {
+    await expect(
+      upsertCatalogResource(poisonedClient(), input("ftp://example.com/x"))
+    ).rejects.toBeInstanceOf(InvalidCatalogUrlError);
+  });
+
+  it("rejects the real bad entry shape (localhost) with a reason mentioning the host", async () => {
+    await expect(
+      upsertCatalogResource(poisonedClient(), input("http://localhost:4022/exact/stellar"))
+    ).rejects.toMatchObject({ reason: expect.stringMatching(/local host/i) });
+  });
+
+  it("lets a well-formed externally reachable url past the check (reaches the poisoned client)", async () => {
+    // Proves the check doesn't over-reject: this input gets far enough to
+    // hit the DB call, which is exactly what the poisoned client's own
+    // error message says.
+    await expect(
+      upsertCatalogResource(poisonedClient(), input("https://example.com/weather"))
+    ).rejects.toThrow("must reject before calling client.from()");
   });
 });

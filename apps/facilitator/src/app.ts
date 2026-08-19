@@ -13,6 +13,7 @@ import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 import { BAZAAR } from "@x402/extensions/bazaar";
 import { type Context, Hono } from "hono";
 import type { FacilitatorCore } from "./core.js";
+import { type DemoResourceConfig, mountDemoResource } from "./demo-resource.js";
 import { processBazaarExtension } from "./discovery.js";
 import { listDiscoveryResources, searchDiscoveryResources } from "./discovery-routes.js";
 import { type VerifyOrSettleRequestBody, verifyOrSettleRequestSchema } from "./schemas.js";
@@ -55,6 +56,14 @@ export interface CreateFacilitatorAppOptions {
    * this HTTP layer's cataloging step does.
    */
   readonly catalogClient?: SupabaseClient<Database> | null;
+  /**
+   * A single real, payment-gated demo resource (`demo-resource.ts`),
+   * mounted at `GET /demo/temperature-convert` when configured. `null`/
+   * omitted serves the facilitator alone, unchanged: this is optional
+   * evidence infrastructure (a real resource for search/discovery to be
+   * evaluated against), not a facilitator capability.
+   */
+  readonly demoResource?: DemoResourceConfig | null;
 }
 
 export function createFacilitatorApp(
@@ -63,6 +72,10 @@ export function createFacilitatorApp(
 ): Hono {
   const app = new Hono();
   const catalogClient = options.catalogClient ?? null;
+
+  if (options.demoResource) {
+    mountDemoResource(app, core, options.demoResource, catalogClient);
+  }
 
   // No claim beyond what's true today: this is an API-only service
   // (apps/hub, the human-facing developer hub, is Phase 9 and doesn't
@@ -79,6 +92,7 @@ export function createFacilitatorApp(
         settle: "POST /settle",
         discoveryResources: "GET /discovery/resources",
         discoverySearch: "GET /discovery/search",
+        ...(options.demoResource ? { demoResource: "GET /demo/temperature-convert" } : {}),
       },
       repository: "https://github.com/Eras256/Periplo",
     })

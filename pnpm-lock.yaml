@@ -47,6 +47,9 @@ importers:
       '@x402/extensions':
         specifier: 2.21.0
         version: 2.21.0(typescript@7.0.2)
+      '@x402/hono':
+        specifier: 2.21.0
+        version: 2.21.0(hono@4.13.0)(typescript@7.0.2)
       '@x402/stellar':
         specifier: 2.21.0
         version: 2.21.0(debug@4.4.3)
@@ -708,6 +711,15 @@ packages:
 
   '@x402/extensions@2.21.0':
     resolution: {integrity: sha512-0cZTRVtnWUUsp9KxBvbMERtLKo+57Ru1IhbAHtpgNdK08/LJWtK6CpqM4wgta8nMPth3jMvB/PdS3OdNaEPaBQ==}
+
+  '@x402/hono@2.21.0':
+    resolution: {integrity: sha512-5OjD+jh0p0W4TvTmcwxYkRKfwgzldLE9PomOnVls6Gq6fsYYdajHuDxd8ZQXb8m9S/3JwOYK3Ay8v2hLv/Mv4A==}
+    peerDependencies:
+      '@x402/paywall': ^2.21.0
+      hono: ^4.0.0
+    peerDependenciesMeta:
+      '@x402/paywall':
+        optional: true
 
   '@x402/stellar@2.21.0':
     resolution: {integrity: sha512-Kuq1C0OJB+K8caDinXGRhUYQYBaJnv2flxho5swARe/8tRoDrDCckV5hz8wN0Lje/Nyc5v6O04WpZdHNZZpFTw==}
@@ -1825,6 +1837,17 @@ snapshots:
       tweetnacl: 1.0.3
       viem: 2.55.11(typescript@7.0.2)(zod@3.25.76)
       zod: 3.25.76
+    transitivePeerDependencies:
+      - bufferutil
+      - ethers
+      - typescript
+      - utf-8-validate
+
+  '@x402/hono@2.21.0(hono@4.13.0)(typescript@7.0.2)':
+    dependencies:
+      '@x402/core': 2.21.0
+      '@x402/extensions': 2.21.0(typescript@7.0.2)
+      hono: 4.13.0
     transitivePeerDependencies:
       - bufferutil
       - ethers

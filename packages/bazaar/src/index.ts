@@ -1,6 +1,8 @@
+export { type CatalogUrlCheckResult, checkCatalogUrl } from "./catalog-url.js";
 export {
   type CatalogAcceptsEntry,
   type CatalogResourceInput,
+  InvalidCatalogUrlError,
   mergeAccepts,
   upsertCatalogResource,
 } from "./db/catalog.js";
