@@ -95,8 +95,21 @@ user-facing surface right now.
   `@x402/core@2.21.0`, with a working reproduction contrasting
   mixed-namespace registration (fails) against single-namespace
   registration (works as intended). Filed as
-  [x402-foundation/x402#3172](https://github.com/x402-foundation/x402/issues/3172),
-  open.
+  [x402-foundation/x402#3172](https://github.com/x402-foundation/x402/issues/3172).
+  **Status: fixed, not just filed.** We proposed the fix ourselves rather
+  than waiting on a maintainer:
+  [x402-foundation/x402#3215](https://github.com/x402-foundation/x402/pull/3215),
+  open and mergeable, 657 tests passing. `derivePattern()` now derives one
+  wildcard pattern per namespace present in a registration, instead of
+  collapsing the whole call to a single literal pattern from the first
+  network. Our first regression test was itself wrong: it assumed a
+  namespace with only one registered network should get wildcard coverage
+  after the fix, which contradicts `derivePattern()`'s own pre-existing
+  single-network rule, unrelated to this bug and correct as-is. We caught
+  it because the test failed against our own correct fix, corrected the
+  test to use multi-network namespaces, and posted the correction publicly
+  on [the original issue](https://github.com/x402-foundation/x402/issues/3172#issuecomment-5358382027)
+  rather than letting a flawed original repro stand uncorrected.
 - **Automatic cataloging** lives in `apps/facilitator/src/discovery.ts`.
   A payment carrying the `bazaar` discovery extension is validated and
   written to the catalog on `/verify` and `/settle`. There is no
@@ -156,8 +169,26 @@ user-facing surface right now.
   `buildWithDelegatesEntry`/`authorizeEntry`. CAP-71 isn't live on any
   network yet, so this has no impact today, but the bug is real in
   code already shipped. Filed as
-  [stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655),
-  open, awaiting a maintainer response.
+  [stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655).
+  **Status: fixed, not just filed.**
+  [stellar/js-stellar-sdk#1672](https://github.com/stellar/js-stellar-sdk/pull/1672),
+  open and mergeable, 6663 tests passing. `needsNonInvokerSigningBy()` and
+  `signAuthEntries()` now walk the full delegate tree instead of the
+  top-level node only. Running the new tests surfaced a second, genuinely
+  separate bug along the way, not the one we set out to fix:
+  `authorizeEntry()`'s bare-signature fallback path infers `publicKey`
+  from the entry's top-level address unconditionally, ignoring
+  `forAddress`, so a signature correctly targeted at a delegate was
+  verified against the wrong address and failed. Worked around narrowly,
+  inside `signAuthEntries()`'s own callback, without touching
+  `authorizeEntry()` itself, since that's out of scope for this PR.
+
+  Both #1672 and #3215 are the first pair of contributions from this
+  project to go through the checklist in
+  [`.claude/skills/claude-antigravity-setup/git.md`](.claude/skills/claude-antigravity-setup/git.md)
+  in full: humanized, no filler, a visible AI co-authorship trailer on
+  every commit, and root cause confirmed with real, run code before
+  proposing the fix, not just reasoned about.
 
   Investigating the discovery mechanism behind the `stellar-build` skill
   pack this project's own tooling uses (see `docs/SKILLS.md`) turned up a
