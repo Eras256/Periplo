@@ -10,7 +10,8 @@ what's actually here.
 
 ## Commands
 
-Requires Node ≥22. `pnpm@11.20.0` (pinned) will not run on Node <22.13, it
+Requires Node ≥22. `pnpm@11.22.0` (pinned via `package.json`'s
+`packageManager` field) will not run on Node <22.13, it
 imports the `node:sqlite` built-in. This machine's default shell Node is
 20.19.6; switch first in every new shell:
 

@@ -74,7 +74,8 @@ integration tests, credentials, redeploying, and the Fly account gotcha.
 
 ## Commands
 
-Requires Node ≥22, `pnpm@11.20.0` (pinned). Use `pnpm run ci`, not bare
+Requires Node ≥22, `pnpm@11.22.0` (pinned via `package.json`'s
+`packageManager` field). Use `pnpm run ci`, not bare
 `pnpm ci` (the bare form is a reserved pnpm CLI alias, not this repo's
 gate script). See [`docs/TOOLING.md`](docs/TOOLING.md) for the exact
 commands, the nvm switch needed on this machine, and the `pnpm ci`
