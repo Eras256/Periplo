@@ -131,8 +131,20 @@ user-facing surface right now.
   `routeTemplate` once, so a double percent-encoded payload survives
   the first decode still encoded and slips past both checks, verified
   directly against the function with two working repro payloads. Filed
-  as [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169),
-  open, awaiting a maintainer response.
+  as [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169).
+  **Status: no longer just filed and waiting, another contributor's fix
+  is now independently verified with real code, not just read over.**
+  [ygd58's PR](https://github.com/x402-foundation/x402/pull/3213)
+  decodes to a fixed point with a bounded pass budget instead of one
+  extra fixed pass. We re-ran both original repro payloads directly
+  against the actual diff, both correctly rejected, then went further
+  than the original report asked for: triple-encoded payloads, and the
+  decode-budget boundary checked from both sides (a payload needing
+  exactly 4 passes still resolves and rejects; one needing 6 exceeds the
+  5-pass budget and rejects safely rather than hanging or passing
+  through partially decoded). Recorded as
+  [a real review comment](https://github.com/x402-foundation/x402/pull/3213#issuecomment-5357836987),
+  not a thumbs-up.
 
   A separate one surfaced while working the OpenZeppelin smart-account
   issue below (`#839`): `@stellar/stellar-sdk`'s
