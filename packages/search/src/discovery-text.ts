@@ -12,6 +12,20 @@
 export interface DiscoveryTextInput {
   readonly description: string | null;
   readonly parameters: Record<string, unknown>;
+  /**
+   * The MCP tool name, when this resource is an MCP tool (`null`/omitted
+   * for HTTP resources, which have no equivalent identity field). Folded
+   * in so a resource with no real `description` yet (a thin or
+   * newly-cataloged listing) is still embeddable from its own name rather
+   * than producing an empty string, closing the same "identity isn't
+   * searchable" bug class the `fts` generated column's own fix addresses
+   * on the lexical side (`supabase/migrations/20260819180000_search.sql`).
+   * Underscores/hyphens are loosened to spaces before being added: the raw
+   * literal (`financial_analysis_da8703fa-...`) is a valid identifier but
+   * a poor embedding input, the model was trained on natural text, not
+   * slugs.
+   */
+  readonly toolName?: string | null;
 }
 
 /** Recursively collects every string value found under a `description` key. */
@@ -63,6 +77,9 @@ export function buildDiscoveryText(input: DiscoveryTextInput): string {
   const descriptions: string[] = [];
   if (input.description) {
     descriptions.push(input.description.trim());
+  }
+  if (input.toolName?.trim()) {
+    descriptions.push(input.toolName.trim().replace(/[_-]+/g, " "));
   }
   collectDescriptions(input.parameters, descriptions);
 

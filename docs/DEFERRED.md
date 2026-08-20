@@ -1646,3 +1646,77 @@ pass: the live facilitator keeps running against the previously pinned
 `@x402/core` family until a real redeploy is asked for separately, same
 "local change and a live redeploy are two different actions" boundary
 already applied elsewhere in this file.
+
+## Search relevance floor: fixed for real, but not fully, and a global cosine cutoff turned out to be the wrong shape of fix
+
+A live user re-testing search against `periplo-testnet.fly.dev` (with
+only two rows in the catalog at the time: the demo `temperature-convert`
+HTTP resource and a stale MCP row cataloged back in Phase 4, before Phase
+5's embedding pipeline existed) found that `GET /discovery/search`
+returned `temperature-convert` for essentially any query string,
+including `weather+forecast` and `financial_analysis`, always with
+`partialResults: false`. Reproduced independently against the live
+deployment before touching any code, not just trusted from the report.
+
+Root-caused to two separate, stacked bugs, both confirmed directly
+against the real live database with a raw `pg` connection before fixing
+anything, not assumed from reading the SQL:
+
+1. The `fts` generated column (`supabase/migrations/
+   20260807202307_resources.sql`) only ever indexed `description` and
+   `parameters`. The stale MCP row has `description: null` (the payment
+   that cataloged it in Phase 4 never carried one), so its `fts` was an
+   empty tsvector, unsearchable by any query, including its own literal
+   tool name. Fixed by folding `tool_name`/`route_template` into the
+   indexed text (`supabase/migrations/
+   20260820100000_search_relevance_floor.sql`), and into
+   `buildDiscoveryText` (`packages/search/src/discovery-text.ts`) for
+   future embeddings too, so a thin listing is still findable by its own
+   identity. The stale row's embedding was also backfilled from its
+   (loosened) tool name via a one-off script, real code run against the
+   live project, not a fabricated description.
+2. `periplo_hybrid_search`'s semantic leg had no similarity floor at all:
+   it returns the nearest embedded rows by `<#>` distance unconditionally,
+   so with only one embedded row in a small catalog, that row was
+   "nearest" (and therefore returned with a nonzero RRF score) for any
+   query, relevant or not.
+
+The second bug is the one that turned out to be genuinely hard, and the
+first attempt at fixing it was wrong in a way worth recording rather than
+quietly overwriting. A floor of 0.8 cosine similarity, calibrated against
+real measurements of the one demo resource's own description (weather
+forecast: 0.764, financial_analysis: 0.685, versus true matches like
+"temperature conversion" at 0.870), was pushed live in
+`20260820100000_search_relevance_floor.sql` and cleanly separated true
+from false matches *for that one resource*. Re-running `pnpm eval` (the
+real Phase 5 gate, 55 resources, 300 graded queries) against the migrated
+database immediately showed why that calibration didn't generalize:
+nDCG@10 collapsed from the committed baseline 0.9346 to 0.4632, a 50.4%
+regression. Measuring the same model against `eval/golden.jsonl`'s own
+372 real query/relevant-fixture pairs showed true-positive cosine
+similarities ranging down to 0.625, with the graded-relevant (grade >= 2)
+subset still as low as 0.678, both well inside the 0.6-0.8 band the
+demo-resource calibration had treated as a clean cutoff.
+
+There is no single global cosine floor that both preserves that real
+recall and suppresses every false positive the original report
+demonstrated: real true positives and the reported false positives
+occupy overlapping ranges of the same model's raw similarity output, a
+genuine property of BGESmallENV15's anisotropy on short text, not a
+tuning miss fixable with a better constant. Corrected the default to 0.6
+(`supabase/migrations/20260820110000_fix_semantic_floor_regression.sql`),
+just under the real measured minimum true positive, verified back to
+zero regression with a second real `pnpm eval` run. That default closes
+the most degenerate case (a near-empty catalog returning any embedded row
+for any query at all) and the `financial_analysis` reproduction (now
+correctly returns the MCP resource, via the lexical fix above, ranked
+alongside rather than hidden behind the semantic false positive). It does
+**not** fully close the `weather forecast` reproduction: that query's
+0.764 similarity to the demo resource sits well above 0.6, so
+`temperature-convert` still appears for it, live, confirmed after the
+fix. Left open on purpose rather than tuned back down to hide it: the
+real fix for that case is architectural (RRF's `1/(k+rank)` fusion is
+magnitude-blind by design, so it can't distinguish "the nearest of many
+at 0.87" from "the nearest of one at 0.68"), not a constant, and is worth
+its own scoped design pass once the catalog has enough real, non-fixture
+resources to calibrate a magnitude-aware signal against.

@@ -241,7 +241,7 @@ export async function processBazaarExtension(
   // undefined/null distinction matters at the upsert layer.
   let embedding: number[] | undefined;
   try {
-    embedding = await embedDocument(buildDiscoveryText({ description, parameters }));
+    embedding = await embedDocument(buildDiscoveryText({ description, parameters, toolName }));
   } catch (error) {
     console.warn(
       `[bazaar] failed to embed discovery text for ${catalogUrl}: ${error instanceof Error ? error.message : String(error)}`

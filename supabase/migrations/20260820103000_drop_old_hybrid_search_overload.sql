@@ -1,0 +1,15 @@
+-- Fixes a real deploy-time break from the previous migration
+-- (20260820100000_search_relevance_floor.sql), found live by re-running
+-- eval/run.ts against the migrated database, not assumed: PostgreSQL's
+-- "CREATE OR REPLACE FUNCTION may extend the argument list, provided the
+-- additional arguments all have default values" allowance did not apply
+-- the way expected here, and the previous migration's CREATE OR REPLACE
+-- left both the old 7-argument and the new 8-argument
+-- `periplo_hybrid_search` as two distinct overloads instead of replacing
+-- in place. PostgREST's named-parameter RPC call can't disambiguate
+-- between them (every argument the caller supplies is a valid prefix
+-- match for both), and errors: "Could not choose the best candidate
+-- function." Dropping the old signature explicitly leaves exactly one
+-- overload, closing the ambiguity for good rather than trying a different
+-- CREATE OR REPLACE shape a second time.
+drop function if exists periplo_hybrid_search(text, vector, int, int, float, float, int);

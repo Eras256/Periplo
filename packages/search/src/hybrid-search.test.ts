@@ -64,6 +64,32 @@ describe("hybridSearch", () => {
     });
   });
 
+  it("omits min_semantic_similarity by default, so the SQL function's own default governs", async () => {
+    let capturedArgs: unknown;
+    const client = fakeClient({ data: [], error: null }, (_fn, args) => {
+      capturedArgs = args;
+    });
+
+    await hybridSearch(client, { query: "weather", queryEmbedding: [0.1] });
+
+    expect(capturedArgs).not.toHaveProperty("min_semantic_similarity");
+  });
+
+  it("passes through an explicit minSemanticSimilarity override", async () => {
+    let capturedArgs: unknown;
+    const client = fakeClient({ data: [], error: null }, (_fn, args) => {
+      capturedArgs = args;
+    });
+
+    await hybridSearch(client, {
+      query: "weather",
+      queryEmbedding: [0.1],
+      minSemanticSimilarity: 0.6,
+    });
+
+    expect(capturedArgs).toMatchObject({ min_semantic_similarity: 0.6 });
+  });
+
   it("returns the rows verbatim on success", async () => {
     const rows = [{ id: "1", url: "https://example.com", score: 0.5 }];
     const client = fakeClient({ data: rows, error: null }, () => {});

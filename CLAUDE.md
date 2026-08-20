@@ -371,6 +371,22 @@ already stored; see `packages/bazaar/src/db/catalog.ts`'s
 unawaited warm-up call at boot so the first real payment isn't the request
 that pays for downloading the model.
 
+A real search relevance-floor bug, found live by a user re-testing
+`/discovery/search` against a near-empty production catalog, is fixed in
+two parts: `fts` (`supabase/migrations/20260807202307_resources.sql`) now
+folds in `tool_name`/`route_template`, not just `description`/
+`parameters`, and `periplo_hybrid_search`'s semantic leg
+(`supabase/migrations/20260812080000_search.sql`) now enforces a minimum
+cosine similarity, previously absent, which let the single nearest
+embedded row win for any query regardless of true relevance. The first
+calibration attempt (0.8, from the one demo resource's own real
+similarities) regressed nDCG@10 50% against the real
+`eval/golden.jsonl` gate and was corrected to 0.6; even that doesn't
+fully close the bug, since real true positives and the reported false
+positives overlap in the same similarity band for this model. Full
+root-cause writeup, both migrations, and the honest remaining gap are in
+`docs/DEFERRED.md`.
+
 `eval/` is the Phase 5 gate: `pnpm eval` seeds `fixtures.ts` through the
 *real* `upsertCatalogResource` path, runs every query in `golden.jsonl`
 through the real `hybridSearch`, computes nDCG@10/MRR (`metrics.ts`, pure

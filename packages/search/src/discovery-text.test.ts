@@ -73,6 +73,30 @@ describe("buildDiscoveryText", () => {
     expect(buildDiscoveryText({ description: null, parameters: {} })).toBe("");
   });
 
+  it("falls back to a loosened tool name when description and parameters are empty", () => {
+    const text = buildDiscoveryText({
+      description: null,
+      parameters: {},
+      toolName: "financial_analysis_da8703fa-2ee7-4922-aed5-b8cee63b908c",
+    });
+    expect(text).toContain("financial analysis da8703fa 2ee7 4922 aed5 b8cee63b908c");
+  });
+
+  it("includes the tool name alongside a real description, not instead of it", () => {
+    const text = buildDiscoveryText({
+      description: "Analyze financial data for a given ticker",
+      parameters: {},
+      toolName: "financial_analysis",
+    });
+    expect(text).toContain("Analyze financial data for a given ticker");
+    expect(text).toContain("financial analysis");
+  });
+
+  it("ignores a null or blank tool name", () => {
+    expect(buildDiscoveryText({ description: null, parameters: {}, toolName: null })).toBe("");
+    expect(buildDiscoveryText({ description: null, parameters: {}, toolName: "  " })).toBe("");
+  });
+
   it("doesn't throw on a malformed/unexpected parameters shape", () => {
     expect(() =>
       buildDiscoveryText({ description: "ok", parameters: { input: "not an object" } })
