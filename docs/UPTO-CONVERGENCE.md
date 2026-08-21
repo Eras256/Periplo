@@ -102,8 +102,15 @@ wiring fix, scoped honestly in `docs/DEFERRED.md` rather than stubbed.
 Two more implementers engaged the same `#3098` thread afterward rather than
 opening a third:
 
-- **AutoLayer** confirmed the same profile-discrimination requirement,
-  reached independently rather than from reading our comment first.
+- **AutoLayer** (`autolayer-labs`) confirmed the same
+  profile-discrimination requirement, reached independently rather than
+  from reading our comment first, and went further: on the same
+  [`#3098`](https://github.com/x402-foundation/x402/pull/3098) thread it
+  said directly that it "will not open a third competing spec PR,"
+  committing instead to implement whichever profile maintainers select
+  and to send an implementation PR against the converged spec rather
+  than a document of its own. Confirmed against the real comment on the
+  PR, not paraphrased from memory.
 - **[pedro-pelicioni](https://github.com/pedro-pelicioni)**, building the
   discovery side specifically
   (on [stellar/x402-stellar#72](https://github.com/stellar/x402-stellar/issues/72)),

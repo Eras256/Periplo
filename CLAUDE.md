@@ -91,7 +91,10 @@ each package's `tsconfig.json`, which extends `tsconfig.base.json`.
 `references` array, or `tsc -b` silently skips it.**
 
 `packages/licence-check`, `packages/bazaar`, `packages/search`,
-`apps/facilitator`, and `eval/` exist so far (Phases 0–5). Everything else
+`packages/evidence-check`, `apps/facilitator`, and `eval/` exist so far
+(Phases 0–5; `packages/evidence-check` is a CI-gate addition outside the
+phase numbering, same as `packages/licence-check`, see the Architecture
+section below). Everything else
 in the target layout (`apps/hub`, `packages/mcp`, `packages/helpers`,
 `contracts/`, `spec/`, `conformance/` runner, `examples/`) is **planned,
 not built**, see `docs/SPEC.md` §3 for what belongs where. Don't create
@@ -549,6 +552,40 @@ explicitly excluded from every later bug-hunting round; both are direct
 competitors for the same SCF RFP, so their code was never copied and
 neither repo was ever commented on or interacted with publicly, per
 explicit standing instruction.
+
+`packages/evidence-check` (added 2026-08-21) is a CI-only gate, same
+pattern as `packages/licence-check`: pure extraction logic in
+`extract.ts` (regex-based, fully unit tested, 17 tests) plus a thin
+`cli.ts` that does real network/filesystem I/O, exercised only through
+the gate itself. It turns the evidence table from a snapshot into
+something self-auditing, per explicit user feedback that every other
+submission in this SCF round already has a "real tx per row" table and
+that alone is no longer a differentiator: on every push, it re-fetches
+every Stellar transaction hash cited in `README.md`/
+`conformance/RESULTS.md` from Horizon (`successful: true` required),
+re-checks every cited GitHub issue/PR against the GitHub API (using the
+default `GITHUB_TOKEN`, no extra secret, read-only), re-confirms every
+internal doc link still resolves on disk, and pings the live facilitator
+(`GET /supported`) to confirm the "Live now" README claim stays true.
+Wired into `.github/workflows/ci.yml` as its own step, not folded into
+`pnpm run ci`, matching how `pnpm eval` is already kept separate: it
+depends on outbound network access to three external services, not just
+this repo's own code. Run for real against the live repo before being
+declared done, not just reasoned about: 6 transaction hashes and 14
+GitHub links, all passed. `docs/THREAT-MODEL.md` (spec §6's threat/
+control/test table, formalized into its own citable file, each row
+pointing at the real code and test that backs it, including one honest
+gap stated rather than hidden: no CI-enforced secret-leakage check
+exists yet) and `docs/FOR-REVIEWERS.md` (a short, human-written index
+for a panel reviewer, distinct from `CLAUDE.md`'s session-resumption
+purpose) were added the same round. `README.md`'s upstream-convergence
+story (two direct SCF #45 competitors, Rialto and AutoLayer, building on
+the `upto` spec this project opened rather than forking their own) was
+pulled out of a buried paragraph into its own top-of-file section,
+visible on first scroll, per the same feedback; `docs/UPTO-CONVERGENCE.md`
+gained AutoLayer's exact quoted commitment ("will not open a third
+competing spec PR"), verified against the real PR comment before being
+cited, not paraphrased from memory.
 
 `Dockerfile.facilitator` builds and ships `@periplo/bazaar` and
 `@periplo/search` alongside `@periplo/facilitator`. Three things the image

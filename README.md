@@ -10,6 +10,11 @@ the facilitator running on `stellar:testnet`. Try
 [`GET /supported`](https://periplo-testnet.fly.dev/supported) directly,
 no setup required.
 
+**Reviewing this for the RFP round?**
+[`docs/FOR-REVIEWERS.md`](docs/FOR-REVIEWERS.md) is a ten-minute,
+human-written path through this repo, not written for a Claude Code
+session the way `CLAUDE.md` is.
+
 **Status: Phase 6, the `upto` Soroban contract, is complete.** The
 facilitator is live on `stellar:testnet` at
 [periplo-testnet.fly.dev](https://periplo-testnet.fly.dev). The rest of
@@ -22,6 +27,32 @@ and has not started. `/browse`, `/playground`, `/status` and the rest of
 §10's routes do not exist. The facilitator's JSON API is the only
 user-facing surface right now.
 
+## The ecosystem is converging on this spec, not the other way around
+
+Twenty-plus real teams are competing for the same SCF #45 award. Here is
+the one thing none of the others can currently show with real, linked
+evidence: two direct competitors in the same round chose to build on the
+`upto` payment spec this project opened upstream
+([x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098)),
+rather than fork their own.
+
+- **Rialto** ([Iam0TI](https://github.com/Iam0TI), `0d1026/Rialto`)
+  opened a competing design against the same spec file
+  ([`#3134`](https://github.com/x402-foundation/x402/pull/3134), the
+  `stateless` profile). It was credited and merged into `#3098` as a
+  second named profile, not left as a rival PR for maintainers to
+  arbitrate between.
+- **AutoLayer** (`autolayer-labs`) engaged the same `#3098` thread and
+  said directly that it "will not open a third competing spec PR,"
+  committing instead to implement whichever profile maintainers select
+  and to send an implementation PR against the converged spec rather
+  than a document of its own.
+
+Neither commitment came from us asking; both are quoted, dated, and
+linked, not paraphrased. Full chronological writeup, every link and
+finding sourced rather than restated, is in
+[`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md).
+
 ## What's real right now
 
 - Monorepo tooling: pnpm workspaces, TypeScript 7 (strict,
@@ -32,6 +63,14 @@ user-facing surface right now.
   (constraint: spec §1). It is unit-tested, including the exact
   AGPL-3.0-or-later case the spec names: the OpenZeppelin Relayer
   license.
+- [`packages/evidence-check`](packages/evidence-check) is a second CI
+  gate: on every push, it re-fetches every transaction hash cited below
+  from Horizon, re-checks every cited GitHub issue/PR against the GitHub
+  API, and re-confirms every internal doc link still resolves, so this
+  evidence table is a self-auditing claim, not a photograph of the day it
+  was written. [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) formalizes
+  the spec §6 threat/control/test table into its own citable file, each
+  row pointing at the real code and test behind it.
 - [`packages/bazaar`](packages/bazaar) is the catalog trust boundary.
   `checkRouteTemplate` decodes a route template fully, then rejects path
   traversal, absolute URLs, protocol-relative paths, backslash traversal,
@@ -213,20 +252,21 @@ user-facing surface right now.
   as [stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103),
   open, awaiting a maintainer response.
 
-  The `upto` spec thread itself (below,
-  [x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098))
-  went through the same evidence discipline as everything else here: an
-  honest comparison against a competing design rather than defending our
-  own, real fee numbers and independently-verified transaction XDR rather
-  than trusting a PR description, and self-checks against external review
-  that turned up four real gaps in our own code. Three closed since,
-  each with its own commit and tests: `GET /discovery/resources` and
-  `GET /discovery/search` now exist, and the catalog's dedupe key is
-  `extra.uptoProfile`-aware. `/supported` still can't report `upto`, since
-  that needs a real scheme implementation, not a wiring fix, scoped
-  honestly in `docs/DEFERRED.md` rather than stubbed. Full chronological
-  writeup, with links to every thread and finding, in
-  [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md).
+  The `upto` spec thread itself went through the same evidence discipline
+  as everything else here: an honest comparison against a competing
+  design rather than defending our own, real fee numbers and
+  independently-verified transaction XDR rather than trusting a PR
+  description, and self-checks against external review that turned up
+  four real gaps in our own code. Three closed since, each with its own
+  commit and tests: `GET /discovery/resources` and `GET /discovery/search`
+  now exist, and the catalog's dedupe key is `extra.uptoProfile`-aware.
+  `/supported` still can't report `upto`, since that needs a real scheme
+  implementation, not a wiring fix, scoped honestly in `docs/DEFERRED.md`
+  rather than stubbed. See "[The ecosystem is converging on this
+  spec](#the-ecosystem-is-converging-on-this-spec-not-the-other-way-around)"
+  above for what two other teams in this same RFP round did with this
+  thread, and [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md) for
+  the full chronological writeup.
 
   The facilitator reports the outcome through the `EXTENSION-RESPONSES`
   header: `{"bazaar":{"status":"success"}}`, or
@@ -468,3 +508,14 @@ old at check time; `soroban-sdk`, held at the version the already-deployed
   project's real history, not promised in the abstract.
 - [`docs/PRIVACY.md`](docs/PRIVACY.md): what Periplo collects (nothing
   personal, checked directly against the running code) and why.
+- [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md): the `upto`
+  spec's chronological devlog, including two competitors converging on
+  it instead of forking their own.
+- [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md): the spec §6 threat/
+  control/test table, formalized with a pointer to where each control
+  actually lives and what proves it, citable directly without reading
+  the full build spec first.
+- [`docs/FOR-REVIEWERS.md`](docs/FOR-REVIEWERS.md): a one-page,
+  human-written index for a panel reviewer, not a Claude Code session:
+  what to look at, in what order, and what each link confirms, in under
+  ten minutes.
