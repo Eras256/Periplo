@@ -1873,3 +1873,43 @@ on `@x402/stellar`, trust reality over the spec when they conflict, note
 the divergence, keep going). Revisit once `#1655`-adjacent work is
 approved and, if it goes upstream, either merged or clearly scoped as
 out of reach for this build.
+
+## A second real catalog resource: genuinely blocked, not attempted with a shortcut
+
+Per direct feedback that the catalog's weakest point against rival
+submissions' real payment volume (Openx402: 290 observed payments;
+Rail402: 110+) is having exactly one real, externally-reachable
+resource, not two: a second one, ideally from a third party, was asked
+for. Not built this round, for two separate, real reasons, neither
+worked around:
+
+1. **A second self-authored resource still needs a real, externally-
+   reachable deployment**, and the one thing this repo already deploys
+   to, `periplo-testnet.fly.dev`, is exactly the app the same
+   `fly`-CLI-account gap above (and twice before it, see "Fly.io
+   redeploy blocked" below) currently blocks this session from
+   redeploying. A resource that exists only in this repo's source and
+   never actually serves a request behind a real URL cannot pass
+   `packages/bazaar/src/catalog-url.ts`'s own `checkCatalogUrl` gate
+   (rejects `localhost`/unreachable hosts, the exact bug class the
+   2026-08-19 external-QA round already fixed once), so building the
+   code without the ability to deploy it would not produce a real
+   second catalog row, only the appearance of one. Not attempted as a
+   fake/local-only entry for that reason.
+2. **A third-party resource is a real coordination problem, not an
+   engineering one.** It needs an actual second team choosing to list a
+   real paid service against this project's live catalog. That is
+   outside what a single build session can produce unilaterally, the
+   same category of limit as the Audit Bank application and the Matrix/
+   Mastodon channels in the "External accounts not yet provisioned"
+   list above, not a gap this session declined to close out of
+   laziness.
+
+Both blockers are logged rather than routed around. The practical next
+step, once the Fly account is resolved: redeploy with a second, genuinely
+different demo resource (not a copy of temperature-convert), which at
+minimum restores "two real self-hosted resources" and gives the search-
+ranking evidence `docs/DEFERRED.md`'s own search-relevance section
+already flags as thin (`eval/`'s fixtures are synthetic; the live
+catalog itself has never had more than one real row to rank against). A
+third-party listing stays a standing ask, not something to manufacture.
