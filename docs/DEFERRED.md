@@ -1850,15 +1850,32 @@ describes), so nothing here suggests the network itself would reject a
 correctly-signed second-signer authorization, only that the client SDK
 never manages to produce one.
 
-**Standing on the same discipline as the six upstream bugs already
-filed:** not filed yet. Per the standing rule, every new finding gets
-verified against the real published package (done: reproduced directly
-against `@stellar/stellar-sdk@16.2.0`, the version this repo pins),
-checked for duplicates (done, against `#1610`, the closest candidate),
-and shown for explicit approval before anything is opened or commented,
-same as every prior finding in this file. Severity, stated honestly: not
-a security vulnerability, it fails closed (a wrong signature is rejected,
-funds are never at risk), it degrades functionality (this specific
+**Filed as [stellar/js-stellar-sdk#1681](https://github.com/stellar/js-stellar-sdk/issues/1681),
+same discipline as the six upstream bugs already filed before it, all
+of it actually satisfied, not skipped for speed.** Re-verified against
+the real published package a second time, this time by the user
+independently, downloading `@stellar/stellar-sdk@latest` (17.0.0) and
+reading the source directly rather than trusting this file's own
+16.2.0-pinned repro: confirmed the same two defects present, byte-for-
+byte identical logic in both versions. That independent pass also
+sharpened the root cause of the first defect precisely:
+`signAuthEntries`'s own `address = signerAddress(signAuthEntry) ??
+this.options.publicKey` default calls `signerAddress` on `signAuthEntry`
+itself, a plain function per `SignAuthEntryLike`'s own documented union
+type (`SignAuthEntry | Signer | Keypair`), and `signerAddress`'s guard
+(`typeof value !== "object"`) can never pass for a function, so the
+default silently resolves to `this.options.publicKey` for the
+simplest, most common, fully-documented usage pattern, not an edge
+case. Checked for duplicates against `#1610` (confirmed not a
+duplicate, that issue is about `authorizeEntry`-override preflight
+checks being skipped, a different problem) and four other
+`signAuthEntries`-related issues found searching first. The issue
+itself proposes a fix for both defects, verified against the real
+`authorizeEntry`/`toSignAuthEntry` source, not just the finding, per
+the standing rule that a confirmed root cause with a reasonable fix
+gets the fix included. Severity, stated honestly: not a security
+vulnerability, it fails closed (a wrong signature is rejected, funds
+are never at risk), it degrades functionality (this specific
 signer-agnosticism the SEP-43 interface advertises silently doesn't
 work end to end for the one path that actually needs it).
 
@@ -1867,12 +1884,14 @@ as a second settled transaction, the honest outcome of actually running
 it rather than the one that would have made the strongest evidence-table
 entry. What's real instead: a second signer genuinely registered
 on-chain (kept, harmless, adds a key without touching the master one or
-the account's thresholds), and a new, reproducible, root-caused upstream
-finding in the exact library this project is built on (spec §1: build
-on `@x402/stellar`, trust reality over the spec when they conflict, note
-the divergence, keep going). Revisit once `#1655`-adjacent work is
-approved and, if it goes upstream, either merged or clearly scoped as
-out of reach for this build.
+the account's thresholds), and `#1681` filed and open, the seventh real,
+independently verified upstream bug this project has found and reported
+(CLAUDE.md's Architecture section keeps the full list). Revisit
+`multisig-signer-demo.ts` once `#1681` (or `#1655`, the adjacent
+CAP-71-delegate finding it generalizes) lands upstream; until then a
+non-master-key signer for this scheme stays unrepresentable through
+`@x402/stellar`'s real, unmodified client, not a gap this repo can close
+on its own.
 
 ## A second real catalog resource: genuinely blocked, not attempted with a shortcut
 

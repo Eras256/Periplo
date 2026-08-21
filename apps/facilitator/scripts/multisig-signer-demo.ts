@@ -12,9 +12,11 @@
  * **Currently fails before reaching the facilitator, at
  * `client.createPaymentPayload()`, with a real, root-caused upstream bug
  * in `@stellar/stellar-sdk`, not a bug in this script or in
- * `@x402/stellar`.** Full writeup, reproduction, and duplicate-check in
- * `docs/DEFERRED.md`'s "A second `exact`-scheme signer mode was attempted
- * for real" section. `ensureSecondSignerRegistered()` below still runs
+ * `@x402/stellar`, filed as
+ * [stellar/js-stellar-sdk#1681](https://github.com/stellar/js-stellar-sdk/issues/1681).**
+ * Full writeup, reproduction, and duplicate-check in `docs/DEFERRED.md`'s
+ * "A second `exact`-scheme signer mode was attempted for real" section.
+ * `ensureSecondSignerRegistered()` below still runs
  * to completion and is real, verified evidence on its own (a genuine
  * on-chain multisig setup), the failure is specifically in
  * `AssembledTransaction.signAuthEntries` discarding the signer's own
