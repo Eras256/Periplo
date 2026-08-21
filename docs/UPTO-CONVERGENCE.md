@@ -90,12 +90,15 @@ previously recorded, full detail in
 `GET /discovery/resources` or `GET /discovery/search` route at all, and the
 catalog's `accepts` dedupe key wasn't `extra`-aware, so two profiles for
 the same resource, network, asset, and `payTo` would silently overwrite
-each other rather than coexist. **Closed 2026-08-17, two of three:** both
-discovery routes now exist, reusing `@x402/extensions/bazaar`'s own wire
-types, and the dedupe key is `extra.uptoProfile`-aware, each with its own
-commit and tests. `/supported` still can't report `upto`, since that needs
-a real scheme implementation registered against `x402Facilitator`, not a
-wiring fix, scoped honestly in `docs/DEFERRED.md` rather than stubbed.
+each other rather than coexist. **Closed 2026-08-17, two of three; the
+third closed 2026-08-21:** both discovery routes now exist, reusing
+`@x402/extensions/bazaar`'s own wire types, and the dedupe key is
+`extra.uptoProfile`-aware, each with its own commit and tests.
+`/supported` can now report `upto`: `UptoStellarScheme`, a real scheme
+implementation registered against `x402Facilitator`, not a stub, with a
+real settled transaction through the facilitator's own `verify()`/
+`settle()` recorded in `conformance/RESULTS.md`, full writeup in
+CLAUDE.md's Architecture section.
 
 ## Independent confirmation and a new requirement
 
@@ -129,11 +132,11 @@ own design.
 
 No pending reply on either thread as of this writing. `#3098` is ready for
 review, waiting on maintainer direction on where the merged two-profile
-document should actually consolidate before a follow-up PR opens. Of the
-four implementation gaps above, three are closed as of 2026-08-17
-(`GET /discovery/*`, and the `extra`-aware dedupe key, found from two
-independent angles), each with its own commit and tests. `/supported`
-still can't report `upto`, tracked honestly in `docs/DEFERRED.md` as
-needing a real scheme implementation, not a wiring fix. Real, dated
-evidence either way, not resolved-sounding claims without a link behind
-them.
+document should actually consolidate before a follow-up PR opens. All
+four implementation gaps above are now closed: `GET /discovery/*` and
+the `extra`-aware dedupe key on 2026-08-17, each with its own commit and
+tests, and `/supported` reporting `upto` for real on 2026-08-21 via
+`UptoStellarScheme`, a real scheme implementation, not a wiring fix, with
+a real settled transaction to back it (`conformance/RESULTS.md`). Real,
+dated evidence either way, not resolved-sounding claims without a link
+behind them.

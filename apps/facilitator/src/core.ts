@@ -39,6 +39,7 @@ import { createEd25519Signer, getHorizonClient } from "@x402/stellar";
 // not "fixed" back to the barrel import later.
 import { ExactStellarScheme } from "@x402/stellar/exact/facilitator";
 import { type AccountLoader, assertNonCustodialSigner } from "./boot-safety.js";
+import { UptoStellarScheme } from "./upto-stellar-scheme.js";
 
 export const STELLAR_NETWORKS = ["stellar:testnet", "stellar:pubnet"] as const;
 export type StellarNetwork = (typeof STELLAR_NETWORKS)[number];
@@ -55,6 +56,18 @@ export interface FacilitatorCoreConfig {
   readonly rpcConfig?: { readonly url?: string };
   /** Safety ceiling in stroops passed through to ExactStellarScheme (default: library default, 50_000). */
   readonly maxTransactionFeeStroops?: number;
+  /**
+   * `UptoSettlement` contract address per network (Phase 6,
+   * `contracts/upto-settlement`). Only networks with a configured address
+   * get `upto` registered alongside `exact`; a facilitator with no
+   * address configured simply doesn't advertise `upto` support, same
+   * "advertised support and reachable support must match" principle as
+   * `signers` above. See `upto-stellar-scheme.ts` for the scheme
+   * implementation itself.
+   */
+  readonly uptoSettlementContracts?: Partial<Record<StellarNetwork, string>>;
+  /** Safety ceiling in stroops passed through to UptoStellarScheme (default: 300_000, see upto-stellar-scheme.ts). */
+  readonly uptoMaxTransactionFeeStroops?: number;
   /** Overridable for tests; defaults to the real Horizon client per network. */
   readonly loadAccount?: (network: StellarNetwork) => AccountLoader;
 }
@@ -117,6 +130,25 @@ export async function createFacilitatorCore(
     signers.map(({ network }) => network),
     scheme
   );
+
+  const uptoNetworks = configuredNetworks.filter(
+    (network) => config.uptoSettlementContracts?.[network]
+  );
+  if (uptoNetworks.length > 0) {
+    const uptoScheme = new UptoStellarScheme(
+      signers.map(({ signer }) => signer),
+      Object.fromEntries(
+        uptoNetworks.map((network) => [network, config.uptoSettlementContracts?.[network]])
+      ),
+      {
+        ...(config.rpcConfig ? { rpcConfig: config.rpcConfig } : {}),
+        ...(config.uptoMaxTransactionFeeStroops !== undefined
+          ? { maxTransactionFeeStroops: config.uptoMaxTransactionFeeStroops }
+          : {}),
+      }
+    );
+    facilitator.register(uptoNetworks, uptoScheme);
+  }
 
   return {
     getSupported: () => facilitator.getSupported(),

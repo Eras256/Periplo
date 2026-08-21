@@ -936,13 +936,22 @@ scope, alongside the contract and the spec. The spec is upstream (PR
 #3098, already open). The contract is built, tested, deployed, and
 settled a real transaction (this phase's actual gate, per §6's own gate
 line: `cargo test` passes, contract deployed to testnet, a settled `upto`
-transaction hash recorded, three assumptions closed). The TypeScript
-client/facilitator package, the piece that would let
-`apps/facilitator`'s own `/verify`/`/settle` routes actually serve `upto`
-requests over HTTP, not just a one-off verification script, is separate,
-larger, not-yet-started work. `apps/facilitator/scripts/upto-settle-demo.ts`
-proves the contract and the wire-level auth mechanism both work for real;
-it is not that package.
+transaction hash recorded, three assumptions closed). At the time this
+section was first written, the facilitator-side TypeScript package that
+would let `apps/facilitator`'s own `/verify`/`/settle` routes actually
+serve `upto` requests over HTTP, not just a one-off verification script,
+was separate, larger, not-yet-started work.
+`apps/facilitator/scripts/upto-settle-demo.ts` proved the contract and
+the wire-level auth mechanism both work for real, but was not that
+package. **Done as of 2026-08-21**: `apps/facilitator/src/upto-stellar-scheme.ts`
+now implements this, registered in `core.ts`, a real settlement through
+the facilitator's own `verify()`/`settle()` recorded in
+`conformance/RESULTS.md`, full writeup in CLAUDE.md's Architecture
+section (search that file for `UptoStellarScheme`). The live
+`https://periplo-testnet.fly.dev` deployment doesn't have it configured
+yet, a real, separately-logged Fly account blocker, not silently
+skipped: see "Fly.io redeploy blocked" below for the recurring shape of
+that gap.
 
 ### `upto` spec convergence with a competing PR: #3098 now documents two profiles
 
@@ -1050,22 +1059,22 @@ required, shared `PaymentRequirements` field in `#3098`'s
 spec text, per the same standard this project holds every other capability
 claim to, three real gaps surfaced, none of them previously recorded:
 
-1. **`/supported` cannot report `upto` at all, in any form. Still open,
-   and it's the one gap that doesn't close with a small fix.**
-   `apps/facilitator/src/core.ts` registers only `ExactStellarScheme`. Since
-   `upto` isn't wired into the HTTP facilitator yet (already noted in this
-   file's Phase 6 section), there is currently no `upto` kind to
-   discriminate a profile on in the first place. Closing this for real
-   needs a genuine `UptoStellarScheme` (verify/settle/getSigners/getExtra)
-   registered against `x402Facilitator`, mirroring `@x402/stellar`'s own
-   `exact` implementation against the deployed `UptoSettlement` contract's
-   two-signature flow (buyer `require_auth_for_args`, facilitator
-   `require_auth`, `docs/SPEC.md` §6's
-   `typescript/packages/mechanisms/stellar/src/upto/` target). That's a new
-   scheme implementation, not a wiring gap, and payment-critical code
-   deserves its own scoped pass rather than a rushed stub. Scoped honestly
-   here in preference to either skipping it silently or shipping something
-   undertested against real funds.
+1. **Closed 2026-08-21.** `/supported` could not report `upto` at all,
+   in any form, since `apps/facilitator/src/core.ts` registered only
+   `ExactStellarScheme` and `upto` wasn't wired into the HTTP facilitator
+   at all. Closed for real, not stubbed: `apps/facilitator/src/upto-stellar-scheme.ts`'s
+   `UptoStellarScheme` (verify/settle/getSigners/getExtra) is now
+   registered against `x402Facilitator` in `core.ts`, for any network
+   with a configured settlement-contract address, mirroring the real,
+   installed `ExactStellarScheme`'s own mechanics as closely as the two
+   schemes' real differences allow. A real settlement through this exact
+   code path is recorded in `conformance/RESULTS.md`; full design
+   writeup in CLAUDE.md's Architecture section. The live
+   `periplo-testnet.fly.dev` deployment doesn't have the settlement
+   contract configured yet (a real, separately-logged Fly account
+   blocker, see "Fly.io redeploy blocked" below), so `/supported` on
+   that specific deployment still won't show `upto` until that redeploy
+   happens; the code itself is done and proven.
 2. **Closed 2026-08-17.** No `GET /discovery/resources` or
    `GET /discovery/search` HTTP route existed in `apps/facilitator` at all
    (grepped, zero hits; even the filters `docs/SPEC.md` §4 names, `type`,
@@ -1747,3 +1756,120 @@ magnitude-blind by design, so it can't distinguish "the nearest of many
 at 0.87" from "the nearest of one at 0.68"), not a constant, and is worth
 its own scoped design pass once the catalog has enough real, non-fixture
 resources to calibrate a magnitude-aware signal against.
+
+## A second `exact`-scheme signer mode was attempted for real: real infrastructure, a real new upstream bug, no completed settlement yet
+
+Every settled `exact` transaction recorded before this attempt
+(`conformance/RESULTS.md`) signed the buyer's payment with that
+account's own master key. Per direct feedback that conformance evidence
+should cover more than one signer mode, run for real rather than
+reasoned about, this attempted classic Stellar multisig: a second
+Ed25519 key registered on `STELLAR_TEST_BUYER_PUBLIC` as an additional
+signer (weight 1, the account's thresholds are the default 0, so any
+registered signer's signature already satisfies every operation),
+signing the payment instead of the master key.
+
+**What's real and confirmed:** the second signer is genuinely registered
+on-chain, a real `set_options` transaction
+([`b398b5d7e02cd0b03965238bc504e82887e3406d70954b5c32683b0133434d70`](https://stellar.expert/explorer/testnet/tx/b398b5d7e02cd0b03965238bc504e82887e3406d70954b5c32683b0133434d70),
+Horizon-verified: operation type `set_options`, `signer_key`
+`GCZEA3FDEBKLJZDZZY4N6YDXPLAYUPW4YR2RDTDC33ARILF3T5BG4DRA`, weight `1`).
+`apps/facilitator/scripts/multisig-signer-demo.ts` is the real script:
+it registers the signer (idempotent, checked live against Horizon, not
+assumed from a prior run), then builds a payment via `@x402/stellar`'s
+real, unmodified `ExactStellarScheme` client, with a `ClientStellarSigner`
+whose `address` is the buyer's account but whose `signAuthEntry`/
+`signTransaction` sign with the second key only, the master key never
+touched. `@x402/stellar`'s signer interface is SEP-43-based and
+signer-agnostic by design (`{ address, signAuthEntry, signTransaction? }`,
+never assumes the signing key matches `address`), which is what makes
+this representable at all with zero changes to `@x402/stellar` itself.
+
+**What actually happened, run for real, not assumed:** the payment build
+step fails locally, before any network call, with `Error: signature
+doesn't match payload`, thrown from `@stellar/stellar-sdk`'s own
+`authorizeEntry()` (`base/auth.ts`). Traced to the real cause, not
+guessed: `AssembledTransaction.signAuthEntries` (`contract/
+assembled_transaction.js`, the method `@x402/stellar`'s client scheme
+calls internally) wraps the caller's SEP-43 `signAuthEntry` in a closure
+that calls it, then does exactly this and nothing else:
+
+```js
+const { signedAuthEntry, error } = await sign(preimage.toXDR("base64"), { address });
+this.handleWalletError(error);
+return Buffer.from(signedAuthEntry, "base64");
+```
+
+The `signerAddress` field a SEP-43-conformant signer explicitly returns
+(and which our second-signer implementation does return, correctly, as
+its own address) is read, then discarded: only the raw signature bytes
+are passed on. Inside `authorizeEntry()`, receiving a bare `Buffer` (not
+an object carrying `signature`/`publicKey`, the shape the function
+otherwise supports) makes it fall into what CLAUDE.md already calls the
+"bare-signature fallback path" for a *different*, previously-found bug
+in this same module
+([stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655)):
+it infers the verifying public key from the auth entry's own top-level
+address (`Address.fromScAddress(addrAuth.address()).toString()`, the
+buyer's master-key address) rather than from the signer that actually
+produced the signature. The local sanity check then fails, correctly,
+because the second signer's signature genuinely doesn't verify against
+the buyer's master public key, exactly as written, but the *correct*
+behavior would be to verify it against the second signer's own address,
+which the discarded `signerAddress` field would have supplied.
+
+**This looks like a real, new, filable bug, distinct from `#1655`, not
+yet checked against duplicates or shown for approval.** `#1655` is about
+`needsNonInvokerSigningBy()`/`signAuthEntries()` missing an outstanding
+*delegate* signature in a CAP-71
+`SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES` entry specifically. This
+finding is different and broader: `signAuthEntries`'s own adapter to
+`authorizeEntry` drops `signerAddress` unconditionally, for a plain,
+non-delegate `SOROBAN_CREDENTIALS_ADDRESS` entry, which means *any*
+signer whose returned address differs from the auth entry's top-level
+address, not just a CAP-71 delegate, can never produce a signature
+`authorizeEntry`'s bare-signature fallback will accept. Checked against
+[`stellar/js-stellar-sdk#1610`](https://github.com/stellar/js-stellar-sdk/issues/1610)
+(the closest-looking open issue found searching first): confirmed **not**
+a duplicate, `#1610` is about `authorizeEntry`-override safety checks
+being skipped and a different silent-`address`-fallback case, it does not
+describe `signerAddress` being dropped. Root-caused to
+`@stellar/stellar-sdk`, not to `@x402/stellar` or to anything in this
+repo: the failing call (`authorizeEntry` in `base/auth.ts`) and its
+caller (`signAuthEntries` in `contract/assembled_transaction.js`) are
+both stellar-sdk source, read directly, not guessed from behavior alone.
+Also confirmed structural, not something a different local script could
+route around: `AssembledTransaction.signAuthEntries` is the *only* path
+`@x402/stellar`'s exact-scheme client uses to produce a Soroban auth
+entry signature, so this blocks every non-master-key signer mode
+through the real, unmodified client path, not just classic multisig.
+Soroban's own protocol-level check for a G-account `SorobanCredentials
+::Address` entry is understood to replicate classic multisig
+weight/threshold verification (the account-contract abstraction CAP-46-11
+describes), so nothing here suggests the network itself would reject a
+correctly-signed second-signer authorization, only that the client SDK
+never manages to produce one.
+
+**Standing on the same discipline as the six upstream bugs already
+filed:** not filed yet. Per the standing rule, every new finding gets
+verified against the real published package (done: reproduced directly
+against `@stellar/stellar-sdk@16.2.0`, the version this repo pins),
+checked for duplicates (done, against `#1610`, the closest candidate),
+and shown for explicit approval before anything is opened or commented,
+same as every prior finding in this file. Severity, stated honestly: not
+a security vulnerability, it fails closed (a wrong signature is rejected,
+funds are never at risk), it degrades functionality (this specific
+signer-agnosticism the SEP-43 interface advertises silently doesn't
+work end to end for the one path that actually needs it).
+
+**Net effect on the "second signer mode" evidence goal:** not achieved
+as a second settled transaction, the honest outcome of actually running
+it rather than the one that would have made the strongest evidence-table
+entry. What's real instead: a second signer genuinely registered
+on-chain (kept, harmless, adds a key without touching the master one or
+the account's thresholds), and a new, reproducible, root-caused upstream
+finding in the exact library this project is built on (spec §1: build
+on `@x402/stellar`, trust reality over the spec when they conflict, note
+the divergence, keep going). Revisit once `#1655`-adjacent work is
+approved and, if it goes upstream, either merged or clearly scoped as
+out of reach for this build.

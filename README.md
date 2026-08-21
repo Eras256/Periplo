@@ -97,10 +97,14 @@ finding sourced rather than restated, is in
   the typed client.
 - [`apps/facilitator`](apps/facilitator) implements `verify`, `settle`,
   and `supported` for the `exact` scheme, built on `@x402/core` and
-  `@x402/stellar`. Settlement logic comes from those packages. A **real
-  settled transaction on `stellar:testnet`** is recorded in
-  [`conformance/RESULTS.md`](conformance/RESULTS.md), with the hash
-  checked independently against Horizon. It is importable as a library,
+  `@x402/stellar`. Settlement logic comes from those packages. It also
+  now implements `upto` (`src/upto-stellar-scheme.ts`, since no
+  published `@x402/stellar` class exists for it), registered the same
+  way. A **real settled transaction on `stellar:testnet`** for each
+  scheme is recorded in
+  [`conformance/RESULTS.md`](conformance/RESULTS.md), with every hash
+  checked independently against Horizon. `upto` isn't configured on the
+  live deployment yet (`docs/DEFERRED.md`). It is importable as a library,
   with no HTTP hop required, for self-facilitation inside a resource
   server, walked through end to end (a real, working example, not just
   described) in [`docs/SELF-FACILITATION.md`](docs/SELF-FACILITATION.md).
@@ -257,12 +261,15 @@ finding sourced rather than restated, is in
   design rather than defending our own, real fee numbers and
   independently-verified transaction XDR rather than trusting a PR
   description, and self-checks against external review that turned up
-  four real gaps in our own code. Three closed since, each with its own
+  four real gaps in our own code. All four now closed, each with its own
   commit and tests: `GET /discovery/resources` and `GET /discovery/search`
-  now exist, and the catalog's dedupe key is `extra.uptoProfile`-aware.
-  `/supported` still can't report `upto`, since that needs a real scheme
-  implementation, not a wiring fix, scoped honestly in `docs/DEFERRED.md`
-  rather than stubbed. See "[The ecosystem is converging on this
+  exist, the catalog's dedupe key is `extra.uptoProfile`-aware, and
+  `/supported` now reports `upto` for real via `UptoStellarScheme`, a
+  real scheme implementation registered against `x402Facilitator`, with
+  a real settled transaction through this facilitator's own `verify()`/
+  `settle()` recorded in [`conformance/RESULTS.md`](conformance/RESULTS.md),
+  not yet reflected on the live deployment (`docs/DEFERRED.md`). See "[The
+  ecosystem is converging on this
   spec](#the-ecosystem-is-converging-on-this-spec-not-the-other-way-around)"
   above for what two other teams in this same RFP round did with this
   thread, and [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md) for

@@ -72,6 +72,29 @@ function loadDemoResourceConfig(): DemoResourceConfig | null {
 }
 
 /**
+ * `{}` unless `UPTO_SETTLEMENT_CONTRACT_TESTNET`/`_PUBNET` are set: same
+ * "advertised support and reachable support must match" principle as
+ * `loadSigners()` above, and the same env var name
+ * `apps/facilitator/scripts/upto-settle-demo.ts` already uses for
+ * testnet, reused rather than inventing a second name for the same
+ * contract address.
+ */
+function loadUptoSettlementContracts(): NonNullable<
+  FacilitatorCoreConfig["uptoSettlementContracts"]
+> {
+  const contracts: NonNullable<FacilitatorCoreConfig["uptoSettlementContracts"]> = {};
+  const testnetContract = process.env.UPTO_SETTLEMENT_CONTRACT_TESTNET;
+  if (testnetContract) {
+    contracts["stellar:testnet"] = testnetContract;
+  }
+  const pubnetContract = process.env.UPTO_SETTLEMENT_CONTRACT_PUBNET;
+  if (pubnetContract) {
+    contracts["stellar:pubnet"] = pubnetContract;
+  }
+  return contracts;
+}
+
+/**
  * `undefined` (library default, 50_000 stroops) unless `MAX_TRANSACTION_FEE_STROOPS`
  * is set. Found necessary live, not assumed: real testnet Soroban resource
  * fees for a plain SAC transfer are currently running ~72,000 stroops
@@ -99,6 +122,7 @@ async function main(): Promise<void> {
   const maxTransactionFeeStroops = loadMaxTransactionFeeStroops();
   const core = await createFacilitatorCore({
     signers: loadSigners(),
+    uptoSettlementContracts: loadUptoSettlementContracts(),
     ...(maxTransactionFeeStroops !== undefined ? { maxTransactionFeeStroops } : {}),
   });
   const app = createFacilitatorApp(core, {
