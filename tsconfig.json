@@ -4,6 +4,7 @@
     { "path": "packages/licence-check" },
     { "path": "packages/bazaar" },
     { "path": "packages/search" },
+    { "path": "packages/evidence-check" },
     { "path": "apps/facilitator" },
     { "path": "eval" }
   ]

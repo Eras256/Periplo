@@ -89,6 +89,20 @@ jobs:
         if: ${{ env.SUPABASE_URL != '' }}
         run: pnpm eval
 
+      - name: Evidence gate (README/RESULTS.md citations still check out)
+        # Turns the evidence table from a photograph into something
+        # self-auditing: re-fetches every cited Stellar transaction hash
+        # from Horizon, every cited GitHub issue/PR from the GitHub API,
+        # and re-confirms every internal doc link still resolves on disk,
+        # on every push, not just at the moment each claim was written.
+        # Uses the default GITHUB_TOKEN (always available, no extra
+        # secret needed) purely to raise the GitHub API rate limit; no
+        # write scope is used. Runs on fork PRs too, since none of this
+        # needs repository secrets, only outbound network access.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm verify-evidence
+
   # contracts/upto-settlement (Phase 6) is a standalone Cargo/Rust
   # project, not a pnpm workspace member: its own job, its own
   # toolchain, no dependency on the `build` job above. Deliberately does

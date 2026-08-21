@@ -1,0 +1,16 @@
+{
+  "name": "@periplo/evidence-check",
+  "private": true,
+  "version": "0.0.0",
+  "description": "CI gate: re-confirms every transaction hash, internal doc link, and GitHub issue/PR link cited as evidence in README.md/conformance/RESULTS.md is still live and matches what's claimed, on every push.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "periplo-evidence-check": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}
