@@ -882,11 +882,15 @@ CoinFabrik, Certora, Zellic, Code4rena), tracked as a genuine Phase 10
 blocker in this file's "Deliberately not self-served" list ("Audit Bank
 engagement, a program application, not something to submit
 unilaterally"), not something this session can complete on its own.
-Static analysis (`cargo scout-audit`, OpenZeppelin's Security Detectors
-SDK) has also not been run, a cheaper, faster gap than the audit itself,
-and one that could reasonably run before Phase 10 rather than waiting for
-it; noted here rather than done, since it wasn't part of this phase's
-gate.
+**Partially closed 2026-08-21**: `cargo audit` (RustSec advisories) and
+`cargo clippy` (including `-W clippy::pedantic`, the strictest built-in
+tier) have now been run for real against all three Rust crates in
+`contracts/`, clean results reported as-is, not oversold as a
+substitute for the audit itself; full writeup in
+`docs/THREAT-MODEL.md`'s "Automated static analysis" section. `cargo
+scout-audit` and OpenZeppelin's Security Detectors SDK specifically are
+still not run, a real, narrower remaining gap than before, not the same
+one.
 
 ### Third-party security review: pending via Audit Bank, status tracked here
 
