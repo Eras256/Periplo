@@ -233,6 +233,29 @@ finding sourced rather than restated, is in
   inside `signAuthEntries()`'s own callback, without touching
   `authorizeEntry()` itself, since that's out of scope for this PR.
 
+  That same `authorizeEntry()` bare-signature fallback path turned up a
+  second, separate way to trip it: attempting a genuine classic Stellar
+  multisig payment (a second Ed25519 key registered on the buyer's
+  account, weight 1, signing instead of the master key, not simulated,
+  verified on a real testnet transaction that registers the signer)
+  found `AssembledTransaction.signAuthEntries()` can't represent a
+  non-master-key signer at all, for two separate reasons. First,
+  `signAuthEntries()`'s own `address` default calls `signerAddress()` on
+  `signAuthEntry` itself, a plain function per that option's own
+  documented type (`SignAuthEntryLike = SignAuthEntry | Signer |
+  Keypair`); `signerAddress()`'s guard requires an object, so it can
+  never resolve for the simplest, most common, fully-documented usage,
+  and silently falls back to an unrelated address instead. Second, even
+  when a caller supplies `address` explicitly and sidesteps that (as
+  `@x402/stellar`'s own client does), the per-entry signing closure
+  discards any `signerAddress` a custom signer returns before handing a
+  bare signature to `authorizeEntry()`, landing on the exact fallback
+  path above and verifying against the wrong key again, this time for a
+  plain `Address` credential rather than a CAP-71 delegate. Filed as
+  [stellar/js-stellar-sdk#1681](https://github.com/stellar/js-stellar-sdk/issues/1681),
+  with a proposed fix for both, checked against #1610 first to confirm
+  it wasn't a duplicate. **Status: filed, not yet fixed, open.**
+
   Both #1672 and #3215 are the first pair of contributions from this
   project to go through the checklist in
   [`.claude/skills/claude-antigravity-setup/git.md`](.claude/skills/claude-antigravity-setup/git.md)
