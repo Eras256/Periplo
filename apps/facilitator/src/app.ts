@@ -84,7 +84,14 @@ export function createFacilitatorApp(
   app.get("/", (c) =>
     c.json({
       service: "periplo-facilitator",
-      description: "x402 facilitator for Stellar: verify/settle/supported for the exact scheme.",
+      // Deliberately doesn't hardcode which schemes ("exact", "upto")
+      // this instance advertises: which are actually registered depends
+      // on deployment config (core.ts), and /supported is the real
+      // source of truth, this blurb would drift out of sync with it
+      // otherwise ("advertised support and reachable support must
+      // match", the same principle core.ts's own signer-loading
+      // comments state).
+      description: "x402 facilitator for Stellar: verify/settle/supported, schemes per /supported.",
       endpoints: {
         health: "/health",
         supported: "/supported",
