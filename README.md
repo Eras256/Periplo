@@ -4,11 +4,18 @@
 
 The discovery layer for x402-payable services on Stellar.
 
+**Live now:** [periplo-testnet.fly.dev](https://periplo-testnet.fly.dev),
+the facilitator running on `stellar:testnet`. Try
+[`GET /`](https://periplo-testnet.fly.dev/) or
+[`GET /supported`](https://periplo-testnet.fly.dev/supported) directly,
+no setup required.
+
 **Status: Phase 6, the `upto` Soroban contract, is complete.** The
 facilitator is live on `stellar:testnet` at
-https://periplo-testnet.fly.dev. The rest of Phase 10 is not done; see
-[`docs/DEFERRED.md`](docs/DEFERRED.md). This README states what is built,
-linked, tested, or hashed today. Everything else is marked as planned.
+[periplo-testnet.fly.dev](https://periplo-testnet.fly.dev). The rest of
+Phase 10 is not done; see [`docs/DEFERRED.md`](docs/DEFERRED.md). This
+README states what is built, linked, tested, or hashed today. Everything
+else is marked as planned.
 
 **There is no frontend yet.** The developer hub (`apps/hub`) is Phase 9
 and has not started. `/browse`, `/playground`, `/status` and the rest of

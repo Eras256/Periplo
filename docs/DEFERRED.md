@@ -95,7 +95,9 @@ should be confirmed with the project owner first:
   `e2e/facilitators/external-proxies/periplo/` means opening a PR against an
   external repo; needs owner sign-off before it's sent.
 - **Audit Bank engagement** (Phase 10): a program application, not something
-  to submit unilaterally.
+  to submit unilaterally. Tracked as a standing, actively-queued item, not
+  just this one mention: see "Third-party security review: pending via
+  Audit Bank, status tracked here" below.
 
 ### `pnpm@11.20.0` genuinely requires Node ≥22.13, not just a spec preference
 Running `pnpm install` on this machine's original Node v20.19.6 crashed
@@ -885,6 +887,31 @@ SDK) has also not been run, a cheaper, faster gap than the audit itself,
 and one that could reasonably run before Phase 10 rather than waiting for
 it; noted here rather than done, since it wasn't part of this phase's
 gate.
+
+### Third-party security review: pending via Audit Bank, status tracked here
+
+This is the canonical status entry for the Audit Bank engagement; the
+Phase 0 "External accounts not yet provisioned" bullet above and
+`docs/SPEC.md`'s own gate checklist (`- [ ] Security review complete via
+the Audit Bank, findings resolved`) both point back to this section
+rather than restating it. Current state, as of this writing: **not yet
+submitted.** Audit Bank is an SDF-run program (partner firms include
+OtterSec, Veridise, Runtime Verification, CoinFabrik, Certora, Zellic,
+Code4rena) with its own application, review, and firm-matching timeline;
+nothing in this repository can shorten that once an application is in.
+There is nothing to self-serve or accelerate from this session's side.
+`docs/SPEC.md` §10 scopes what the application should cover once
+submitted: the off-chain facilitator and its cryptographic validation as
+the primary review target (v1 ships no new Soroban contract on the
+settlement path), with `UptoSettlement` scoped as a separate, smaller
+contract-level review, distinct from the internal, non-adversarial pass
+already recorded above. Audit fees are explicitly not an eligible SCF
+budget line; Audit Bank is a distinct programme from the Build Award
+itself. Kept open here deliberately, as a genuinely active item this
+project is waiting on, not archived as a closed or low-priority
+deferral: update this section the moment an application is actually
+submitted (with a date and, once available, a link/reference), not only
+when a firm is assigned or the review completes.
 
 ### `Client.from(...)` fetches the on-chain contract spec live: no generated bindings committed
 
