@@ -616,7 +616,7 @@ than a paragraph saying it is.
 | --- | --- | --- |
 | Catalog poisoning via `routeTemplate` | Decode-then-validate, traversal rejection | Phase 1 suite |
 | Listing spoofing (seller impersonation) | Bind listings to the verified payer; never trust client-echoed `payTo` | Integration |
-| Replay | Nonce + ledger deadline, enforced before settlement | Contract test |
+| Replay | Nonce + ledger deadline, enforced before settlement (`MAX_WINDOW_LEDGERS`, `rejects_window_exceeding_the_contract_maximum`/`accepts_window_exactly_at_the_contract_maximum` in `contracts/upto-settlement`; full writeup in `docs/THREAT-MODEL.md`) | Contract test |
 | Fund redirection | Recipient read from signed auth entry, never from an argument | Contract + facilitator test |
 | Facilitator drain | The five safety checks in Phase 3 | Adversarial fixtures |
 | Front-running settlement | Facilitator binding in the authorization | Contract test |

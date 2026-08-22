@@ -53,6 +53,20 @@ linked, not paraphrased. Full chronological writeup, every link and
 finding sourced rather than restated, is in
 [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md).
 
+A third, different kind of external signal landed on the same thread on
+2026-08-21: an independent implementer unaffiliated with this project,
+`davedumto`, [reviewed five real Stellar `upto` implementations in
+source](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5373783683)
+(rail402, Rialto, openx402, LumenGate, and this project's contract via
+`#3098`) against a proposed reconciliation of the spec, and named this
+contract's own handling of nonce-TTL replay as one of the cases the
+merged spec should require every implementation to answer correctly.
+It already does, verified live on testnet, not just asserted; full
+technical detail in [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md#independent-external-validation-of-the-replay-row-2026-08-21).
+This is the kind of evidence no competitor can manufacture: an
+unsolicited, source-level review from someone outside the project,
+not self-assessment.
+
 ## What's real right now
 
 - Monorepo tooling: pnpm workspaces, TypeScript 7 (strict,

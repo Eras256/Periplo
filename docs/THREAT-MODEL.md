@@ -17,7 +17,7 @@ separate, adversarial step.
 | --- | --- | --- | --- |
 | Catalog poisoning via `routeTemplate` | Decode-then-validate, reject traversal/absolute/protocol-relative paths before storage | `packages/bazaar/src/route-template.ts` (`checkRouteTemplate`) | `packages/bazaar/src/route-template.test.ts`, 45 unit tests, gate requires ≥20 |
 | Listing spoofing (seller impersonation) | `payTo` is read from the facilitator's own verified `paymentRequirements`, never from client-echoed extension data | `apps/facilitator/src/discovery.ts` | `apps/facilitator/src/discovery.test.ts`, `discovery.integration.test.ts` |
-| Replay | Nonce in `temporary()` storage + ledger-sequence deadline, checked before any transfer | `contracts/upto-settlement/src/lib.rs` | `contracts/upto-settlement/src/test.rs` (21 unit tests incl. `AuthorizationConsumed`), a real same-nonce replay rejected live on testnet (`Error(Contract, #6)`, `conformance/RESULTS.md`) |
+| Replay | Nonce in `temporary()` storage + ledger-sequence deadline, checked before any transfer. The nonce entry's own TTL is derived from `deadline_ledger` at settlement time (`extend_ttl(&key, ttl, ttl)` where `ttl = deadline_ledger - ledger`), not compared against a separately-fixed ceiling, so the entry structurally cannot expire before the authorization itself does; window size is independently bounded by `MAX_WINDOW_LEDGERS = 17_280` (~1 day) | `contracts/upto-settlement/src/lib.rs` | `contracts/upto-settlement/src/test.rs` (21 unit tests incl. `AuthorizationConsumed`, plus `rejects_window_exceeding_the_contract_maximum`/`accepts_window_exactly_at_the_contract_maximum` for the window ceiling), a real same-nonce replay rejected live on testnet (`Error(Contract, #6)`, `conformance/RESULTS.md`), and the TTL-covers-deadline property itself confirmed live (not just in a unit test): a settled transaction's nonce entry `liveUntilLedgerSeq`, read back from RPC, exceeded `deadline_ledger` by exactly the requested margin. See "Independent external validation" below |
 | Fund redirection | Recipient comes from the buyer's signed auth entry (`authorization.to`/`.facilitator`), never from an unsigned argument | `contracts/upto-settlement/src/lib.rs` | `contracts/upto-settlement/src/property_test.rs` (6 proptest properties, ~1,500 randomized cases/run) |
 | Facilitator drain | Five facilitator-safety checks (client can't be transaction source, operation source, or `from`; can't appear as a signer in client auth; simulation must show only the expected balance changes), enforced by `@x402/stellar`'s `ExactStellarScheme` internally (not reimplemented here per spec §1), plus a Periplo-specific boot-time check | `apps/facilitator/src/boot-safety.ts`: refuses to construct a `FacilitatorCore` if the configured fee-sponsor key holds any non-native-XLM balance | `apps/facilitator/src/boot-safety.test.ts` |
 | Front-running settlement | Facilitator identity is part of the signed authorization (`authorization.facilitator`, its own `require_auth()`), not implied by whoever submits the transaction | `contracts/upto-settlement/src/lib.rs` | `contracts/upto-settlement/src/test.rs`, confirmed live via `inspectAuthEntry` on a real testnet simulation (`apps/facilitator/scripts/upto-settle-demo.ts`) |
@@ -25,6 +25,36 @@ separate, adversarial step.
 | Injection / SSRF via resource URLs | Reject `null/*` origins, non-http(s)/mcp schemes, and local hosts (`localhost`, `127.0.0.1`, `*.local`) before a catalog write, enforced inside the write path itself, not just at one call site | `packages/bazaar/src/catalog-url.ts` (`checkCatalogUrl`, called from `upsertCatalogResource`) | `packages/bazaar/src/catalog-url.test.ts`, `packages/bazaar/src/db/catalog.test.ts` (proves the gate runs before any DB call), a real `localhost` case in `apps/facilitator/src/discovery.integration.test.ts` against the live Supabase project. Found and closed as a real bug, not designed in from the start: two dead rows in the live catalog, see `docs/DEFERRED.md`'s "Two real, dead-catalog-entry bugs" section |
 | Secret leakage | Service-role Supabase key and Stellar fee-sponsor secret are read only from server-side env vars (`STELLAR_FEE_SPONSOR_SECRET*`, `SUPABASE_SERVICE_ROLE_KEY`), never bundled to a client; there is no frontend yet for one to leak into (`docs/SPEC.md` Phase 9, not started) | `apps/facilitator/src/serve.ts`, `packages/bazaar/src/db/client.ts` | **Gap, stated honestly, not claimed done:** `docs/SPEC.md` §6 calls for a dedicated "lint rule + CI grep" for this. No such check exists in `.github/workflows/ci.yml` or the Biome config as of this writing; the mitigation today is structural (no frontend to leak into, secrets never appear in committed code) rather than a CI-enforced gate. Tracked as a real, open gap, not silently dropped from this table |
 | Dependency compromise | Committed lockfile and `packages/licence-check`'s AGPL/copyleft gate run on every push; `cargo audit`/`pnpm audit` against RustSec/npm advisories run manually, not yet CI-gated | `.github/workflows/ci.yml`, `packages/licence-check` | CI itself (badge in README), `packages/licence-check`'s own unit tests including the real AGPL-3.0-or-later case (OpenZeppelin Relayer). **Correction, stated honestly:** this row previously listed an `osv-scanner` reusable workflow as an active, on-every-push control; it was removed from CI on 2026-08-07 over a malformed call signature and never re-added (`docs/DEFERRED.md`), so it was not actually running when this row first claimed it was. See "Automated static analysis" below for what real coverage exists today instead |
+
+## Independent external validation of the Replay row (2026-08-21)
+
+An implementer unaffiliated with this project, `davedumto`, reviewed
+five real Stellar `upto` implementations in source (rail402, Rialto,
+openx402, LumenGate, and this project's own `contracts/upto-settlement`
+via [x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098))
+against a competing spec PR
+([x402-foundation/x402#3134](https://github.com/x402-foundation/x402/pull/3134)),
+[posted publicly](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5373783683).
+Point 5 of that review names exactly the risk class the Replay row
+above addresses: "an authorization can be signed with an
+`expiration_ledger` further out than the nonce record's own TTL, which
+would let the identical authorization settle again after the nonce
+record itself expires, silently reopening replay for the residual,"
+citing this project's contract by name (as `#3098`'s reference
+implementation) among the implementations that need to answer this.
+
+This project's contract answers it structurally, not by boundary-
+checking against a separately-configured TTL the way the review's
+cited example (rail402) does: the nonce entry's TTL is *derived from*
+`deadline_ledger` at settlement time, so the two values can never
+diverge by construction, verified live on testnet (see the Replay row
+above). [Replied on the thread](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5383242545)
+with the exact code and evidence rather than asserting agreement, and
+explicit that this is a different mechanism than rail402's, not a claim
+of meeting an identical named test vector. Worth recording here as what
+it is: unsolicited, external, source-level review from an independent
+implementer, not self-assessment, and it found no gap in this
+contract's own handling of the case it raised.
 
 ## Automated static analysis, run for real (2026-08-21)
 
