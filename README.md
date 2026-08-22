@@ -130,8 +130,24 @@ finding sourced rather than restated, is in
   against Horizon, same standard as every other hash in this README. A
   real gap found in the suite's own client bootstrapping along the way is
   filed as
-  [x402-foundation/x402#3187](https://github.com/x402-foundation/x402/issues/3187),
-  open. Full transcript and setup for both runs in
+  [x402-foundation/x402#3187](https://github.com/x402-foundation/x402/issues/3187).
+  **Own PR proposed, mergeable, awaiting maintainer:**
+  [x402-foundation/x402#3228](https://github.com/x402-foundation/x402/pull/3228)
+  scopes EVM/SVM client signer derivation to the selected `--families`,
+  the same pattern every other family already followed, plus a second
+  gap found the same way: the harness's own preflight check validated
+  facilitator env vars but never client env vars, so a family-scoped run
+  could pass that check and still crash deep inside a client. Rebuilt
+  and re-verified against current upstream `main` before opening the
+  PR, not just the original fix: the full `typescript/` and `e2e/`
+  workspaces built clean, and calling the real `createE2EClient()`/
+  `runClientScenario()` under five scenarios (no client creds, matching
+  the exact reported crash; EVM-only; SVM-only with a real generated
+  Ed25519 keypair; both; and the batch-settlement-without-EVM-creds
+  guard) all passed. Fixing this benefits our own conformance
+  infrastructure directly, not charity toward an unrelated repo: it's
+  the same suite this README's own settled transactions above ran
+  through. Full transcript and setup for both e2e runs in
   [`docs/conformance/2026-08-17-x402-e2e-stellar-exact.md`](docs/conformance/2026-08-17-x402-e2e-stellar-exact.md).
 
   Reviewing `@x402/core`, the package this facilitator is built directly
@@ -231,7 +247,13 @@ finding sourced rather than restated, is in
   `forAddress`, so a signature correctly targeted at a delegate was
   verified against the wrong address and failed. Worked around narrowly,
   inside `signAuthEntries()`'s own callback, without touching
-  `authorizeEntry()` itself, since that's out of scope for this PR.
+  `authorizeEntry()` itself, since that's out of scope for this PR, and
+  never given its own issue at the time. Opened now, on its own, closing
+  that gap: [stellar/js-stellar-sdk#1683](https://github.com/stellar/js-stellar-sdk/issues/1683),
+  with the exact code path quoted, `applyExpirationAndSignature`'s own
+  correct fallback rule cited as the pattern the verification step
+  should mirror, and a proposed fix. **Status: filed, not yet fixed,
+  open.**
 
   That same `authorizeEntry()` bare-signature fallback path turned up a
   second, separate way to trip it: attempting a genuine classic Stellar

@@ -512,7 +512,7 @@ own separately-scoped investigation.
 
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
-afterward, turned up seven more real, independently verified upstream
+afterward, turned up eight more real, independently verified upstream
 bugs, all filed, all still open as of this writing:
 [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169)
 (`isValidRouteTemplate`'s traversal/scheme-injection checks decode once,
@@ -537,7 +537,11 @@ SVM signers regardless of the `--families` scoping the CLI documents as
 supported, so a single-family run against a non-EVM/SVM network crashes
 unless unrelated-network credentials are set anyway; found running the
 real conformance pass in `docs/conformance/`, not from reading the harness
-cold), and
+cold; own PR proposed, mergeable, awaiting maintainer, not yet merged:
+[#3228](https://github.com/x402-foundation/x402/pull/3228), rebuilt and
+re-verified against current upstream `main` before opening it, fixing
+the exact suite this project's own conformance evidence runs through),
+and
 [stellar/js-stellar-sdk#1681](https://github.com/stellar/js-stellar-sdk/issues/1681)
 (`AssembledTransaction.signAuthEntries` can't represent a non-master-key
 signer for a plain `Address` credential, in two separate ways: its own
@@ -548,13 +552,24 @@ signature to `authorizeEntry`, which then verifies against the wrong
 public key; found attempting a real classic-multisig signer mode for
 `exact`, full writeup and the real reproduction in `docs/DEFERRED.md`,
 checked against #1610 first to confirm it isn't a duplicate, a fix
-proposed in the issue itself, not just the finding), alongside the
-earlier `mcp://` canonical-URL bug (#3121, fix at #3138, open, LGTM'd
-twice, blocked only on maintainer merge). Each was verified directly
-against the real published package before filing, not asserted from
-reading the source alone; severity was calibrated honestly in every
-case (none of the seven is a security vulnerability, all fail closed or
-degrade functionally, stated as such in the issue itself). Two
+proposed in the issue itself, not just the finding), and
+[stellar/js-stellar-sdk#1683](https://github.com/stellar/js-stellar-sdk/issues/1683)
+(`authorizeEntry`'s own bare-signature fallback path ignores the
+`forAddress` parameter entirely when deriving the public key to verify
+against, ignoring `forAddress` unconditionally, the exact mechanism
+`#1672`'s own PR description had already named as "a second, genuinely
+separate bug" found while fixing `#1655`, worked around narrowly inside
+`signAuthEntries()`'s own callback at the time rather than fixed, and
+never given its own issue until now; a fix proposed in the issue
+itself, checked against the CAP-71-delegate case #1655 already covers
+to confirm this is the distinct, un-filed half of that same finding),
+alongside the earlier `mcp://` canonical-URL bug (#3121, fix at #3138,
+open, LGTM'd twice, blocked only on maintainer merge). Each was
+verified directly against the real published package before filing,
+not asserted from reading the source alone; severity was calibrated
+honestly in every case (none of the eight is a security vulnerability,
+all fail closed or degrade functionally, stated as such in the issue
+itself). Two
 adjacent projects' repos
 (`Vellar-Wallet/vellar-facilitator`, `Ithaca-Labs/openx402`) were read for
 architectural understanding only, during the #839 investigation, and

@@ -198,8 +198,13 @@ real ed25519-derived 64-byte Solana keypair, neither ever used to sign
 anything on their respective networks) rather than treated as a Periplo
 gap, since it sits entirely in the suite's own client bootstrapping, not
 in anything Periplo built or the facilitator's own behavior. Filed as
-[x402-foundation/x402#3187](https://github.com/x402-foundation/x402/issues/3187),
-open.
+[x402-foundation/x402#3187](https://github.com/x402-foundation/x402/issues/3187).
+**2026-08-21: own PR proposed, mergeable, awaiting maintainer:**
+[x402-foundation/x402#3228](https://github.com/x402-foundation/x402/pull/3228),
+rebuilt and re-verified against current upstream `main` before opening
+it, real `createE2EClient()`/`runClientScenario()` calls under five
+scenarios, all passing, see README.md's own upstream-contributions
+section for the full writeup.
 
 ## Reproducing this
 
