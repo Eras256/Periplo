@@ -526,6 +526,14 @@ is correct; if reality differs, change the spec, not the test:**
 transaction hash recorded; each of the three assumptions is a passing test or a
 documented spec change.
 
+**Real-world signal after the gate, not part of it:** two direct SCF #45
+competitors (Rialto, AutoLayer) chose to build on this spec upstream
+rather than fork their own, and an independent implementer (davedumto)
+reviewed the nonce-TTL replay handling here against four other Stellar
+`upto` contracts and found no gap. Full sourced writeup:
+`docs/UPTO-CONVERGENCE.md` and README.md's "The ecosystem is converging
+on this spec" section, not repeated here.
+
 ### Phase 7: MCP discovery server
 `packages/mcp` on `@modelcontextprotocol/sdk` 1.30.0. Let an agent search the
 Stellar Bazaar and make a paid call from inside an agent runtime, wrapping the
@@ -802,3 +810,6 @@ small thing that signals a large one.
 - [ ] No AGPL in the dependency path, verified in CI
 - [ ] Every README claim carries a link, a test, or a hash
 - [ ] Every pinned version in §2 re-verified, with the date stated in the README
+- [ ] Upstream contribution history current (README.md's own list, not
+      repeated here): every real bug found and filed, every PR's actual
+      merge status stated honestly, not asserted "fixed" before it is
