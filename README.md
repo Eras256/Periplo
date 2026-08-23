@@ -214,9 +214,16 @@ not self-assessment.
   the query/fragment stripping the function exists to do), we
   implemented the fix they suggested for it with a new regression test,
   and they reviewed that too, quoted verbatim: "LGTM as it stands —
-  merge-ready from my side." The PR is open, mergeable, reviewed twice
-  by the person who reported the original bug, blocked only on a
-  maintainer's approval to merge.
+  merge-ready from my side." Nine days later, still unmerged, whawk46
+  seconded their own review with a merge request, explicit about why the
+  fix is a real defect rather than a cosmetic one, quoted verbatim: "a
+  query string surviving into the canonical URL means the same resource
+  indexes under as many identities as it has session parameters, which
+  is the kind of thing that quietly inflates a catalog and is very hard
+  to attribute afterward." The PR is open, mergeable, reviewed three
+  times by the person who reported the original bug, with a separate
+  merge nudge from us the same week, blocked only on a maintainer's
+  approval to merge.
 
   Reviewing the same `@x402/extensions/bazaar` package a second time
   turned up another real bug, this one in `isValidRouteTemplate`
