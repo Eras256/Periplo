@@ -528,11 +528,14 @@ documented spec change.
 
 **Real-world signal after the gate, not part of it:** two direct SCF #45
 competitors (Rialto, AutoLayer) chose to build on this spec upstream
-rather than fork their own, and an independent implementer (davedumto)
-reviewed the nonce-TTL replay handling here against four other Stellar
-`upto` contracts and found no gap. Full sourced writeup:
-`docs/UPTO-CONVERGENCE.md` and README.md's "The ecosystem is converging
-on this spec" section, not repeated here.
+rather than fork their own. Separately, an independent implementer
+(davedumto), reviewing five Stellar `upto` implementations (rail402,
+Rialto, openx402, LumenGate, and this one), flagged nonce-TTL replay
+handling as a required test vector, citing rail402's specific guard;
+this contract's mechanism was independently verified in response and
+found to prevent the bug class structurally, response from davedumto
+pending. Full sourced writeup: `docs/UPTO-CONVERGENCE.md` and README.md's
+"The ecosystem is converging on this spec" section, not repeated here.
 
 ### Phase 7: MCP discovery server
 `packages/mcp` on `@modelcontextprotocol/sdk` 1.30.0. Let an agent search the
