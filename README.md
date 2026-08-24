@@ -336,6 +336,27 @@ remains open and unmerged, not yet resolved.
   direction posted in reply to the maintainer's questions, not yet
   confirmed by roebee, not fixed, open.**
 
+  On 2026-08-24, GitHub Copilot's automated review on #1672 itself
+  surfaced two more real, independently-verified problems, not just
+  style nits. First, the regression-test comment for the #1655 case
+  1/2 tests claimed both were "built the same way
+  (buildWithDelegatesEntry / authorizeEntry, not hand-constructed
+  XDR)". Checked against the actual test code, that's false: both
+  hand-construct `SorobanAddressCredentialsWithDelegates` XDR directly,
+  with placeholder `scvBytes`/`scvVoid` signatures, same pattern as the
+  file's own `addrCreds`/`authEntry` helpers. Fixed the comment to
+  describe what the test actually does. Second, and more substantive:
+  `signAuthEntries()`'s own default callback returned
+  `{ signature, publicKey: target }` unconditionally, where `target` is
+  only who the SDK asked to sign, discarding a `signerAddress` the
+  signing callback may report when the real signer differs, such as a
+  delegate whose real key differs from the delegate node's own address.
+  Reverting the fix reproduces a real `signature doesn't match payload`
+  failure from `authorizeEntry`; a new regression test signs with a
+  different keypair than the one requested and confirms the default
+  path still verifies. Both fixed and pushed to the same branch:
+  `pnpm exec vitest run test/unit`, 130 files, 6664 tests passing.
+
   Both #1672 and #3215 are the first pair of contributions from this
   project to go through the checklist in
   [`.claude/skills/claude-antigravity-setup/git.md`](.claude/skills/claude-antigravity-setup/git.md)
@@ -358,6 +379,22 @@ remains open and unmerged, not yet resolved.
   example, and a new CI check preventing the mistake from recurring. Filed
   as [stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103),
   open, awaiting a maintainer response.
+
+  On 2026-08-24, Copilot's review on #103 flagged that the new CI
+  gate's own regex, `BLOB_PATTERN =
+  /^https:\/\/github\.com\/[^/]+\/[^/]+\/blob\//`, only matched the
+  canonical `https://github.com/...` form, missing `http://github.com/...`
+  and `www.github.com/...`, both of which serve the same HTML blob page
+  the check exists to catch. Verified against the actual regex, confirmed
+  real. Fixed by parsing with `URL` and comparing hostname
+  (case-insensitive, `www.` stripped) and pathname instead of a
+  fixed-scheme regex. Added `scripts/check-ecosystem-links.test.mjs`
+  (Node's built-in test runner, no new dependency) covering the
+  canonical form and the three variants that slipped through before,
+  wired into both CI workflows as a new `pnpm test:ecosystem-links`
+  step. `node --test`: 7 passed; the real gate still passes against the
+  live 28-entry `ECOSYSTEM_CARDS` list. Both fixed and pushed to the
+  same branch.
 
   The `upto` spec thread itself went through the same evidence discipline
   as everything else here: an honest comparison against a competing
