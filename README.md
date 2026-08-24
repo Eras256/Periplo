@@ -65,7 +65,10 @@ It already does, verified live on testnet, not just asserted; full
 technical detail in [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md#independent-external-validation-of-the-replay-row-2026-08-21).
 This is the kind of evidence no competitor can manufacture: an
 unsolicited, source-level review from someone outside the project,
-not self-assessment.
+not self-assessment. **As of 2026-08-23**, that thread is still active
+(Rialto and davedumto continuing to work through interop details like
+`autoRevoke` defaults and nonce-TTL edge cases) and `#3134` itself
+remains open and unmerged, not yet resolved.
 
 ## What's real right now
 
@@ -189,7 +192,12 @@ not self-assessment.
   it because the test failed against our own correct fix, corrected the
   test to use multi-network namespaces, and posted the correction publicly
   on [the original issue](https://github.com/x402-foundation/x402/issues/3172#issuecomment-5358382027)
-  rather than letting a flawed original repro stand uncorrected.
+  rather than letting a flawed original repro stand uncorrected. A separate,
+  unrelated defect surfaced 2026-08-23: the PR's `check-verified-commits`
+  check was failing because its one commit was unsigned. Fixed by amending
+  it with a registered SSH signing key and force-pushing the same branch;
+  GitHub's API confirms `verified: true` on the amended commit and the
+  check now passes. Still open, awaiting maintainer review.
 - **Automatic cataloging** lives in `apps/facilitator/src/discovery.ts`.
   A payment carrying the `bazaar` discovery extension is validated and
   written to the catalog on `/verify` and `/settle`. There is no
@@ -220,10 +228,16 @@ not self-assessment.
   query string surviving into the canonical URL means the same resource
   indexes under as many identities as it has session parameters, which
   is the kind of thing that quietly inflates a catalog and is very hard
-  to attribute afterward." The PR is open, mergeable, reviewed three
+  to attribute afterward." The PR is open, mergeable, commented on three
   times by the person who reported the original bug, with a separate
-  merge nudge from us the same week, blocked only on a maintainer's
-  approval to merge.
+  merge nudge from us the same week. **Precision check, 2026-08-23:**
+  GitHub's own review API reports zero formal reviews on this PR
+  (`reviews: []`); whawk46's "LGTM"/"nothing further" language is plain
+  comment text, not a submitted GitHub review, and we have not confirmed
+  whawk46 holds a maintainer or write-access role on this repo. Stated
+  here as what it is: a positive, substantive comment from the person who
+  reported the original bug, not a formal or authoritative approval.
+  Still open, blocked on a maintainer actually merging it.
 
   Reviewing the same `@x402/extensions/bazaar` package a second time
   turned up another real bug, this one in `isValidRouteTemplate`
@@ -261,8 +275,13 @@ not self-assessment.
   [stellar/js-stellar-sdk#1672](https://github.com/stellar/js-stellar-sdk/pull/1672),
   open and mergeable, 6663 tests passing. `needsNonInvokerSigningBy()` and
   `signAuthEntries()` now walk the full delegate tree instead of the
-  top-level node only. Running the new tests surfaced a second, genuinely
-  separate bug along the way, not the one we set out to fix:
+  top-level node only. On 2026-08-23 the maintainer, roebee, asked directly
+  on #1655 whether this behavior change (a documented public API now
+  reports every unsigned node, not just the top-level one) should ship as
+  a v17.x bug fix or wait for v18, given CAP-71 isn't live on any network
+  yet. We replied recommending v17.x. **Still open, not merged**, the
+  version question unresolved. Running the new tests surfaced a second,
+  genuinely separate bug along the way, not the one we set out to fix:
   `authorizeEntry()`'s bare-signature fallback path infers `publicKey`
   from the entry's top-level address unconditionally, ignoring
   `forAddress`, so a signature correctly targeted at a delegate was
@@ -273,8 +292,17 @@ not self-assessment.
   that gap: [stellar/js-stellar-sdk#1683](https://github.com/stellar/js-stellar-sdk/issues/1683),
   with the exact code path quoted, `applyExpirationAndSignature`'s own
   correct fallback rule cited as the pattern the verification step
-  should mirror, and a proposed fix. **Status: filed, not yet fixed,
-  open.**
+  should mirror, and a proposed fix. On 2026-08-23 roebee posted three
+  implementation questions to pin the fix down: how to derive the public
+  key when the signer callback returns a bare `Uint8Array` instead of
+  `forAddress`, what the resulting error text should say, and whether the
+  verify step should follow `applyExpirationAndSignature`'s own fallback
+  rule. We replied the same day: throw rather than silently derive from
+  `forAddress`, proposed error wording, and yes to matching the existing
+  fallback rule, with this fix landing in the same PR as #1681's below
+  since both converge on the same `{ signature, publicKey }` return shape.
+  **Status: filed, our proposed direction posted in reply to the
+  maintainer's questions, not yet confirmed by roebee, not fixed, open.**
 
   That same `authorizeEntry()` bare-signature fallback path turned up a
   second, separate way to trip it: attempting a genuine classic Stellar
@@ -297,7 +325,16 @@ not self-assessment.
   plain `Address` credential rather than a CAP-71 delegate. Filed as
   [stellar/js-stellar-sdk#1681](https://github.com/stellar/js-stellar-sdk/issues/1681),
   with a proposed fix for both, checked against #1610 first to confirm
-  it wasn't a duplicate. **Status: filed, not yet fixed, open.**
+  it wasn't a duplicate. On 2026-08-23 roebee asked two questions to pin
+  the fix: whether the missing-`address` default should throw or keep the
+  current silent fallback to `this.options.publicKey`, and whether the
+  signing closure should return `{ signature, publicKey }` (and if so,
+  whether that lands together with #1683 or as separate PRs). We replied
+  the same day: throw rather than fail silently, return
+  `{ signature, publicKey }`, and land both fixes in one PR since they
+  converge on the same return shape. **Status: filed, our proposed
+  direction posted in reply to the maintainer's questions, not yet
+  confirmed by roebee, not fixed, open.**
 
   Both #1672 and #3215 are the first pair of contributions from this
   project to go through the checklist in
