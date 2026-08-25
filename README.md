@@ -70,6 +70,20 @@ not self-assessment. **As of 2026-08-23**, that thread is still active
 `autoRevoke` defaults and nonce-TTL edge cases) and `#3134` itself
 remains open and unmerged, not yet resolved.
 
+**2026-08-25:** a separate, unrelated fix fed back into this same
+convergence story. Moving our own facilitator's catalog to settle-only
+(the "Automatic cataloging" bullet below, prompted by
+[x402-foundation/x402#3226](https://github.com/x402-foundation/x402/issues/3226))
+turned up that pedro-pelicioni's stellarsight facilitator had
+independently reached the same settle-only reading. We cited that
+convergence, not as an isolated technical note but as further evidence
+for this section's own thesis, in a nudge on
+[stellar/x402-stellar#72](https://github.com/stellar/x402-stellar/issues/72#issuecomment-5418484702)
+asking directly whether `#3098` or `#3134` is what the wire spec
+consolidates onto. **Still unresolved as of that ask**, same open
+question this section already tracked. Full writeup in
+`docs/UPTO-CONVERGENCE.md`.
+
 ## What's real right now
 
 - Monorepo tooling: pnpm workspaces, TypeScript 7 (strict,

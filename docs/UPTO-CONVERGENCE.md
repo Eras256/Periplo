@@ -130,13 +130,29 @@ own design.
 
 ## Where it stands
 
-No pending reply on either thread as of this writing. `#3098` is ready for
-review, waiting on maintainer direction on where the merged two-profile
-document should actually consolidate before a follow-up PR opens. All
-four implementation gaps above are now closed: `GET /discovery/*` and
-the `extra`-aware dedupe key on 2026-08-17, each with its own commit and
-tests, and `/supported` reporting `upto` for real on 2026-08-21 via
-`UptoStellarScheme`, a real scheme implementation, not a wiring fix, with
-a real settled transaction to back it (`conformance/RESULTS.md`). Real,
-dated evidence either way, not resolved-sounding claims without a link
-behind them.
+`#3098` is ready for review, waiting on maintainer direction on where the
+merged two-profile document should actually consolidate before a
+follow-up PR opens. All four implementation gaps above are now closed:
+`GET /discovery/*` and the `extra`-aware dedupe key on 2026-08-17, each
+with its own commit and tests, and `/supported` reporting `upto` for
+real on 2026-08-21 via `UptoStellarScheme`, a real scheme implementation,
+not a wiring fix, with a real settled transaction to back it
+(`conformance/RESULTS.md`). Real, dated evidence either way, not
+resolved-sounding claims without a link behind them.
+
+**2026-08-25: a nudge sent on
+[stellar/x402-stellar#72](https://github.com/stellar/x402-stellar/issues/72#issuecomment-5418484702),**
+the thread's first activity in 8-9 days, prompted by a separate,
+unrelated finding converging in the same direction. Fixing our own
+facilitator's catalog to settle-only (see the README's "Automatic
+cataloging" bullet and `docs/DEFERRED.md`, prompted by
+[x402-foundation/x402#3226](https://github.com/x402-foundation/x402/issues/3226))
+turned up that pedro-pelicioni's stellarsight had independently reached
+the same settle-only reading. Two Stellar-side catalogs landing on the
+same answer without coordinating is the same shape of convergence this
+thread already showed for the `upto` design itself, cited in the nudge
+as evidence rather than as a technical note in isolation. The actual
+open question, whether `#3098` or `#3134` is what the wire spec
+consolidates onto, was asked directly. **Still unresolved as of the
+nudge**: no response yet, same status this file already tracked, now
+with 2026-08-25 as the most recent attempt to move it.
