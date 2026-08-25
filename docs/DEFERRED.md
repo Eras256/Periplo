@@ -1936,3 +1936,72 @@ ranking evidence `docs/DEFERRED.md`'s own search-relevance section
 already flags as thin (`eval/`'s fixtures are synthetic; the live
 catalog itself has never had more than one real row to rank against). A
 third-party listing stays a standing ask, not something to manufacture.
+
+## Cataloging moved to settle-only, closing a real free-mint path the spec text leaves open
+
+`apps/facilitator/src/app.ts`'s `/verify` handler used to run
+`processBazaarExtension` whenever `core.verify()` returned
+`isValid: true`, the same trigger `/settle` uses on `result.success`.
+That reading is spec-conforming as written:
+`specs/extensions/bazaar.md`'s Facilitator Behavior section describes
+validating `info`/`schema` and extracting discovery information without
+mentioning settlement anywhere, and the `EXTENSION-RESPONSES`
+response-header section is written generically as "the verify or
+settlement response." But `isValid: true` only proves a payload is a
+well-formed, correctly-signed authorization that *could* settle. No
+funds move on verify, and a signed-but-never-submitted (or never-funded)
+authorization still verifies. Cataloging on that signal means a catalog
+row, and each `accepts` entry in it, costs one HTTP request and no
+balance.
+
+This is exactly the ambiguity
+[x402-foundation/x402#3226](https://github.com/x402-foundation/x402/issues/3226)
+opened to audit, with a real, reproduced example: a payload sent to a
+live facilitator's `/verify` and deliberately never settled still
+produced a catalog entry, no tokens moved. Two other implementers
+independently reached the same read this session did, worth noting
+because none of the three coordinated on it beforehand: the issue itself
+observes that CDP's own pipeline engages at verify, and
+[pedro-pelicioni](https://github.com/pedro-pelicioni) (stellarsight, a
+second real Stellar-side facilitator+Bazaar implementation, see
+`docs/UPTO-CONVERGENCE.md`) replied in the same thread that his
+facilitator's catalog write sits inside `if (success)` in the `/settle`
+handler and that `/verify` never touches the catalog at all, code
+checked directly at
+[`stellarsight/apps/facilitator/src/server.mjs`](https://github.com/pedro-pelicioni/stellarsight/blob/main/apps/facilitator/src/server.mjs)
+before citing it here, not taken on the strength of the comment alone.
+
+Periplo's own catalog schema has no popularity, call-count, or
+buyer-count column today (`supabase/migrations/*.sql`, checked directly:
+`hybridSearch`'s ranking is lexical+semantic only, see the wash-trading
+design note above), so the specific "counter reads as a demand signal"
+harm the issue centers on does not apply to this project's ranking yet.
+What does apply regardless of ranking: a resource's mere presence in the
+catalog, and which payment options it claims to accept, could previously
+be minted for free, for any `resource.url` an attacker chose to claim,
+without ever completing a payment. Settle-only closes that path
+entirely, since `result.success` means a real transfer happened,
+confirmed the same way every other settlement in this repo is confirmed
+(Horizon/RPC, not the facilitator's own say-so).
+
+Changed in `apps/facilitator/src/app.ts` (the `/verify` handler no
+longer calls `processBazaarExtension` under any condition) and
+`apps/facilitator/src/discovery.ts` (comments corrected to stop
+describing cataloging as a "/verify or /settle" concern, since it is now
+settle-only everywhere `processBazaarExtension` is ever called,
+including `demo-resource.ts`'s `onAfterSettle` hook, which was already
+settle-only). `apps/facilitator/src/app.test.ts` updated to match: the
+tests that used to exercise bazaar validation/rejection against `/verify`
+now exercise the identical logic against `/settle` instead (the
+validation code itself is unchanged, only which endpoint triggers it),
+plus a new regression test asserting `/verify` never emits
+`EXTENSION-RESPONSES` for a valid declared extension. `pnpm run ci`
+green throughout, 255 tests (net -1 from the prior count: two
+verify-specific cases collapsed into one settle-only case that already
+covered the same validation logic, plus one new regression test).
+
+No upstream issue filed for this: `#3226` already exists, already
+frames the ambiguity precisely, and already has this project's own data
+point in it via Pedro's reply citing the equivalent stellarsight code.
+Filing a second, near-duplicate report would add noise to a thread that
+is already being read carefully by the working group, not signal.

@@ -142,23 +142,18 @@ export function createFacilitatorApp(
     const { paymentPayload, paymentRequirements } = toSdkTypes(parsed.data);
     const result = await core.verify(paymentPayload, paymentRequirements);
 
-    // Cataloging only runs against a payload that actually verified: the
-    // facilitator is a trust boundary (spec Phase 1); an unverified
-    // payload's echoed `resource`/extensions are not yet trustworthy.
-    if (result.isValid) {
-      const bazaarResult = await processBazaarExtension(
-        paymentPayload,
-        paymentRequirements,
-        catalogClient
-      );
-      if (bazaarResult) {
-        c.header(
-          "EXTENSION-RESPONSES",
-          encodeExtensionResponsesHeader({ [BAZAAR.key]: bazaarResult })
-        );
-      }
-    }
-
+    // Cataloging never runs here, only at /settle below. `isValid: true`
+    // proves the payload is a well-formed, correctly-signed authorization
+    // that COULD settle, not that any payment happened: no funds move on
+    // verify, and a signed-but-never-submitted payload still verifies. The
+    // spec text (`specs/extensions/bazaar.md` Facilitator Behavior) does
+    // not actually require settlement before cataloging, so a verify-side
+    // catalog write is conforming, but it is the reading that lets a
+    // catalog entry be minted for the cost of one HTTP request and no
+    // balance, which is exactly the ambiguity x402-foundation/x402#3226
+    // is auditing in public right now, with real evidence of it happening.
+    // Settle-only is the stronger guarantee and the reading this
+    // facilitator commits to. See docs/DEFERRED.md for the record.
     return c.json(result);
   });
 
@@ -195,8 +190,9 @@ export function createFacilitatorApp(
     const { paymentPayload, paymentRequirements } = toSdkTypes(parsed.data);
     const result = await core.settle(paymentPayload, paymentRequirements);
 
-    // Same trust-boundary rule as /verify: only a settled payment's echoed
-    // extensions are cataloged.
+    // The only place cataloging runs: `result.success` means the payment
+    // actually settled, real funds moved. This is deliberately the whole
+    // gate, not "verify or settle" — see the comment on /verify above.
     if (result.success) {
       const bazaarResult = await processBazaarExtension(
         paymentPayload,

@@ -200,8 +200,32 @@ remains open and unmerged, not yet resolved.
   check now passes. Still open, awaiting maintainer review.
 - **Automatic cataloging** lives in `apps/facilitator/src/discovery.ts`.
   A payment carrying the `bazaar` discovery extension is validated and
-  written to the catalog on `/verify` and `/settle`. There is no
-  separate registration step, no dashboard, and no API key.
+  written to the catalog on `/settle`. There is no separate registration
+  step, no dashboard, and no API key.
+
+  **2026-08-25: settle-only, corrected from an earlier verify-or-settle
+  reading.** Cataloging used to run on `/verify` too, whenever
+  `isValid: true`. That reading is conforming with the extension spec's
+  own text, but `isValid: true` only proves a payload could settle, not
+  that it did: no funds move on verify, so a catalog entry, and every
+  `accepts` option in it, could be produced for one HTTP request and no
+  balance. This is exactly what
+  [x402-foundation/x402#3226](https://github.com/x402-foundation/x402/issues/3226)
+  is auditing in public right now, with a reproduced example of it
+  happening against a live facilitator. Our own ranking has no
+  popularity or call-count column to inflate, but the catalog's
+  contents, resources and payment options that were never actually paid
+  for, could still be minted the same way. Fixed by removing the
+  `/verify`-side write entirely; `/settle`'s `result.success` (a real
+  settled transfer, confirmed the same way every transaction in this
+  README is confirmed) is now the only trigger.
+  [pedro-pelicioni](https://github.com/pedro-pelicioni) (stellarsight,
+  a second real Stellar Bazaar facilitator, credited elsewhere in this
+  README and in `docs/UPTO-CONVERGENCE.md`) independently reached the
+  same settle-only reading and confirmed it in the same GitHub thread,
+  code checked directly rather than taken on the comment alone. Full
+  writeup in `docs/DEFERRED.md`. `pnpm run ci` green throughout, 255
+  tests.
 
   It is built on the official
   [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)

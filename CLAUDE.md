@@ -199,7 +199,8 @@ doesn't satisfy the Phase 4 gate's hard-reject requirement. Full comparison
 and a genuine upstream bug found via the live integration test (`mcp://`
 URLs resolve to a broken `null/...` catalog URL because `mcp:` isn't a
 WHATWG special scheme) are in [`docs/INTEROP.md`](docs/INTEROP.md). `app.ts`
-wires this into `/verify` and `/settle`, cataloging only runs after the
+wires this into `/settle` only (originally also wired into `/verify`;
+see the settle-only correction below), cataloging runs after the
 underlying payment call itself succeeds (the facilitator is a trust
 boundary), and the outcome is reported via the `EXTENSION-RESPONSES` header
 regardless of whether a catalog client is configured. `packages/bazaar/src/db/catalog.ts`
@@ -257,6 +258,26 @@ handle already appears publicly on the issues being quoted, this
 tester's name reached this session only through a private conversation
 with no indication they want it in a public repo, so it stays unnamed
 unless they say otherwise.
+
+**2026-08-25: cataloging moved to settle-only**, closing a real
+free-mint path the bazaar extension's own spec text leaves open by not
+requiring settlement before cataloging. `/verify`'s `isValid: true`
+proves a payload could settle, not that it did, so cataloging on that
+signal let a catalog row (and each `accepts` entry in it) be produced
+for one HTTP request and no balance, exactly the ambiguity
+[x402-foundation/x402#3226](https://github.com/x402-foundation/x402/issues/3226)
+is auditing in public, and independently confirmed by
+[pedro-pelicioni](https://github.com/pedro-pelicioni)'s stellarsight
+facilitator, which took the same settle-only reading, code checked
+directly rather than taken on the comment alone. Periplo's own ranking
+has no popularity/count column to inflate (checked directly against the
+SQL), but the catalog's mere contents, resources and accepted payment
+options that were never actually paid for, could previously be minted
+the same way. `/verify` no longer calls `processBazaarExtension` under
+any condition; `/settle` is now the only trigger. Full writeup,
+including the two other implementers who reached the same conclusion
+independently, in `docs/DEFERRED.md`. `pnpm run ci` green throughout,
+255 tests.
 
 The same tester's report also named the actual practical effect: an empty
 or dead-URL-only catalog means Bazaar's ranking quality can't be evaluated

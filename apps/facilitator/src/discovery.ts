@@ -166,8 +166,8 @@ export async function processBazaarExtension(
 
   // extractDiscoveryInfo (v2 path) does `new URL(paymentPayload.resource?.url ?? "")` with
   // no guard: an empty/missing resource.url throws rather than returning null. Caught here
-  // so a malformed payload rejects with a reason instead of 500ing the whole /verify or
-  // /settle response (spec §1: the facilitator is a trust boundary; every rejection carries
+  // so a malformed payload rejects with a reason instead of 500ing the whole settlement
+  // response (spec §1: the facilitator is a trust boundary; every rejection carries
   // a reason, nothing crashes on hostile or merely incomplete input).
   if (paymentPayload.x402Version === 2 && !paymentPayload.resource?.url) {
     return rejected("payload.resource.url is required to catalog a bazaar extension");
@@ -265,7 +265,7 @@ export async function processBazaarExtension(
     // enforced inside upsertCatalogResource itself: reported as a normal
     // rejection, same as every other bazaar-extension validation failure
     // above, rather than propagating and 500ing an otherwise-successful
-    // /verify or /settle response over a cataloging concern. Any other
+    // settlement response over a cataloging concern. Any other
     // error (a real database failure) is not this class of problem and
     // still propagates, unchanged from before this check existed.
     if (error instanceof InvalidCatalogUrlError) {

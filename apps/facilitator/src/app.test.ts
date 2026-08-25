@@ -302,11 +302,26 @@ describe("bazaar discovery extension: EXTENSION-RESPONSES header (spec Phase 4)"
 
   it("emits no EXTENSION-RESPONSES header when the payload declares no bazaar extension", async () => {
     const app = createFacilitatorApp(fakeCore());
-    const res = await app.request("/verify", {
+    const res = await app.request("/settle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(validRequestBody),
     });
+    expect(res.headers.get("EXTENSION-RESPONSES")).toBeNull();
+  });
+
+  // Regression coverage for the settle-only cataloging decision
+  // (docs/DEFERRED.md, prompted by x402-foundation/x402#3226): /verify
+  // never runs bazaar processing, valid extension or not, because
+  // `isValid: true` proves the payload could settle, not that it did.
+  it("never processes the bazaar extension on /verify, regardless of the payload's validity", async () => {
+    const app = createFacilitatorApp(fakeCore());
+    const res = await app.request("/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBodyWithExtensions(validExtension())),
+    });
+    expect(res.status).toBe(200);
     expect(res.headers.get("EXTENSION-RESPONSES")).toBeNull();
   });
 
@@ -316,7 +331,7 @@ describe("bazaar discovery extension: EXTENSION-RESPONSES header (spec Phase 4)"
       ...validRequestBody,
       paymentPayload: { ...validRequestBody.paymentPayload, extensions: validExtension() },
     };
-    const res = await app.request("/verify", {
+    const res = await app.request("/settle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -327,18 +342,7 @@ describe("bazaar discovery extension: EXTENSION-RESPONSES header (spec Phase 4)"
     expect(decoded?.bazaar?.rejectedReason).toMatch(/resource\.url/);
   });
 
-  it("emits a success header on /verify for a valid declared extension, without a catalog client configured", async () => {
-    const app = createFacilitatorApp(fakeCore());
-    const res = await app.request("/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBodyWithExtensions(validExtension())),
-    });
-    expect(res.status).toBe(200);
-    expect(readExtensionResponsesHeader(res)).toEqual({ bazaar: { status: "success" } });
-  });
-
-  it("emits a success header on /settle for a valid declared extension", async () => {
+  it("emits a success header on /settle for a valid declared extension, without a catalog client configured", async () => {
     const app = createFacilitatorApp(fakeCore());
     const res = await app.request("/settle", {
       method: "POST",
@@ -349,12 +353,12 @@ describe("bazaar discovery extension: EXTENSION-RESPONSES header (spec Phase 4)"
     expect(readExtensionResponsesHeader(res)).toEqual({ bazaar: { status: "success" } });
   });
 
-  it("emits a rejected header with a specific reason for a hostile routeTemplate, and never calls the core's settle a second time for it", async () => {
+  it("emits a rejected header with a specific reason for a hostile routeTemplate", async () => {
     const extension = validExtension();
     (extension["bazaar"] as Record<string, unknown>)["routeTemplate"] = "/../../etc/passwd";
 
     const app = createFacilitatorApp(fakeCore());
-    const res = await app.request("/verify", {
+    const res = await app.request("/settle", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBodyWithExtensions(extension)),
@@ -363,18 +367,6 @@ describe("bazaar discovery extension: EXTENSION-RESPONSES header (spec Phase 4)"
     const decoded = readExtensionResponsesHeader(res);
     expect(decoded?.bazaar?.status).toBe("rejected");
     expect(decoded?.bazaar?.rejectedReason).toBeTruthy();
-  });
-
-  it("does not run bazaar processing (and so emits no header) when the underlying verify fails", async () => {
-    const app = createFacilitatorApp(
-      fakeCore({ verify: async () => ({ isValid: false, invalidReason: "bad_signature" }) })
-    );
-    const res = await app.request("/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBodyWithExtensions(validExtension())),
-    });
-    expect(res.headers.get("EXTENSION-RESPONSES")).toBeNull();
   });
 
   it("does not run bazaar processing when the underlying settle fails", async () => {
