@@ -2005,3 +2005,100 @@ frames the ambiguity precisely, and already has this project's own data
 point in it via Pedro's reply citing the equivalent stellarsight code.
 Filing a second, near-duplicate report would add noise to a thread that
 is already being read carefully by the working group, not signal.
+
+## `extensions.bazaar` was echoed empty for every resource, found reconciling a third party's report rather than assuming either side
+
+A conformance report from a real integrator claimed three gaps against
+`temperature-convert` (the demo resource): empty `description`, no
+`bazaar` declaration, and phantom CORS headers. Checking the raw 402
+challenge directly (`GET /demo/temperature-convert` unpaid) contradicted
+two of the three: `description` was fully populated, and `extensions.bazaar`
+carried the complete declared object (`info`, `schema`, per-parameter
+descriptions). Only the empty `mimeType` matched, and CORS was
+genuinely absent everywhere tested (no `access-control-*` header on any
+route, `Origin` present or not), matching neither the report's specific
+"phantom headers" framing nor a real CORS implementation.
+
+Rather than conclude the report was simply wrong, the discrepancy was
+checked against the actual discovery API instead of the raw challenge:
+`GET /discovery/resources` and `GET /discovery/search` both returned
+`extensions.bazaar: {}` for `temperature-convert`, the same symptom the
+report described. This is a real, general bug, not specific to the two
+already-known stale rows: `resources.extensions: text[]` (added Phase 2)
+only ever recorded which extension *keys* a resource declared, never
+their payloads. `discovery-routes.ts`'s `toDiscoveryResource` then
+mapped each key to a fabricated `{}` rather than omitting the field or
+sourcing real content, since there was no real content stored to source.
+This directly contradicts the installed `@x402/extensions/bazaar`
+package's own `DiscoveryResource` type, which documents that field as
+"Extension payloads echoed from discovery (e.g. bazaar info/schema)",
+checked against the real `.d.ts`, not assumed from the wire spec's
+prose.
+
+Fixed by persisting the missing half: `extension_payloads jsonb`
+(migration `20260826010000_extension_payloads.sql`), written from
+`discovery.ts`'s already-validated `rawExtRecord`, the same object
+`processBazaarExtension` already extracts `description`/`parameters`
+from, just never stored verbatim before. `periplo_hybrid_search`'s
+`RETURNS TABLE` shape changed to include it, which required an explicit
+`DROP FUNCTION` before `CREATE FUNCTION`: PostgreSQL's `CREATE OR
+REPLACE FUNCTION` cannot change a function's return type at all, the
+return-type sibling of the argument-list lesson
+`20260820103000_drop_old_hybrid_search_overload.sql` already learned
+the hard way. Applied proactively this time rather than rediscovered via
+a failed `supabase db push`.
+
+Verified against the live deployment, not just locally: deployed the
+fix (`fly deploy --config fly.facilitator.toml --dockerfile
+Dockerfile.facilitator`), then ran a real signed payment against the
+live `/demo/temperature-convert`
+(`apps/facilitator/scripts/demo-resource-settle.ts`) to re-catalog it
+through the new write path, since a row cataloged before this migration
+keeps `extension_payloads: {}` until its next payment. Settled
+transaction
+[`12470945ac72aed3b781f102848f2346c85e3c85d874fb2a3ff6cf17df6cd375`](https://stellar.expert/explorer/testnet/tx/12470945ac72aed3b781f102848f2346c85e3c85d874fb2a3ff6cf17df6cd375),
+Horizon-verified (`successful: true`). Re-queried `GET /discovery/search`
+afterward: the full `info`/`schema` object is now present, confirmed
+directly against the live response, not inferred from the code change
+alone.
+
+Separately, the same reconciliation surfaced the `financial_analysis`
+Phase 4 fixture (`mcp://tool/financial_analysis_da8703fa-...`) as real,
+ongoing pollution: it appeared in every search result regardless of
+query relevance (confirmed with two unrelated queries), still carrying
+literal placeholder `asset`/`pay_to` values from 2026-08-11 that the
+2026-08-19 backfill's URL fix never addressed. Deleted (migration
+`20260826020000_delete_stale_financial_analysis_fixture.sql`), confirmed
+gone via the live REST API and both discovery endpoints (`GET
+/discovery/resources` now reports `total: 1`, `temperature-convert`
+only).
+
+**What this does not resolve, an open question rather than assumed
+either way:** whether the report's CORS-header claim is explained by the
+same "measuring the discovery API, not the raw challenge" reframing.
+Both discovery routes were checked directly and show the identical
+zero-CORS behavior as every other route in this facilitator (no
+`access-control-*` header anywhere, `OPTIONS` a bare 404), so this
+specific finding does not, on its own, explain the report's phantom
+CORS claim. Whether the report's own tool measures a different
+deployment entirely (e.g. an `@x402/express`-based one, the same
+package and bug class already found and fixed in `#3148` on an
+unrelated deployment) remains a live hypothesis, not confirmed. Needs
+the report's author to confirm the exact URL/route their tool actually
+requests before this gets resolved either way.
+
+**A separate, adjacent finding noticed while verifying the fix above,
+not yet acted on:** `resources.last_updated` never actually updates on
+a repeat payment. Its schema default (`timestamptz not null default
+now()`) only applies on the initial `INSERT`; `upsertCatalogResource`
+never explicitly sets it, and PostgREST's `upsert` only touches columns
+present in the write payload, so a resource paid for many times still
+reports its original cataloging date. Confirmed live:
+`temperature-convert`'s `lastUpdated` stayed `2026-08-19T17:59:27...`
+even immediately after the real re-cataloging payment above. Undermines
+`GET /discovery/resources`'s own `order by last_updated desc` (a
+repeatedly-paid resource doesn't actually sort as "recently active"),
+though the practical impact on a catalog this size is currently zero
+(one real resource). Not fixed in this round: found verifying a
+different fix, not the thing being verified, and flagged rather than
+folded in silently.

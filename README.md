@@ -241,6 +241,28 @@ question this section already tracked. Full writeup in
   writeup in `docs/DEFERRED.md`. `pnpm run ci` green throughout, 255
   tests.
 
+  **2026-08-26: `extensions.bazaar` was echoed empty for every
+  resource, found reconciling a real integrator's conformance report
+  against the live deployment instead of assuming either side was
+  right.** Two of the report's three claimed gaps didn't match the raw
+  402 challenge (`description` and the bazaar declaration were both
+  fully populated there), but did match `GET /discovery/resources` and
+  `GET /discovery/search`, which both echoed `extensions.bazaar: {}`
+  regardless. Root cause: the catalog tracked which extension keys a
+  resource declared, never their actual payload, contradicting
+  `@x402/extensions/bazaar`'s own `DiscoveryResource` type, which
+  documents that field as "Extension payloads echoed from discovery."
+  Fixed with a new `extension_payloads` column, deployed, and verified
+  against the live catalog with a real re-settled payment
+  ([`12470945ac72...`](https://stellar.expert/explorer/testnet/tx/12470945ac72aed3b781f102848f2346c85e3c85d874fb2a3ff6cf17df6cd375),
+  Horizon-verified): `GET /discovery/search` now returns the full
+  declared `info`/`schema` object. Separately deleted a stale Phase 4
+  test fixture (`financial_analysis_da8703fa-...`, literal placeholder
+  `asset`/`payTo` values, surfacing in every search result regardless
+  of relevance) that the same reconciliation turned up. Full writeup,
+  including the CORS-header part of the report that this does **not**
+  resolve, in `docs/DEFERRED.md`.
+
   It is built on the official
   [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)
   package, for the same reason the facilitator does not reimplement

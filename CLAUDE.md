@@ -279,6 +279,42 @@ including the two other implementers who reached the same conclusion
 independently, in `docs/DEFERRED.md`. `pnpm run ci` green throughout,
 255 tests.
 
+**2026-08-26: two more real catalog bugs, found reconciling a third
+party's conformance report against the live deployment rather than
+assuming either side was right.** `GET /discovery/resources` and
+`GET /discovery/search` echoed `extensions.bazaar: {}` for every
+resource, `temperature-convert` included, despite its own live 402
+challenge carrying the full declared extension. Root cause was in the
+read path (`discovery-routes.ts`'s `toDiscoveryResource`), not the
+write path: `resources.extensions: text[]` only ever tracked which
+extension keys a resource declared, never their payloads, contradicting
+`@x402/extensions/bazaar`'s own installed `DiscoveryResource` type,
+which documents that field as "Extension payloads echoed from
+discovery." Fixed by adding `extension_payloads jsonb` (migration
+`20260826010000`, `periplo_hybrid_search`'s `RETURNS TABLE` shape
+updated too, requiring an explicit `DROP FUNCTION` first since
+`CREATE OR REPLACE` cannot change a return type, same lesson
+`20260820103000` already learned for an argument-list change), written
+from `discovery.ts`'s already-validated `rawExtRecord`. Deployed and
+verified against the live catalog, not just locally: a real settled
+payment against `/demo/temperature-convert`
+([`12470945ac72...`](https://stellar.expert/explorer/testnet/tx/12470945ac72aed3b781f102848f2346c85e3c85d874fb2a3ff6cf17df6cd375),
+Horizon-verified) re-cataloged it with the fix live, confirmed via
+`GET /discovery/search` actually returning the full `info`/`schema`
+object afterward. Separately, the `financial_analysis_da8703fa-...`
+Phase 4 test fixture (still live since 2026-08-11, its URL fixed by the
+2026-08-19 backfill but never its content: `asset: "CTESTASSET"`,
+`pay_to: "GPHASE4TEST"`, both literal placeholders, no real MCP tool
+behind the URI) was deleted (migration `20260826020000`), confirmed
+gone via the live REST API and both discovery endpoints. Both bugs
+found by independently reconciling a conformance report against this
+project's own live deployment: two of the report's three claimed gaps
+didn't match the raw 402 challenge, but did match what
+`/discovery/search` actually returned, reframing which endpoint the
+report's own tooling most likely measures. Not yet resolved: whether
+that also explains a separate CORS-header discrepancy in the same
+report, tracked open, not assumed either way.
+
 The same tester's report also named the actual practical effect: an empty
 or dead-URL-only catalog means Bazaar's ranking quality can't be evaluated
 by anyone outside the build. `apps/facilitator/src/demo-resource.ts` is
