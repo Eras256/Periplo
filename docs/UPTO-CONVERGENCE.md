@@ -156,3 +156,27 @@ open question, whether `#3098` or `#3134` is what the wire spec
 consolidates onto, was asked directly. **Still unresolved as of the
 nudge**: no response yet, same status this file already tracked, now
 with 2026-08-25 as the most recent attempt to move it.
+
+**2026-08-25/26: responded on `#3098` itself to pedro-pelicioni's
+pricing-metadata proposal
+([`#3181`](https://github.com/x402-foundation/x402/pull/3181), closing
+[`#3264`](https://github.com/x402-foundation/x402/issues/3264)),
+[comment](https://github.com/x402-foundation/x402/pull/3098#issuecomment-5418697386).**
+Acknowledged it as complementary, not competing: pedro-pelicioni
+designed it to live at the discovery layer rather than the core `upto`
+scheme, consistent with the position he already took on `#72`. Also
+corrected our own earlier speculation from that same `#72` comment,
+against the actual published design rather than what we'd guessed it
+might look like: `pricing` sits as a sibling of `info`/`schema` on the
+bazaar extension itself, resource-level, not per-`accepts`-entry, so it
+doesn't end up giving our `extra.uptoProfile` dedupe key anywhere new to
+pick up a discriminator from, the two live at different levels of the
+structure. Not a flaw in the proposal, just narrower overlap with our
+own dedupe problem than the earlier speculation assumed;
+`extra.uptoProfile` stays our own, separate answer to that specific
+problem. Also connected `#3181`'s point 3 (settlement-count ranking
+stops being comparable once amounts vary) to the settle-only fix closed
+the same round, the same integrity thread one step further down the
+amount-normalization axis. Offered to wire `pricing` into our own
+catalog and report back with real numbers once it merges, rather than
+just agreeing it's a good idea.

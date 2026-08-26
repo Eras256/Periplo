@@ -91,7 +91,16 @@ for this section's own thesis, in a nudge on
 [stellar/x402-stellar#72](https://github.com/stellar/x402-stellar/issues/72#issuecomment-5418484702)
 asking directly whether `#3098` or `#3134` is what the wire spec
 consolidates onto. **Still unresolved as of that ask**, same open
-question this section already tracked. Full writeup in
+question this section already tracked.
+
+Also responded on `#3098` itself to pedro-pelicioni's pricing-metadata
+proposal for the bazaar extension
+([`#3181`](https://github.com/x402-foundation/x402/pull/3181)):
+acknowledged it as complementary to `upto`, not competing, and corrected
+our own earlier speculation once the actual design was published,
+`pricing` lives at a different level of the wire structure than our own
+dedupe key needs, so it doesn't solve that specific problem the way we'd
+guessed it might, not a flaw in the proposal itself. Full writeup in
 `docs/UPTO-CONVERGENCE.md`.
 
 ## What's real right now
@@ -657,6 +666,11 @@ pnpm test
 pnpm licence-check
 ```
 
+Exact commands, local environment quirks (the Node version switch, real
+integration-suite credentials, redeploying, checking CI's actual run
+status rather than trusting the local gate) are in
+[`docs/TOOLING.md`](docs/TOOLING.md).
+
 Baseline transcripts backing the conformance claims above:
 [`conformance/baseline/x402-org/supported.md`](conformance/baseline/x402-org/supported.md),
 [`conformance/baseline/x402-org/discovery-404.md`](conformance/baseline/x402-org/discovery-404.md),
@@ -717,6 +731,9 @@ old at check time; `soroban-sdk`, held at the version the already-deployed
   0 to 10.
 - [`CLAUDE.md`](CLAUDE.md): repo guide for Claude Code sessions
   (commands, architecture, working rules).
+- [`docs/TOOLING.md`](docs/TOOLING.md): exact commands and
+  machine-specific setup, split out from `CLAUDE.md` so architecture
+  and operational how-to don't compete for space in one file.
 - [`docs/SKILLS.md`](docs/SKILLS.md): which `stellar-build` skills are
   actually available in the build environment, mapped to spec phases.
 - [`docs/DEFERRED.md`](docs/DEFERRED.md): everything deliberately not
