@@ -200,10 +200,19 @@ export function createFacilitatorApp(
         catalogClient
       );
       if (bazaarResult) {
-        c.header(
-          "EXTENSION-RESPONSES",
-          encodeExtensionResponsesHeader({ [BAZAAR.key]: bazaarResult })
-        );
+        const extensionResponses = { [BAZAAR.key]: bazaarResult };
+        c.header("EXTENSION-RESPONSES", encodeExtensionResponsesHeader(extensionResponses));
+        // Also echoed in the body's own `extensions` field (already part
+        // of @x402/core's SettleResponse type, just never populated by
+        // this facilitator before), not only the header. Found live,
+        // 2026-08-26: the installed @x402/core@2.22.0's own
+        // HTTPFacilitatorClient.settle() reads the header only to
+        // console.log a summary, then discards it, so a seller calling
+        // settle() through the official client has no way to read the
+        // header at all, only server-side logs. The body field the same
+        // client already parses and returns costs nothing extra to send
+        // and needs no upstream fix to start working today.
+        return c.json({ ...result, extensions: extensionResponses });
       }
     }
 

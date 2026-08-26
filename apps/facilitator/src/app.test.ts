@@ -353,6 +353,25 @@ describe("bazaar discovery extension: EXTENSION-RESPONSES header (spec Phase 4)"
     expect(readExtensionResponsesHeader(res)).toEqual({ bazaar: { status: "success" } });
   });
 
+  // Regression coverage for a real, money-relevant bug (2026-08-26,
+  // found live by a real seller): @x402/core@2.22.0's own
+  // HTTPFacilitatorClient.settle() reads EXTENSION-RESPONSES only to
+  // console.log it, then discards the response, so a seller calling
+  // settle() through the official client never sees the header at all.
+  // The body's own `extensions` field (already part of SettleResponse's
+  // type, already parsed and returned by that same client) works today
+  // with no upstream fix needed.
+  it("also echoes the extension outcome in the response body's extensions field, not just the header", async () => {
+    const app = createFacilitatorApp(fakeCore());
+    const res = await app.request("/settle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBodyWithExtensions(validExtension())),
+    });
+    const body = (await res.json()) as { extensions?: unknown };
+    expect(body.extensions).toEqual({ bazaar: { status: "success" } });
+  });
+
   it("emits a rejected header with a specific reason for a hostile routeTemplate", async () => {
     const extension = validExtension();
     (extension["bazaar"] as Record<string, unknown>)["routeTemplate"] = "/../../etc/passwd";

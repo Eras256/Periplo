@@ -105,21 +105,38 @@ request. No extra round trip is needed.
 
 ## 3. Confirm the listing landed
 
-Periplo's `/verify` and `/settle` responses carry an `EXTENSION-RESPONSES`
-header (base64-encoded JSON) reporting the outcome:
+Periplo's `/settle` response (cataloging is settle-only, see
+`docs/DEFERRED.md`) carries an `EXTENSION-RESPONSES` header
+(base64-encoded JSON) reporting the outcome:
 
 ```jsonc
 { "bazaar": { "status": "success" } }
 { "bazaar": { "status": "rejected", "rejectedReason": "info failed schema validation" } }
 ```
 
-`HTTPFacilitatorClient` (the official client) decodes and logs this header
-automatically. Check your resource server's logs after a test payment, or
-decode it yourself:
+**If you're calling `/settle` through `HTTPFacilitatorClient` (the
+official client, shown throughout this guide), you cannot actually read
+this header from `settle()`'s return value.** Found live, 2026-08-26,
+verified against the installed `@x402/core@2.22.0` package, not assumed:
+its `settle()`/`verify()` methods read the header only to `console.log`
+a sanitized summary internally (`logExtensionResponsesHeader`), then
+discard the response object entirely; nothing about the extension
+outcome reaches the object `settle()` returns to your code. "Decode it
+yourself" only works if you bypass `HTTPFacilitatorClient` and make the
+HTTP call to `/settle` directly with your own `fetch`, reading
+`response.headers.get("EXTENSION-RESPONSES")` before the response is
+consumed:
 
 ```typescript
 const decoded = JSON.parse(Buffer.from(header, "base64").toString("utf8"));
 ```
+
+**The reliable way to confirm a listing without working around the
+client library:** query `GET /discovery/resources` or
+`GET /discovery/search` for your resource's URL right after a real
+settlement. Cataloging happens synchronously inside `/settle` itself, so
+a query immediately after should already see it. This doesn't depend on
+`HTTPFacilitatorClient`'s own gap at all.
 
 A `rejected` status always carries a specific `rejectedReason`, per spec
 §1's rule that every rejection carries a non-null reason. The most common
