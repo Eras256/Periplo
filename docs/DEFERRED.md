@@ -2193,3 +2193,33 @@ badly polluted result. Not fixed in this round: the practical fix (a
 separate eval-only database, or seeding into a schema/tenant the public
 routes never query) is a real infrastructure change, not something to
 retrofit into an unrelated bug-fix commit.
+
+## `@x402/core` has a newer client-side `spendControls` guard than what's pinned, found testing someone else's PR, not our own dependency review
+
+Found live, 2026-08-26, running a real end-to-end check of
+[x402-foundation/x402#3278](https://github.com/x402-foundation/x402/pull/3278)
+(the community's fix for our own `#3270`) against the live facilitator:
+building `@x402/core` from that PR's branch (based on a newer `main`
+than the `2.22.0` this project pins,
+`apps/facilitator/package.json`) pulled in a client-side
+`spendControls` guard that rejects a payment requirement whose asset
+isn't in a default allowlist unless the caller explicitly opts in
+(`client.setSpendControls(false)`, or an `allowedAssets` entry).
+`temperature-convert`'s self-issued `PTEST`-backed asset isn't a
+default one, so `x402Client.createPaymentPayload` threw until that was
+set. Not a bug in `#3278` itself, unrelated to its diff, and not
+reproducible against `2.22.0` at all since the feature doesn't exist
+there yet.
+
+Worth tracking deliberately rather than discovering it again at the
+next dependency bump: this project's own `x402Client` usage (any
+script or future resource-server code building payment payloads
+client-side, e.g. `apps/facilitator/scripts/*-settle*.ts`,
+`demo-resource-settle.ts`) will need the same `setSpendControls(false)`
+(or a real `allowedAssets` entry naming `PTEST`/testnet USDC) the
+moment `@x402/core` is bumped past whatever version introduces this
+guard, or those scripts start failing exactly the way this
+verification run initially did. Not urgent (still pinned to `2.22.0`,
+which predates the guard), but a real, concrete thing to check the
+changelog for before the next `@x402/core` version bump, not just
+"upgrade and see what breaks."
