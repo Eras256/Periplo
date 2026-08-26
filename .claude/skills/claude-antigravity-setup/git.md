@@ -32,7 +32,7 @@ evidencia real, se propone el fix, no solo el hallazgo. Detalle en
 
 ## La regla, en corto
 
-Tres cosas, no una:
+Cuatro cosas, no una:
 
 1. **Humanizado al máximo, sin verbosidad.** Nada de relleno tipo "es
    importante destacar que", nada de repetir en la conclusión lo que ya
@@ -56,6 +56,43 @@ Tres cosas, no una:
    investiga primero, con la misma reproducción aislada y verificada que
    ya se exige para el reporte original, y solo después de confirmar se
    escribe la reparación.
+4. **Citar o parafrasear un hilo ajeno exige releer la fuente real ese
+   mismo día, antes de publicar, no recitar desde lo que ya está en el
+   contexto de una lectura anterior de la sesión.** Regla añadida
+   26-ago-2026. Detalle completo abajo.
+
+## Citar o parafrasear un hilo ajeno: releer primero, el disclosure es la consecuencia, no una plantilla
+
+Cuando un PR/issue/comentario cite o parafrasee algo dicho en otro hilo
+(un comentario ajeno, un PR body, un issue), el orden importa:
+
+1. **Primero se relee la fuente real, hoy.** No se cita desde memoria de
+   sesión ni desde una lectura anterior, por reciente que sea — la fuente
+   pudo haberse editado (ver `x402-foundation/x402#3181`, cuya PR body
+   tiene un edit fechado 25-ago corrigiendo una mischaracterización de
+   una cita anterior) o la cita pudo copiarse mal la primera vez.
+2. **Solo después, y solo si de verdad se releyó, el disclosure agrega
+   una segunda oración:**
+
+   ```
+   Disclosure: drafted with AI assistance under my direction and reviewed
+   by hand. Both quotations above were re-verified against the linked
+   comments today.
+   ```
+
+   Ajustar `"Both"`/`"the"` al número real de citas del comentario
+   (`"The quotation above was re-verified..."` para una sola,
+   `"All three quotations above..."` para tres, etc.).
+
+**La oración es la consecuencia de haber releído, no una plantilla que se
+pega y después se justifica.** Si no hubo tiempo de releer la fuente
+antes de publicar, la oración no va — un disclosure corto y verdadero es
+mejor que uno largo sin respaldo real detrás. Una afirmación específica
+que resulta falsa es peor que una vaga que nunca se comprueba, porque
+ahora hay algo concreto que contradecir si alguien la chequea.
+
+Aplica desde ya en cualquier comentario nuevo. No hace falta corregir
+retroactivamente los ya publicados.
 
 ## Antes de publicar cualquier PR/issue/comentario — checklist
 
@@ -70,3 +107,8 @@ Tres cosas, no una:
 4. ¿Se probó algo más allá de lo mínimo pedido (un caso límite extra, una
    verificación cruzada), o solo se repitió el caso obvio? La evidencia
    extra es lo que separa un reporte creíble de uno superficial.
+5. ¿Hay una cita o paráfrasis de otro hilo? Si sí: ¿se releyó la fuente
+   real hoy, antes de este publish? Solo si la respuesta es sí va la
+   segunda oración del disclosure ("re-verified against the linked
+   comments today"). Si no se releyó, esa oración no se agrega, aunque
+   el resto del disclosure sí vaya.
