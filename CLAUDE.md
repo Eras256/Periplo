@@ -598,7 +598,7 @@ own separately-scoped investigation.
 
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
-afterward, turned up eight more real, independently verified upstream
+afterward, turned up nine more real, independently verified upstream
 bugs, all filed, all still open as of this writing:
 [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169)
 (`isValidRouteTemplate`'s traversal/scheme-injection checks decode once,
@@ -650,10 +650,19 @@ never given its own issue until now; a fix proposed in the issue
 itself, checked against the CAP-71-delegate case #1655 already covers
 to confirm this is the distinct, un-filed half of that same finding),
 alongside the earlier `mcp://` canonical-URL bug (#3121, fix at #3138,
-open, LGTM'd twice, blocked only on maintainer merge). Each was
+open, LGTM'd twice, blocked only on maintainer merge), and
+[x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270)
+(`HTTPFacilitatorClient.settle()`/`.verify()` read the
+`EXTENSION-RESPONSES` header only to `console.log` it, then discard it,
+never attaching it to the object those methods return, even though
+`SettleResponse`/`VerifyResponse` already declare an unused `extensions`
+field for exactly this; found live by the first real external seller
+against this facilitator, root-caused by reading the actual compiled
+`@x402/core@2.22.0` source rather than assumed from behavior, a proposed
+fix included). Each was
 verified directly against the real published package before filing,
 not asserted from reading the source alone; severity was calibrated
-honestly in every case (none of the eight is a security vulnerability,
+honestly in every case (none of the nine is a security vulnerability,
 all fail closed or degrade functionally, stated as such in the issue
 itself). Two
 adjacent projects' repos

@@ -2153,12 +2153,15 @@ yourself" advice didn't warn that doing so means bypassing
 (query `GET /discovery/resources`/`search` right after settling) is now
 documented alongside it.
 
-Whether this is worth filing upstream against `@x402/core` (the ninth
-real, independently verified bug this project would have found if so,
-same bar as the other eight: verified against the real published
-package, not just source reading) is a filing decision, not made here
--- surfaced for the standing approve-before-filing rule, not filed
-unilaterally.
+**Filed, 2026-08-26, after explicit approval:**
+[x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270),
+the ninth real, independently verified upstream bug this project has
+found, same bar as the other eight (verified against the real published
+package, not just source reading; severity calibrated honestly, not a
+security issue, fails closed). Draft reviewed line-by-line against the
+real installed source before approval, not accepted on the strength of
+the writeup alone; root cause correctly attributed to `@x402/core`
+throughout, nothing in it implicates Periplo's own code.
 
 **A metric correction adopted from the same seller, going forward, not
 retroactive:** citing a raw JSON character count (e.g. "1,346
