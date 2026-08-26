@@ -24,7 +24,23 @@ that it "will not open a third competing spec PR." Read
 or the full [`docs/UPTO-CONVERGENCE.md`](UPTO-CONVERGENCE.md) devlog for
 the sourced, dated version.
 
-## 3. The evidence table (2 minutes)
+## 3. A real, external seller already uses this (1 minute)
+
+Section 2 is design-level alignment between competing teams. This is
+adoption: [`agentpayments.fi`](https://agentpayments.fi) built its own
+resource server, pointed it at this facilitator with no coordination
+beyond following [`docs/SELLERS.md`](SELLERS.md), and settled a real
+payment, real testnet USDC, from a buyer that isn't this project either.
+Try it yourself:
+[`GET /discovery/search?query=conformance`](https://periplo-testnet.fly.dev/discovery/search?query=conformance)
+returns their resource as the top result, found by a stranger, not
+inserted by us. The settled transaction
+([`4befe51d2c1e...`](https://stellar.expert/explorer/testnet/tx/4befe51d2c1e58387d128c2f759262d33454b209f2aee8a03283a85b027904fd))
+is the row `conformance/RESULTS.md` itself marks as the strongest
+evidence in that document, ahead of every transaction this project
+settled with its own test accounts.
+
+## 4. The evidence table (2 minutes)
 
 [`conformance/RESULTS.md`](../conformance/RESULTS.md) lists every settled
 transaction this project claims, each with a transaction hash checked
@@ -34,7 +50,7 @@ a link, a test, or a hash, never a bare assertion. `README.md`'s "What's
 real right now" section follows the same rule and is explicit about what
 is planned but not yet built.
 
-## 4. What's actually deployed vs. what's still a plan (2 minutes)
+## 5. What's actually deployed vs. what's still a plan (2 minutes)
 
 `README.md`'s opening section states the phase status plainly (Phase 6,
 the `upto` Soroban contract, complete; Phase 7 onward not started) and
@@ -44,7 +60,7 @@ gotcha encountered along the way, that's
 [`docs/DEFERRED.md`](DEFERRED.md), the project's own running log of
 blockers and divergences, not a curated highlight reel.
 
-## 5. Security, if that's your focus (2 minutes)
+## 6. Security, if that's your focus (2 minutes)
 
 [`docs/THREAT-MODEL.md`](THREAT-MODEL.md) is the threat/control/test
 table, each row pointing at the actual code and test file that backs it,
@@ -54,7 +70,7 @@ that file's own status note, and [`docs/DEFERRED.md`](DEFERRED.md)'s
 "Third-party security review: pending via Audit Bank" section for
 exactly where that stands.
 
-## 6. If you want the full architecture
+## 7. If you want the full architecture
 
 [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) has the system diagram and a
 plain-English walk-through of the stack. [`docs/SPEC.md`](SPEC.md) is the
