@@ -259,9 +259,23 @@ question this section already tracked. Full writeup in
   declared `info`/`schema` object. Separately deleted a stale Phase 4
   test fixture (`financial_analysis_da8703fa-...`, literal placeholder
   `asset`/`payTo` values, surfacing in every search result regardless
-  of relevance) that the same reconciliation turned up. Full writeup,
-  including the CORS-header part of the report that this does **not**
-  resolve, in `docs/DEFERRED.md`.
+  of relevance) that the same reconciliation turned up. The report's
+  CORS-header claim, initially left unresolved, turned out to measure a
+  different, unrelated deployment entirely (confirmed by the report's
+  own author and independently corroborated), never Periplo.
+
+  **The first real external seller published and settled for real the
+  same round** (`agentpayments.fi`), and found a genuine, money-relevant
+  bug doing it: `EXTENSION-RESPONSES` never reached their code from
+  `/settle`, even though cataloging worked. Root cause verified before
+  fixing: the header is sent correctly on the wire, but the installed
+  `@x402/core` client only logs it internally and discards it rather
+  than returning it to the caller. Fixed on our side, no upstream change
+  needed: `/settle`'s JSON body now also carries the outcome in its
+  already-declared-but-previously-empty `extensions` field, verified
+  through the real official client, transaction
+  [`10919a59342fc0cc...`](https://stellar.expert/explorer/testnet/tx/10919a59342fc0cc69d3698a58cf7fb76f3e997914e16562ffa39bbf7f70af28),
+  Horizon-verified. Full writeup in `docs/DEFERRED.md`.
 
   It is built on the official
   [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)

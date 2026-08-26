@@ -2073,19 +2073,19 @@ gone via the live REST API and both discovery endpoints (`GET
 /discovery/resources` now reports `total: 1`, `temperature-convert`
 only).
 
-**What this does not resolve, an open question rather than assumed
-either way:** whether the report's CORS-header claim is explained by the
-same "measuring the discovery API, not the raw challenge" reframing.
-Both discovery routes were checked directly and show the identical
-zero-CORS behavior as every other route in this facilitator (no
-`access-control-*` header anywhere, `OPTIONS` a bare 404), so this
-specific finding does not, on its own, explain the report's phantom
-CORS claim. Whether the report's own tool measures a different
-deployment entirely (e.g. an `@x402/express`-based one, the same
-package and bug class already found and fixed in `#3148` on an
-unrelated deployment) remains a live hypothesis, not confirmed. Needs
-the report's author to confirm the exact URL/route their tool actually
-requests before this gets resolved either way.
+**Resolved, 2026-08-26: the CORS-header part of the report was never
+about Periplo.** Confirmed by the report's own author directly, and
+independently corroborated rather than taken on their word alone: their
+CORS/conformance table measures `nirium-agent-mainnet.fly.dev`, an
+unrelated deployment (Nirium's), not Periplo's. Checked that endpoint
+directly to confirm it's structurally capable of producing the report's
+observations: it genuinely runs `@x402/express` with a real CORS setup
+(`access-control-expose-headers` present, listing `X-MPP-Warning`, the
+exact unrelated header already named in `#3148`'s own root cause),
+unlike Periplo's facilitator, which was already confirmed to have zero
+CORS code anywhere. Both zero-CORS-in-Periplo and real-CORS-in-Nirium
+are independently verifiable facts, not a report reinterpreted to fit a
+convenient story.
 
 **A separate, adjacent finding noticed while verifying the fix above,
 not yet acted on:** `resources.last_updated` never actually updates on
@@ -2102,3 +2102,91 @@ though the practical impact on a catalog this size is currently zero
 (one real resource). Not fixed in this round: found verifying a
 different fix, not the thing being verified, and flagged rather than
 folded in silently.
+
+## `EXTENSION-RESPONSES` never reached a seller through the official client, found live by the first external seller
+
+The first real external seller (Fer, `agentpayments.fi`) published a
+resource and settled a real payment against it, closing the loop this
+whole round of fixes exists for: cataloging worked, search worked, and
+the loop actually reached a third party's real code, not just this
+project's own scripts. In the process they found a new, real,
+money-relevant bug: `EXTENSION-RESPONSES` never reached their code from
+`/settle`, even though the catalog write genuinely happened. They ruled
+out their own side carefully (their client forwards and exposes headers
+correctly when one arrives) before reporting it.
+
+Root cause verified before proposing anything, same standard as every
+other finding here. A direct `fetch` to `/settle` (Node, not a browser,
+so no CORS header-visibility restriction applies) shows the header
+genuinely present and correctly decoded on the raw wire -- Periplo's own
+code was never the problem. The actual gap is in the installed
+`@x402/core@2.22.0` dependency itself: `HTTPFacilitatorClient`'s
+`settle()`/`verify()` methods call `logExtensionResponsesHeader`, which
+reads `EXTENSION-RESPONSES`, `console.log`s a sanitized summary, and
+discards it -- nothing about the extension outcome is attached to the
+object those methods return to the caller. Confirmed reading the actual
+compiled source (`dist/cjs/server/index.js` and `dist/cjs/http/index.js`
+both bundle the identical function), not assumed from behavior alone. A
+seller using the officially documented client, the same one
+`docs/SELLERS.md`'s own quickstart shows, structurally cannot read this
+header: the client never exposes the raw `Response` object, only the
+parsed JSON body.
+
+Fixed without waiting on an upstream change. `SettleResponse` (and
+`VerifyResponse`) already declare an optional `extensions` field,
+verified against the real `.d.ts`, which `HTTPFacilitatorClient`'s own
+response schema already parses and returns to the caller: the field
+exists, it was simply never populated because Periplo's own `/settle`
+never put anything in the body's `extensions` key, only the header.
+Sending it in both places now costs nothing and needs no upstream fix
+to start working today, for every seller already using the current
+pinned SDK version. Verified through the actual official client, not
+just a raw fetch: a real settled payment via
+`HTTPFacilitatorClient.settle()` now returns `settleResult.extensions`
+populated with `{ bazaar: { status: "success" } }`, transaction
+[`10919a59342fc0cc69d3698a58cf7fb76f3e997914e16562ffa39bbf7f70af28`](https://stellar.expert/explorer/testnet/tx/10919a59342fc0cc69d3698a58cf7fb76f3e997914e16562ffa39bbf7f70af28),
+Horizon-verified. `docs/SELLERS.md`'s "Confirm the listing landed"
+section was also corrected: it referenced "/verify and /settle" (stale
+since the settle-only fix earlier this round) and its "decode it
+yourself" advice didn't warn that doing so means bypassing
+`HTTPFacilitatorClient` entirely; the more reliable alternative
+(query `GET /discovery/resources`/`search` right after settling) is now
+documented alongside it.
+
+Whether this is worth filing upstream against `@x402/core` (the ninth
+real, independently verified bug this project would have found if so,
+same bar as the other eight: verified against the real published
+package, not just source reading) is a filing decision, not made here
+-- surfaced for the standing approve-before-filing rule, not filed
+unilaterally.
+
+**A metric correction adopted from the same seller, going forward, not
+retroactive:** citing a raw JSON character count (e.g. "1,346
+characters") to compare a discovery payload's completeness across
+implementations is not a real measure -- it depends on serialization
+choices (key order, whitespace, JS vs. Python's JSON encoder) that have
+nothing to do with actual content. Never written into this repo's own
+docs, so nothing to correct there, but noted here so a future session
+doesn't reach for it: count parameters actually described instead,
+which is what the underlying claim ("the declaration is complete") is
+actually about.
+
+**A separate, narrow, transient finding, not a bug in the classic
+sense:** `pnpm eval` seeds and cleans up its 55-fixture golden dataset
+against this project's one and only Supabase project, the same one the
+live catalog uses (`eval/run.ts` reads `SUPABASE_URL`/
+`SUPABASE_SERVICE_ROLE_KEY` directly, no separate eval-only project
+exists). Caught live: a `GET /discovery/resources` call made during a
+CI run's `pnpm eval` step (triggered by a push, confirmed by correlating
+the exact fixture-insertion timestamps against `gh run list`'s
+`createdAt` for that commit) briefly showed 57 resources, 55 of them
+eval fixtures, before the run's own `finally`-block cleanup removed them
+seconds later, confirmed by re-querying immediately after and seeing the
+real count again. Working as designed (`cleanupFixtures` in `eval/run.ts`
+runs in a `finally`, even on failure), but the design itself means
+anyone, an SCF panelist included, who happens to load `/discovery/search`
+during the roughly 30-second window a CI eval run is active sees a
+badly polluted result. Not fixed in this round: the practical fix (a
+separate eval-only database, or seeding into a schema/tenant the public
+routes never query) is a real infrastructure change, not something to
+retrofit into an unrelated bug-fix commit.

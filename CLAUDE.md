@@ -311,9 +311,38 @@ found by independently reconciling a conformance report against this
 project's own live deployment: two of the report's three claimed gaps
 didn't match the raw 402 challenge, but did match what
 `/discovery/search` actually returned, reframing which endpoint the
-report's own tooling most likely measures. Not yet resolved: whether
-that also explains a separate CORS-header discrepancy in the same
-report, tracked open, not assumed either way.
+report's own tooling most likely measures. The report's separate
+CORS-header claim, initially left open, was resolved the same round: it
+measures `nirium-agent-mainnet.fly.dev` (an unrelated deployment, real
+CORS present there), never Periplo, confirmed by the report's own
+author and independently corroborated against both endpoints directly.
+
+**Same round, the first real external seller (Fer, `agentpayments.fi`)
+published and settled for real**, closing the loop this whole round
+exists for, and found a new, real, money-relevant bug in the process:
+`EXTENSION-RESPONSES` never reached their code from `/settle`, even
+though cataloging genuinely happened. Root-caused before proposing a
+fix: the header is genuinely sent correctly on the wire (confirmed via
+a direct, non-browser `fetch`, so no CORS visibility restriction
+applies), but the installed `@x402/core@2.22.0`'s own
+`HTTPFacilitatorClient.settle()`/`.verify()` only `console.log` the
+header internally, then discard it, never attaching it to what those
+methods return to the caller, confirmed reading the real compiled
+source. Fixed without an upstream change: `SettleResponse` already
+declares an unused `extensions` field the same client already parses,
+so `/settle` now sends the outcome in the body too, verified through
+the real official client (not just a raw fetch): a settled payment via
+`HTTPFacilitatorClient.settle()` now returns `settleResult.extensions`
+populated, transaction
+[`10919a59342fc0cc...`](https://stellar.expert/explorer/testnet/tx/10919a59342fc0cc69d3698a58cf7fb76f3e997914e16562ffa39bbf7f70af28),
+Horizon-verified. `docs/SELLERS.md` corrected to match (stale
+"/verify and /settle" wording, plus the `HTTPFacilitatorClient`
+limitation the old "decode it yourself" advice didn't mention). Full
+writeup, including whether this is worth filing upstream against
+`@x402/core` (a filing decision, not made unilaterally) and a metric
+correction adopted from the same seller (parameter counts, not raw JSON
+character counts, to compare discovery-payload completeness), in
+`docs/DEFERRED.md`. `pnpm run ci` green, 257 tests.
 
 The same tester's report also named the actual practical effect: an empty
 or dead-URL-only catalog means Bazaar's ranking quality can't be evaluated
