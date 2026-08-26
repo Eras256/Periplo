@@ -10,6 +10,16 @@ the facilitator running on `stellar:testnet`. Try
 [`GET /supported`](https://periplo-testnet.fly.dev/supported) directly,
 no setup required.
 
+**The Bazaar has a real external seller in it, not just our own demo
+resource.** [`agentpayments.fi`](https://agentpayments.fi) built its
+own resource server, pointed it at this facilitator, and settled a real
+payment on `stellar:testnet`, no coordination beyond following
+[`docs/SELLERS.md`](docs/SELLERS.md). Try
+[`GET /discovery/search?query=conformance`](https://periplo-testnet.fly.dev/discovery/search?query=conformance)
+directly: their resource is the top result, alongside ours, found by a
+buyer who has never seen either service before. This is what the
+catalog is for, demonstrated by someone who isn't us.
+
 **Reviewing this for the RFP round?**
 [`docs/FOR-REVIEWERS.md`](docs/FOR-REVIEWERS.md) is a ten-minute,
 human-written path through this repo, not written for a Claude Code
@@ -268,12 +278,20 @@ question this section already tracked. Full writeup in
   same round** (`agentpayments.fi`), and found a genuine, money-relevant
   bug doing it: `EXTENSION-RESPONSES` never reached their code from
   `/settle`, even though cataloging worked. Root cause verified before
-  fixing: the header is sent correctly on the wire, but the installed
-  `@x402/core` client only logs it internally and discards it rather
-  than returning it to the caller. Fixed on our side, no upstream change
-  needed: `/settle`'s JSON body now also carries the outcome in its
+  fixing, not assumed: a direct fetch to `/settle` showed the header is
+  sent correctly on the wire, so the gap traced to the installed
+  `@x402/core@2.22.0` dependency itself, whose `HTTPFacilitatorClient.
+  settle()`/`.verify()` read the header only to `console.log` it
+  internally, then discard it, never attaching it to what those methods
+  return to the caller, confirmed reading the actual compiled source.
+  Filed as
+  [x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270),
+  with a proposed fix (populate the `extensions` field those response
+  types already declare but never use). **Status: fixed on our own
+  side the same day, not waiting on the upstream merge.** `/settle`'s
+  JSON body now also carries the outcome in that same
   already-declared-but-previously-empty `extensions` field, verified
-  through the real official client, transaction
+  through the real official client, not just a raw fetch: transaction
   [`10919a59342fc0cc...`](https://stellar.expert/explorer/testnet/tx/10919a59342fc0cc69d3698a58cf7fb76f3e997914e16562ffa39bbf7f70af28),
   Horizon-verified. Full writeup in `docs/DEFERRED.md`.
 
