@@ -316,7 +316,21 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   body-wins/header-fallback precedence proposed in `#3270` exactly, and
   ships four regression tests, not the three the PR's own summary
   implies (the fourth, a malformed-header case, wasn't something we'd
-  asked for, a good defensive addition on its own initiative). Added a
+  asked for, a good defensive addition on its own initiative). **Went
+  further than reading the diff**: pulled `#3278`'s own branch
+  (`bartok9/extension-responses-header-3270`, `54b136d`), built its
+  `@x402/core` directly, and ran a real payment through it against our
+  own production facilitator, `https://periplo-testnet.fly.dev`, the
+  exact deployment the original bug came from. `verify()`/`settle()`
+  both real, `settleResult.extensions` populated, transaction
+  [`892af0974bee...`](https://stellar.expert/explorer/testnet/tx/892af0974bee7884e491dbe8d39a7450113bdfb90ae814f80dcefb3b3f774e85),
+  Horizon-verified. Honest about scope: this exercised the body-wins
+  branch, the only one reachable against a facilitator that already
+  sends `extensions` in the body on our own side, not the header-only
+  fallback, which stays covered only by Bartok9's own mocked tests. A
+  separate, unrelated version-skew finding from the same run
+  (a client-side `spendControls` guard newer than what we pin) is
+  tracked in `docs/DEFERRED.md`, not repeated here. Added a
   second, independent real-world case for the same underlying bug
   (`#3187`, the e2e suite's eager EVM/SVM signer derivation): an
   unrelated Stellar facilitator, stellarsight, hit the identical crash
