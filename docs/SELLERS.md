@@ -25,7 +25,7 @@ catalog row. It is not a reimplementation of the extension mechanics. See
 ```typescript
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
 import { x402HTTPResourceServer } from "@x402/core/http";
-import { ExactStellarScheme } from "@x402/stellar/exact/client"; // client-side variant
+import { ExactStellarScheme } from "@x402/stellar/exact/server"; // server-side variant
 import { declareDiscoveryExtension, bazaarResourceServerExtension } from "@x402/extensions/bazaar";
 
 const facilitatorClient = new HTTPFacilitatorClient({
@@ -37,6 +37,17 @@ const resourceServer = new x402ResourceServer(facilitatorClient)
   // Registering this is what fills in the HTTP method / dynamic-route
   // pathParams automatically, see step 2.
   .registerExtension(bazaarResourceServerExtension);
+
+// Fetches /supported from every registered facilitator client and builds
+// the internal scheme/kind lookup table `enhancePaymentRequirements` reads
+// from. Skipping this doesn't fail at construction time, `parsePrice` and
+// `new x402HTTPResourceServer(...)` both still work, it fails later,
+// inside `enhancePaymentRequirements`, the first time a real request
+// actually needs a 402 challenge built (`Cannot read properties of
+// undefined (reading 'extra')`, confirmed by actually running this
+// snippet against the real @x402/core and @x402/stellar packages rather
+// than assumed from their types).
+await resourceServer.initialize();
 
 const routes = {
   "GET /weather/:city": {
