@@ -53,6 +53,9 @@ function row(overrides: Partial<ResourceRow> = {}): Partial<ResourceRow> {
     pay_to: "GPAYTO",
     accepts: [{ scheme: "exact", network: "stellar:testnet", asset: "CASSET", amount: "1000" }],
     extensions: ["bazaar"],
+    extension_payloads: {
+      bazaar: { info: { input: { city: "San Francisco" } } },
+    },
     last_updated: "2026-08-07T12:00:00.000Z",
     description: "Current conditions by city",
     ...overrides,
@@ -74,9 +77,25 @@ describe("listDiscoveryResources", () => {
         accepts: row().accepts,
         lastUpdated: "2026-08-07T12:00:00.000Z",
         description: "Current conditions by city",
-        extensions: { bazaar: {} },
+        // The real declared payload, not an empty placeholder: regression
+        // coverage for the extension_payloads fix, this project's own
+        // catalog previously echoed `{}` here regardless of what the
+        // resource actually declared.
+        extensions: { bazaar: { info: { input: { city: "San Francisco" } } } },
       },
     ]);
+  });
+
+  it("falls back to {} for a row cataloged before extension_payloads existed", async () => {
+    // Built without row()'s default rather than overriding it to undefined:
+    // exactOptionalPropertyTypes rejects an explicit `undefined` for a
+    // non-optional field, and omitting the key entirely is also the more
+    // honest simulation of a pre-migration row that never had this column
+    // populated.
+    const { extension_payloads: _omitted, ...rowWithoutPayloads } = row();
+    const client = fakeListClient([rowWithoutPayloads], 1, () => {});
+    const result = await listDiscoveryResources({ client }, {});
+    expect(result.items[0]).toMatchObject({ extensions: { bazaar: {} } });
   });
 
   it("omits description and extensions when the row has neither", async () => {

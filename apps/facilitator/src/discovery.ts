@@ -258,6 +258,13 @@ export async function processBazaarExtension(
       parameters,
       accept: toCatalogAccept(paymentRequirements),
       extensionKeys: Object.keys(rawExtensions),
+      // The actual declared bazaar extension, already validated above,
+      // verbatim: what GET /discovery/resources and GET /discovery/search
+      // echo back under extensions.bazaar, per DiscoveryResource's own
+      // documented contract in @x402/extensions/bazaar. Previously never
+      // persisted at all, so both routes emitted an empty {} regardless of
+      // how complete the resource's own declaration was.
+      extensionPayloads: { [BAZAAR.key]: rawExtRecord },
       ...(embedding !== undefined ? { embedding } : {}),
     });
   } catch (error) {

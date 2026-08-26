@@ -63,6 +63,17 @@ export interface CatalogResourceInput {
   readonly accept: CatalogAcceptsEntry;
   readonly extensionKeys: readonly string[];
   /**
+   * The actual declared extension object per key in `extensionKeys`
+   * (e.g. `{ bazaar: rawExtRecord }`), what `GET /discovery/resources`/
+   * `GET /discovery/search` echo back under `extensions` per
+   * `DiscoveryResource`'s own documented contract ("Extension payloads
+   * echoed from discovery"). Optional and conditionally written (see
+   * below), same posture as `embedding`: omitted on a call site that
+   * doesn't have one, never written as `{}` to blindly clobber a payload
+   * a prior write already stored.
+   */
+  readonly extensionPayloads?: Record<string, unknown>;
+  /**
    * Semantic embedding (spec Phase 5, `packages/search`) over the
    * discovery text, `null` when the caller has no embedding pipeline
    * configured, or when generating one failed. Cataloging never depends on
@@ -174,6 +185,13 @@ export async function upsertCatalogResource(
     parameters: input.parameters,
     accepts,
     extensions: input.extensionKeys,
+    // Same "omit rather than clobber" posture as `embedding` below: a
+    // caller that legitimately has no payload to report (there isn't one
+    // today, `processBazaarExtension` always has `rawExtRecord` by the
+    // time it calls this) shouldn't reset an existing payload to `{}`.
+    ...(input.extensionPayloads !== undefined
+      ? { extension_payloads: input.extensionPayloads }
+      : {}),
     // Omitted entirely (not sent as null) when the caller didn't supply
     // one: PostgREST's upsert only SETs columns present in the payload, so
     // an absent key leaves an existing embedding from a prior payment

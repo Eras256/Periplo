@@ -34,6 +34,17 @@ export type ResourceRow = {
   readonly parameters: Record<string, unknown>;
   readonly accepts: readonly unknown[];
   readonly extensions: readonly string[];
+  /**
+   * The actual declared extension object per key in `extensions` above
+   * (e.g. `{ bazaar: { info: {...}, schema: {...} } }`), verbatim as
+   * `discovery.ts`'s `processBazaarExtension` validated it. `extensions`
+   * itself only ever tracked which keys applied, never their payloads;
+   * this is that missing half, what `DiscoveryResource.extensions` in
+   * `@x402/extensions/bazaar` documents as "Extension payloads echoed
+   * from discovery." A resource cataloged before this column existed
+   * defaults to `{}` here until its next payment re-catalogs it.
+   */
+  readonly extension_payloads: Record<string, unknown>;
   readonly last_updated: string;
   readonly embedding: readonly number[] | null;
 };

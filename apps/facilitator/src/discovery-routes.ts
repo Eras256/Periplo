@@ -29,7 +29,7 @@ const X402_VERSION = 2;
 
 type ResourceLike = Pick<
   ResourceRow,
-  "url" | "type" | "accepts" | "last_updated" | "description" | "extensions"
+  "url" | "type" | "accepts" | "last_updated" | "description" | "extensions" | "extension_payloads"
 >;
 
 function toDiscoveryResource(row: ResourceLike): DiscoveryResource {
@@ -44,13 +44,19 @@ function toDiscoveryResource(row: ResourceLike): DiscoveryResource {
     accepts: row.accepts as DiscoveryResource["accepts"],
     lastUpdated: row.last_updated,
     ...(row.description ? { description: row.description } : {}),
-    // The wire shape's `extensions` is a per-extension payload map, but
-    // the catalog only stores which extension *keys* applied
-    // (`extensions: text[]`, spec §2), not their payloads (those aren't
-    // persisted, see discovery.ts), so each key maps to an empty object
-    // rather than a fabricated payload.
+    // `extensions` tracks which keys a resource declared; the actual
+    // payload per key lives in `extension_payloads`, stored separately
+    // (see discovery.ts / catalog.ts). A key falls back to `{}` only for
+    // a row cataloged before `extension_payloads` existed, not as the
+    // general case, per `DiscoveryResource.extensions`'s own documented
+    // contract in @x402/extensions/bazaar: "Extension payloads echoed
+    // from discovery."
     ...(row.extensions.length > 0
-      ? { extensions: Object.fromEntries(row.extensions.map((key) => [key, {}])) }
+      ? {
+          extensions: Object.fromEntries(
+            row.extensions.map((key) => [key, row.extension_payloads?.[key] ?? {}])
+          ),
+        }
       : {}),
   };
 }
@@ -75,9 +81,10 @@ export async function listDiscoveryResources(
 
   let query = deps.client
     .from("resources")
-    .select("url, type, network, pay_to, accepts, extensions, last_updated, description", {
-      count: "exact",
-    })
+    .select(
+      "url, type, network, pay_to, accepts, extensions, extension_payloads, last_updated, description",
+      { count: "exact" }
+    )
     .order("last_updated", { ascending: false })
     .range(offset, Math.max(offset, offset + limit - 1));
 
