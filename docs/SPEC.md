@@ -533,8 +533,9 @@ rather than fork their own. Separately, an independent implementer
 Rialto, openx402, LumenGate, and this one), flagged nonce-TTL replay
 handling as a required test vector, citing rail402's specific guard;
 this contract's mechanism was independently verified in response and
-found to prevent the bug class structurally, response from davedumto
-pending. Full sourced writeup: `docs/UPTO-CONVERGENCE.md` and README.md's
+found to prevent the bug class structurally. A concrete consolidation
+direction has since emerged from the same thread (`#3134`). Full sourced
+writeup: `docs/UPTO-CONVERGENCE.md` and README.md's
 "The ecosystem is converging on this spec" section, not repeated here.
 
 ### Phase 7: MCP discovery server

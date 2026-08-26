@@ -128,6 +128,55 @@ opening a third:
 We responded to both with verified, additive findings, not advocacy for our
 own design.
 
+## A third independent reviewer, five implementations compared
+
+[davedumto](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5373783683),
+2026-08-21, read five real Stellar `upto` implementations in source, not
+skimmed, rail402, Rialto, openx402, LumenGate, and Periplo's own
+`#3098` reference contract, plus their own deployed instance
+(`CDHPA64M73TUTEM4MMHIWIXINBQXH7JJXFGZMGH22VJWFJFROMR6QV2S`, testnet, a
+real settlement checked on Horizon). Five findings, ranked by how
+settled they seemed: the `require_auth_for_args` exclusion pattern is
+converged across all five teams and should be a spec MUST; the
+settlement-hook question (rail402's unwrapped hook call vs. openx402's
+versioned, authorized entry point) has no spec position yet; a real,
+measured benchmark from LumenGate found escrow-and-refund 31.5%
+*cheaper* than allowance-based settlement, cutting against the
+zero-custody consensus every reviewed design (including both `#3098`
+and `#3134`) had assumed without measuring; Rialto's conditional
+`autoRevoke` auth-tree shape needs precise spec language so a client
+library can build against it without reading each implementation's own
+docs; and the nonce-TTL boundary rail402 already tests explicitly
+(`NONCE_TTL_LEDGERS`, both sides of the boundary) is worth a required
+test vector for any stored-nonce profile.
+
+On point 5, specifically for our own contract,
+[our reply](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5383242545)
+the next day showed the case doesn't apply the way it's framed for a
+boundary-checked design, because ours isn't one:
+
+```rust
+let ttl = authorization.deadline_ledger.saturating_sub(ledger);
+env.storage().temporary().set(&key, &authorization.deadline_ledger);
+env.storage().temporary().extend_ttl(&key, ttl, ttl);
+```
+
+The nonce's TTL is derived directly from the signed `deadline_ledger` at
+settlement time, so there's no separately-sized ceiling that could fall
+short of what an authorization signs for, the two are the same value by
+construction. `MAX_WINDOW_LEDGERS` bounds how large that window can ever
+be in the first place, verified against the network's own real
+storage-TTL ceiling rather than assumed, and the TTL-covers-deadline
+property was confirmed live on testnet (a settled nonce's
+`liveUntilLedgerSeq`, read back from RPC, exceeding `deadline_ledger` by
+exactly the requested margin), not just in a unit test. Not proposed as
+*the* required test vector over rail402's own boundary check, since
+they're different mechanisms answering the same risk: flagged instead
+that "stored TTL-bounded nonce" isn't one shape, and the merged spec
+should allow either "derive TTL from the signed deadline" or "check the
+deadline against a fixed ceiling" rather than assuming one implies the
+other.
+
 ## Where it stands
 
 `#3098` is ready for review, waiting on maintainer direction on where the
@@ -153,9 +202,9 @@ same answer without coordinating is the same shape of convergence this
 thread already showed for the `upto` design itself, cited in the nudge
 as evidence rather than as a technical note in isolation. The actual
 open question, whether `#3098` or `#3134` is what the wire spec
-consolidates onto, was asked directly. **Still unresolved as of the
-nudge**: no response yet, same status this file already tracked, now
-with 2026-08-25 as the most recent attempt to move it.
+consolidates onto, was asked directly. **Answered, 2026-08-26, with a
+concrete direction**: see below, bomanaps recommended consolidating on
+`#3134` with real evidence behind it, not just a preference.
 
 **2026-08-25/26: responded on `#3098` itself to pedro-pelicioni's
 pricing-metadata proposal
@@ -180,3 +229,31 @@ the same round, the same integrity thread one step further down the
 amount-normalization axis. Offered to wire `pricing` into our own
 catalog and report back with real numbers once it merges, rather than
 just agreeing it's a good idea.
+
+**2026-08-26: bomanaps answered the nudge with a concrete direction,
+not just an acknowledgment.**
+[Reply on `#72`](https://github.com/stellar/x402-stellar/issues/72#issuecomment-5423343680):
+`#3134` is ready to consolidate on, backed by real evidence, not a
+preference, commits signed, contract deployed, exercised on testnet
+covering both G-account and C-account payers (the PR's own body: 7 of
+7 tests passing). Directly answers the nonce-TTL bug class this
+thread's own comparison already surfaced: `#3134`'s design gets replay
+protection from the protocol nonce itself, so there is no app-managed
+TTL to size wrong at all. Also confirmed, independently from Rialto's
+own side this time, the same settle-only cataloging reading `#3226` is
+auditing, with provenance labels on every catalog entry.
+
+The same day, on `#3134` itself,
+[bomanaps proposed a concrete structure](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5423560051)
+for the merged document: `stateless` as the base profile (no
+implementation-defined boundary to test), `contract`/stateful carrying
+the required test vectors, both mechanisms accepted rather than one
+picked as canonical, replying directly to the TTL exchange above.
+[We agreed](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5432236025)
+and folded in HeylmStoned's earlier wire-level point before the
+structure gets drafted: `scheme: "upto"` alone still doesn't
+disambiguate the two profiles once both exist in one spec, the merged
+document needs the stable `extra.uptoProfile` discriminator (already
+tracked in `docs/DEFERRED.md`) reflected in `/supported` too, or the
+clean base-vs-stateful split leaves the exact client-side ambiguity
+this thread already found unresolved.

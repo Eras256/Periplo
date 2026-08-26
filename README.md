@@ -90,8 +90,15 @@ convergence, not as an isolated technical note but as further evidence
 for this section's own thesis, in a nudge on
 [stellar/x402-stellar#72](https://github.com/stellar/x402-stellar/issues/72#issuecomment-5418484702)
 asking directly whether `#3098` or `#3134` is what the wire spec
-consolidates onto. **Still unresolved as of that ask**, same open
-question this section already tracked.
+consolidates onto. **Answered the next day**: bomanaps recommended
+consolidating on `#3134`, backed by real evidence (signed commits, a
+deployed contract exercised on testnet for both G-account and
+C-account payers, 7 of 7 tests passing), and bomanaps and
+[davedumto](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5373783683)
+(a third independent reviewer who compared five real Stellar `upto`
+implementations in source) have since agreed on a concrete structure
+for the merged document. Full, sourced chronology in
+`docs/UPTO-CONVERGENCE.md`.
 
 Also responded on `#3098` itself to pedro-pelicioni's pricing-metadata
 proposal for the bazaar extension
@@ -302,7 +309,20 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   already-declared-but-previously-empty `extensions` field, verified
   through the real official client, not just a raw fetch: transaction
   [`10919a59342fc0cc...`](https://stellar.expert/explorer/testnet/tx/10919a59342fc0cc69d3698a58cf7fb76f3e997914e16562ffa39bbf7f70af28),
-  Horizon-verified. Full writeup in `docs/DEFERRED.md`.
+  Horizon-verified. **A community member (`Bartok9`) built the upstream
+  fix**: [`#3278`](https://github.com/x402-foundation/x402/pull/3278),
+  open, not yet merged. Reviewed the real diff line by line before
+  saying so, not on the strength of the PR description: it matches the
+  body-wins/header-fallback precedence proposed in `#3270` exactly, and
+  ships four regression tests, not the three the PR's own summary
+  implies (the fourth, a malformed-header case, wasn't something we'd
+  asked for, a good defensive addition on its own initiative). Added a
+  second, independent real-world case for the same underlying bug
+  (`#3187`, the e2e suite's eager EVM/SVM signer derivation): an
+  unrelated Stellar facilitator, stellarsight, hit the identical crash
+  in their own conformance run and needed the same decoy-key
+  workaround, cited on `#3228` with their commit hash. Full writeup in
+  `docs/DEFERRED.md`.
 
   It is built on the official
   [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)
