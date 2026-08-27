@@ -240,8 +240,23 @@ covering both G-account and C-account payers (the PR's own body: 7 of
 thread's own comparison already surfaced: `#3134`'s design gets replay
 protection from the protocol nonce itself, so there is no app-managed
 TTL to size wrong at all. Also confirmed, independently from Rialto's
-own side this time, the same settle-only cataloging reading `#3226` is
-auditing, with provenance labels on every catalog entry.
+own side this time, the same settle-only cataloging reading `#3226`
+was auditing, with provenance labels on every catalog entry.
+
+**2026-08-26/27: our own case joined that same thread, and a
+maintainer named the result.** Commented directly on `#3226` citing
+[`fae6daa9`](https://github.com/Eras256/Periplo/commit/fae6daa90885e99d81056c1178d2e13ab81d3980)
+(the settle-only fix earlier in this file), a third implementation
+reaching the same reading independently.
+[whawk46 replied](https://github.com/x402-foundation/x402/issues/3226#issuecomment-5438145198),
+naming it explicitly: "With Periplo, @pedro-pelicioni, and our datasets
+aligned, we have the consensus needed to make settle-only catalog
+provenance a normative requirement in the specification." `#3226`
+itself was retitled from an open question to a formal proposal in
+response: "Label catalog provenance, verify-only versus settled, so
+Bazaar counters mean something." Not just three implementations
+converging on an answer, now cited as the evidence for writing the
+norm.
 
 The same day, on `#3134` itself,
 [bomanaps proposed a concrete structure](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5423560051)

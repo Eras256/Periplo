@@ -251,8 +251,8 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   `accepts` option in it, could be produced for one HTTP request and no
   balance. This is exactly what
   [x402-foundation/x402#3226](https://github.com/x402-foundation/x402/issues/3226)
-  is auditing in public right now, with a reproduced example of it
-  happening against a live facilitator. Our own ranking has no
+  audited in public, with a reproduced example of it happening against
+  a live facilitator. Our own ranking has no
   popularity or call-count column to inflate, but the catalog's
   contents, resources and payment options that were never actually paid
   for, could still be minted the same way. Fixed by removing the
@@ -266,6 +266,22 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   code checked directly rather than taken on the comment alone. Full
   writeup in `docs/DEFERRED.md`. `pnpm run ci` green throughout, 255
   tests.
+
+  **2026-08-27: this stopped being something we only observed.** Added
+  our own data point to `#3226` directly, citing
+  [`fae6daa9`](https://github.com/Eras256/Periplo/commit/fae6daa90885e99d81056c1178d2e13ab81d3980)
+  (the commit above), a third implementation reaching settle-only
+  without coordinating with the other two. A maintainer,
+  [whawk46](https://github.com/x402-foundation/x402/issues/3226#issuecomment-5438145198),
+  named it explicitly as part of the consensus: "With Periplo,
+  @pedro-pelicioni, and our datasets aligned, we have the consensus
+  needed to make settle-only catalog provenance a normative requirement
+  in the specification." The issue itself has since been retitled from
+  an open question to a formal proposal: "Label catalog provenance,
+  verify-only versus settled, so Bazaar counters mean something." Same
+  pattern as the rest of this section: not just building on what this
+  project proposed, now citing this project's own evidence to write the
+  norm.
 
   **2026-08-26: `extensions.bazaar` was echoed empty for every
   resource, found reconciling a real integrator's conformance report
