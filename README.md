@@ -271,8 +271,8 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   our own data point to `#3226` directly, citing
   [`fae6daa9`](https://github.com/Eras256/Periplo/commit/fae6daa90885e99d81056c1178d2e13ab81d3980)
   (the commit above), a third implementation reaching settle-only
-  without coordinating with the other two. A maintainer,
-  [whawk46](https://github.com/x402-foundation/x402/issues/3226#issuecomment-5438145198),
+  without coordinating with the other two.
+  [whawk46](https://github.com/x402-foundation/x402/issues/3226#issuecomment-5438145198)
   named it explicitly as part of the consensus: "With Periplo,
   @pedro-pelicioni, and our datasets aligned, we have the consensus
   needed to make settle-only catalog provenance a normative requirement
