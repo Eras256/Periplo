@@ -107,10 +107,13 @@ sign-in so later phases can call `search`/`execute` directly instead.
 ## The skill pack's own repo: a real bug found and fixed, 2026-08-16
 
 This file documents skill *usage*, but the pack itself
-(`stellar/stellar-dev-skill`, confirmed as the real source via
-`~/.claude/plugins/known_marketplaces.json`, not assumed from the
-directory name) turned out to have a genuine bug in its own public skill
-index. 27 of the 28 community-skill entries in
+(`stellar/stellar-dev-skill`, its upstream repo identity confirmed via
+`~/.claude/plugins/known_marketplaces.json` rather than assumed from the
+local directory name) turned out to have a genuine bug in its own public
+skill index. That file is a user-level registry, shared across every
+project on this machine rather than scoped to this repo, so it confirms
+which repo backs the installed skill pack, not which project's session
+found the bug below. 27 of the 28 community-skill entries in
 `skills.stellar.org/llms.txt` linked to GitHub's rendered HTML page
 instead of the raw markdown an agent needs to fetch, root-caused to the
 pack's own `site/README.md` contribution guide having the wrong URL shape
