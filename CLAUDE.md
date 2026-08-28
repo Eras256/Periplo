@@ -870,6 +870,15 @@ hashes, cross-checked against Horizon, not just printed and trusted.
   doesn't depend on it.
 - Commit at every gate, conventional-commit format. The history is a
   reviewed deliverable, not just a log.
+- This account also runs other projects (Nirium, Contextio, Kumply, and
+  others) from the same GitHub identity and the same machine. When
+  determining which project a piece of external work (a PR, an issue, a
+  local checkout) actually belongs to, the user's own tracking record is
+  the authority, not an incidental technical signal: a shared local
+  directory path, or a user-level config file like
+  `~/.claude/plugins/known_marketplaces.json`, is not scoped to one
+  project and can't settle the question either way. Ask rather than
+  infer from machine state alone.
 
 ## Environment notes specific to this machine
 
