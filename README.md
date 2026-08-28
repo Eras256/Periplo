@@ -547,6 +547,78 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   live 28-entry `ECOSYSTEM_CARDS` list. Both fixed and pushed to the
   same branch.
 
+  On 2026-08-27, Kaan Kaçar's own automated triage bot reviewed #103
+  directly and confirmed the original fix real (`generate-llms-txt.mjs:156`
+  writes `copyValue` verbatim into `llms.txt`, the deployed file held 28
+  blob links and 0 raw ones, all 27 rewritten URLs returned
+  `200 text/plain`), then raised three further findings, each verified
+  independently before fixing rather than accepted on the bot's word
+  alone. First, `main` had gained a new ecosystem card (PMLL) since the
+  branch was cut, still pointing at a `blob` URL; it merged cleanly (no
+  conflict) but left one `blob` `copyValue` in the tree, which would have
+  failed `check:ecosystem-links` on the first deploy after merge. Fixed
+  by rebasing onto `origin/main` and rewriting that entry, its raw URL
+  confirmed `200` before writing it. Second, the wrong-URL-shape example
+  from the original fix was only corrected in `site/README.md`;
+  `site/src/app/page.tsx`'s `ADD_SKILL_SNIPPET` (the copy actually
+  rendered live in the site's "Add your skill" block) and
+  `site/CLAUDE.md`'s own contribution guide still carried it, both fixed
+  to match. Third, rewriting every `copyValue` to
+  `raw.githubusercontent.com` had silently changed each community card's
+  "View source" icon to open plain text instead of GitHub's rendered
+  page, since `page.tsx` passed `sourceUrl={c.copyValue}`, the same value
+  for both. Decided on purpose rather than left as a side effect: a new
+  `ecosystemSourceUrl` helper (`site/src/lib/ecosystem-source-url.mjs`)
+  reconstructs the `github.com/.../blob/...` URL from the raw one instead
+  of storing a second field that could drift, falling back to the
+  original URL unchanged for a card not hosted on GitHub at all
+  (`stellarlight.xyz`), verified against the real build output for both
+  cases plus the newly-fixed PMLL entry. A smaller fix rode along:
+  `import.meta.url` compared against a hand-built `file://` string
+  doesn't survive a checkout path needing URL-encoding, silently skipping
+  the whole check; `import.meta.filename` compares raw paths directly
+  instead. Left open for @kaankacar, not decided unilaterally: whether
+  `check:ecosystem-links` should run in the PR lane at all, since
+  `preview-pr.yml` skips fork PRs today. Fixed and pushed as `8eb4c4d`:
+  `pnpm lint`, `lint:ts`, and `build` clean, the real gate reporting 29
+  entries and no blob URLs, `node --test` 12/12 across both
+  ecosystem-links test files.
+
+  On 2026-08-28, the same bot's third triage round on `8eb4c4d` raised
+  three more real, independently confirmed findings before this could go
+  to @kaankacar for a human merge decision. First,
+  `check:ecosystem-links`/`test:ecosystem-links` had never actually run
+  in CI for this PR at all: `site-ci-fork.yml`, the only pre-merge lane a
+  fork PR runs (`preview-pr.yml` skips forks, `deploy-pages.yml` only
+  runs post-merge), landed on `main` after this branch was cut and only
+  ran install/lint/lint:ts/build. Fixed by adding both steps to
+  `site-ci-fork.yml` and correcting the workflow's own comment describing
+  what it runs. Second, `site/CLAUDE.md` still said the site had "no test
+  runner", now false since `node:test` was already in use with zero new
+  dependencies; fixed the stale claim (cross-referencing the file's own
+  "Don't add" policy rather than rewriting it) and added the two new
+  scripts to both `CLAUDE.md`'s and `README.md`'s script lists, neither
+  of which named them. Third, `SkillCard.tsx`'s comment on
+  `showOpenLink = copyValue !== sourceUrl` still described the pre-fix
+  behavior (`copyValue`/`sourceUrl` always equal for ecosystem cards,
+  chip never rendering); with `sourceUrl` now derived separately, all 28
+  GitHub-hosted cards' values differ, so the chip renders for them too, a
+  second, direct link to the raw file alongside the header's link to the
+  rendered page, confirmed on purpose in the real build output (PMLL's
+  chip opens its raw `SKILL.md`, `stellarlight.xyz`'s card still shows
+  none) and the comment rewritten to describe the new behavior. Fixed and
+  pushed as `40e6ce6`, all four checks (`lint`, `lint:ts`,
+  `check:ecosystem-links`, `test:ecosystem-links` at 12/12, `build`)
+  clean. Kaan's bot then confirmed the fix live rather than on
+  description alone: `site-ci-fork.yml` printed "29 entries checked, no
+  blob-URL copyValue found" at `40e6ce6`, all 29 `copyValue` URLs still
+  resolved (28 raw at `200 text/plain`, the one non-GitHub entry at
+  `200 text/markdown`), and the check now runs in all three CI lanes,
+  `site-ci-fork.yml` and `preview-pr.yml` pre-merge, `deploy-pages.yml`'s
+  copy left as a post-merge backstop rather than the only enforcement
+  point. Still open, unmerged: this PR touches `.github/workflows/`, so
+  the bot does not merge it, @kaankacar makes that call.
+
   The `upto` spec thread itself went through the same evidence discipline
   as everything else here: an honest comparison against a competing
   design rather than defending our own, real fee numbers and
