@@ -707,8 +707,8 @@ loose ends from shipping `contracts/upto-settlement`.
   found responding to external review, not self-discovered, then fixed
   the low-risk one (the "(default)"/"(alternative)" label wording in
   `#3098`'s spec text) before drafting a reply crediting the reviewer.
-- **whawk46 found a real follow-on gap in the already-merged `#3138`
-  fix itself**: the opaque-origin branch skipped query/fragment
+- **whawk46 found a real follow-on gap in the (still open, unmerged)
+  `#3138` fix itself**: the opaque-origin branch skipped query/fragment
   stripping the function exists to do. Implemented the fix they
   suggested, added a regression test with a query string on an opaque
   scheme, confirmed it fails before the fix and passes after, and they
@@ -884,7 +884,7 @@ loose ends from shipping `contracts/upto-settlement`.
 - **The SCF Build Award was submitted 2026-08-11.** Bug-hunting rounds
   are paused afterward, not abandoned: no urgency to generate more
   upstream evidence right now (five real issues/PRs already attached:
-  `#3098` merged, `#3121`/`#3138` open, `#839` open, `#3169`/`#1655`/`#3172`
+  `#3098`/`#3121`/`#3138` open, `#839` open, `#3169`/`#1655`/`#3172`
   open), and a lead toward `stellar-docs` (the Agent Skills discovery
   index publication mechanism, an indirect relationship to Periplo) was
   explicitly deferred rather than chased, named directly as the kind of
@@ -953,7 +953,8 @@ script tested both passing and failing) before anything was pushed.
 Opened as
 [stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103),
 open as of this writing, added to `README.md` alongside the other five
-upstream findings.
+upstream findings. (Merged 2026-08-28 by @kaankacar; true when written,
+see `README.md` for current status.)
 
 ## 2026-08-17: closing two of three `upto` gaps, a repo-wide em-dash pass, and the real x402 e2e conformance run
 
@@ -1031,3 +1032,89 @@ next time: an ambiguous background-task signal is not evidence a claim is
 false, only a prompt to go check the claim's own underlying evidence
 directly, the same standard this project already holds every other claim
 to, including its own prior work.
+
+## 2026-08-21: `upto` wired into the facilitator's own HTTP routes, closing a gap tracked open since Phase 6
+
+No published `@x402/stellar` class exists for `upto` (spec §1's "don't
+reimplement verify/settle" only binds schemes that package ships), so
+`UptoStellarScheme` follows the real, installed `ExactStellarScheme`
+facilitator's actual mechanics as closely as the two schemes' real
+differences allow, read directly from `@x402/stellar@2.22.0`'s own
+compiled source rather than guessed, per the upstream `upto` spec's own
+Appendix: "Implementations SHOULD share verification code between the
+two schemes where these do not diverge." Three non-obvious mechanics
+found only by actually running it against a real testnet simulation and
+hitting a real failure first, not reasoned out in advance: (1) `settle()`
+reuses the client's already-signed `SorobanAuthorizationEntry` verbatim
+rather than re-signing after a rebuild, since Soroban's own nonce and
+`signatureExpirationLedger` are chosen fresh by each new simulation, so a
+re-simulated entry never matches what the buyer actually signed; (2) the
+facilitator's own `require_auth()` needs a structurally-present,
+auto-generated, unsigned entry, since `assembleTransaction` treats a
+non-empty `auth` array on the simulated operation as already complete
+rather than merging in what the simulator would otherwise discover,
+forcing a two-pass simulation (empty auth to discover the requirement,
+then again with the buyer's real signed entry substituted in); (3)
+`_verify` must simulate a facilitator-sourced rebuild, not the client's
+raw payload transaction, since the client's own throwaway-source
+transaction can never satisfy `authorization.facilitator.require_auth()`
+on its own. Real end-to-end proof: a genuine partial settlement through
+this facilitator's own `core.verify()`/`core.settle()` (buyer signed
+0.1 PTEST, facilitator settled 0.035, buyer refunded 0.065), transaction
+[`35085ff714c5...`](https://stellar.expert/explorer/testnet/tx/35085ff714c54e591634cfe61c5f7d8b94e702aa6273005c29c9a0e369301829),
+Horizon-verified via `/effects`. Not yet reflected on the live
+`periplo-testnet.fly.dev` deployment: needs `UPTO_SETTLEMENT_CONTRACT_TESTNET`
+set and a redeploy, blocked on the recurring `fly` account-auth gap (see
+`docs/DEFERRED.md`). `pnpm run ci` green throughout, 256 tests.
+
+## 2026-08-25: cataloging moved to settle-only, closing a real free-mint path
+
+Stopped calling `processBazaarExtension` from `/verify` entirely;
+`/settle` is now the only trigger. `/verify`'s `isValid: true` proves a
+payload *could* settle, not that it did, so cataloging on that signal
+let a catalog row, and each `accepts` entry in it, be produced for one
+HTTP request and no real balance movement, exactly the ambiguity
+[x402-foundation/x402#3226](https://github.com/x402-foundation/x402/issues/3226)
+is auditing in public. Independently confirmed as the right reading by
+[pedro-pelicioni](https://github.com/pedro-pelicioni)'s stellarsight
+facilitator, which took the same settle-only interpretation, code
+checked directly rather than taken on the comment alone. `pnpm run ci`
+green throughout, 255 tests.
+
+## 2026-08-26: two more real catalog bugs, and the first real external seller
+
+Two read-path bugs found reconciling a third party's conformance report
+against the live deployment rather than assuming either side was right.
+`GET /discovery/resources`/`GET /discovery/search` echoed
+`extensions.bazaar: {}` for every resource despite the real 402
+challenge carrying the full declared extension. Root cause:
+`resources.extensions: text[]` only ever tracked which extension keys a
+resource declared, never their payloads, contradicting
+`@x402/extensions/bazaar`'s own installed `DiscoveryResource` type,
+which documents a payload field distinct from the key list. Fixed by
+adding `extension_payloads jsonb` (migration `20260826010000`) rather
+than repurposing the existing column. Required an explicit
+`DROP FUNCTION` before `CREATE OR REPLACE` on `periplo_hybrid_search`,
+since its `RETURNS TABLE` shape changed, the same lesson `20260820103000`
+already learned for an argument-list change. Separately, the
+`financial_analysis_da8703fa-...` Phase 4 test fixture (live since
+2026-08-11, literal placeholder values, no real MCP tool behind it) was
+deleted (migration `20260826020000`), both changes confirmed against the
+live Supabase project via its REST API, not from the migrations' own
+reported success.
+
+Same round, the first real external seller (Fer, `agentpayments.fi`)
+published and settled for real, and found a new, real, money-relevant
+bug: `EXTENSION-RESPONSES` never reached their code from `/settle`, even
+though cataloging genuinely happened. Root cause, found by reading the
+actual compiled `@x402/core@2.22.0` source rather than assumed from
+behavior: `HTTPFacilitatorClient.settle()`/`.verify()` only `console.log`
+the header internally, then discard it, never attaching it to what those
+methods return to the caller. Fixed without an upstream change, since
+`SettleResponse` already declares an unused `extensions` field the same
+client already parses; `/settle` now sends the outcome in the body too,
+verified through the real official client, not just a raw fetch. Filed
+upstream anyway as
+[x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270),
+since the underlying client bug affects every caller, not just Periplo's
+workaround. `pnpm run ci` green, 257 tests.
