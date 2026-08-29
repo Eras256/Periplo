@@ -40,7 +40,7 @@ flowchart LR
     Bazaar --> DB
     Facilitator -->|"automatic cataloging\n(PaymentPayload + discovery extension)"| Bazaar
     Facilitator --> RPC
-    Facilitator -.->|upto scheme| Upto
+    Facilitator -->|upto scheme| Upto
     Hub --> Bazaar
     Hub --> Facilitator
 
@@ -73,11 +73,14 @@ flowchart LR
   contract behind the `upto` scheme's `contract` profile (a plain SEP-41
   allowance can't express recipient-bound, single-use metered payment).
   Deployed to `stellar:testnet`, a real settled transaction recorded in
-  `conformance/RESULTS.md`. **Not yet wired into the facilitator's own
-  `/verify`/`/settle` HTTP routes** (the dashed edge in the diagram): the
-  contract works and settles for real, but a client can't yet negotiate
-  the `upto` scheme through Periplo's hosted facilitator over HTTP, that
-  integration is separate, tracked in `docs/DEFERRED.md`.
+  `conformance/RESULTS.md`. **Wired into the facilitator's own
+  `/verify`/`/settle` HTTP routes in code** (`UptoStellarScheme`,
+  `apps/facilitator/src/upto-stellar-scheme.ts`), with a real signed
+  `upto` payment settled through those exact entry points and recorded
+  in `conformance/RESULTS.md`. Not yet reflected on the live
+  `https://periplo-testnet.fly.dev` deployment: that needs
+  `UPTO_SETTLEMENT_CONTRACT_TESTNET` set and a redeploy, blocked on a
+  `fly` account mismatch, tracked in `docs/DEFERRED.md`.
 - **Supabase / Postgres**: the one real datastore, holding the catalog
   table both Bazaar and Search read from and write to. Public read (RLS),
   writes only via the service role.
