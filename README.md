@@ -529,7 +529,7 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   PR rather than just an issue: all 27 URLs, the contribution guide's
   example, and a new CI check preventing the mistake from recurring. Filed
   as [stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103),
-  open, awaiting a maintainer response.
+  merged 2026-08-28 by @kaankacar.
 
   On 2026-08-24, Copilot's review on #103 flagged that the new CI
   gate's own regex, `BLOB_PATTERN =
@@ -616,8 +616,8 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   `200 text/markdown`), and the check now runs in all three CI lanes,
   `site-ci-fork.yml` and `preview-pr.yml` pre-merge, `deploy-pages.yml`'s
   copy left as a post-merge backstop rather than the only enforcement
-  point. Still open, unmerged: this PR touches `.github/workflows/`, so
-  the bot does not merge it, @kaankacar makes that call.
+  point. This PR touches `.github/workflows/`, so the bot didn't merge it
+  itself; @kaankacar did, the same day, at `254aff4f`.
 
   The `upto` spec thread itself went through the same evidence discipline
   as everything else here: an honest comparison against a competing

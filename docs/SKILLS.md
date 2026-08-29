@@ -119,6 +119,6 @@ instead of the raw markdown an agent needs to fetch, root-caused to the
 pack's own `site/README.md` contribution guide having the wrong URL shape
 in its own example. Fixed with a PR, not just an issue:
 [stellar/stellar-dev-skill#103](https://github.com/stellar/stellar-dev-skill/pull/103),
-open as of this writing. Full detail in `docs/MEMORY.md`'s 2026-08-16
+merged 2026-08-28 by @kaankacar. Full detail in `docs/MEMORY.md`'s 2026-08-16
 entry and `README.md`'s `apps/facilitator` bullet, same evidence
 discipline as every other upstream finding this project has filed.
