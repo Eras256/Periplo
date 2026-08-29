@@ -1107,9 +1107,8 @@ claim to, three real gaps surfaced, none of them previously recorded:
 
 Recorded here first, deliberately, before any reply was drafted or posted
 for #1-#3 originally, so the finding was on record independent of how the
-thread response read. #2 and #3 are shipped, with their own commits and
-tests, clickable rather than asserted. #1 remains open, honestly scoped
-above rather than stubbed.
+thread response read. All three are now closed, with their own commits
+and tests, clickable rather than asserted, #1 as of 2026-08-21.
 
 ## Phase 6b: additional evidence for `upto` on Stellar, not an SCF tranche deliverable
 
@@ -1898,6 +1897,11 @@ non-master-key signer for this scheme stays unrepresentable through
 on its own.
 
 ## A second real catalog resource: genuinely blocked, not attempted with a shortcut
+
+**Superseded 2026-08-26, see "`EXTENSION-RESPONSES` never reached a
+seller through the official client" below**: the first real external
+seller (Fer, `agentpayments.fi`) published and settled for real,
+closing exactly the gap this section describes.
 
 Per direct feedback that the catalog's weakest point against rival
 submissions' real payment volume (Openx402: 290 observed payments;
