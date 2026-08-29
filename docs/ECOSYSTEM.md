@@ -31,7 +31,7 @@ Generated from `~/.claude/skills/data/lumenloop/projects.json` on **2026-08-07**
 **All 728 projects.** 557 hold an SCF award · $55.1M distributed · median $85,000 · 27% multi-round.
 Regenerate before any submission, the catalogue updates upstream.
 
-**Why this file exists.** The Open Track rejects teams *replicating existing ecosystem solutions*, and every submission must state its differentiation. This is the list to check that against. It is also where the zero-competition finding for x402 comes from: as of this snapshot, **none of the agentic-payments-adjacent projects below is an x402 facilitator or a discovery catalogue.**
+**Why this file exists.** The Open Track rejects teams *replicating existing ecosystem solutions*, and every submission must state its differentiation. This is the list to check that against. It is also where the zero-competition finding for x402 comes from: as of this snapshot, **none of the agentic-payments-adjacent projects below is an x402 facilitator or a discovery catalogue.** That's a different claim from "no competition for this submission": `README.md` documents 20-plus real teams competing for the same SCF #45 RFP Track award, this file's zero-competition finding is scoped to the general ecosystem catalogue, not that round.
 
 ---
 

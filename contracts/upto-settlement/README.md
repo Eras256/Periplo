@@ -24,7 +24,7 @@ contracts/upto-settlement/
 ├── Cargo.toml            # single-crate manifest
 ├── src/
 │   ├── lib.rs             # the contract
-│   ├── test.rs             # 21 unit tests (mod test, cfg(test))
+│   ├── test.rs             # 29 unit tests (mod test, cfg(test))
 │   └── property_test.rs    # 6 proptest properties (mod property_test, cfg(test))
 ├── fuzz/                  # cargo-fuzz target (nightly only, see below)
 └── test_snapshots/        # committed regression evidence (test.rs's 21 cases only,

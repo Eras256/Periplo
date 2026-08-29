@@ -138,8 +138,9 @@ listings specifically.
 ## What this path does NOT give you for free
 
 - **No automatic Bazaar listing.** Cataloging on Periplo's own Bazaar
-  (`docs/SELLERS.md`) happens inside Periplo's own `/verify`/`/settle`
-  HTTP handlers, specific to Periplo's deployment, not something a fully
+  (`docs/SELLERS.md`) happens inside Periplo's own `/settle` HTTP handler
+  (settle-only, see `docs/DEFERRED.md`), specific to Periplo's
+  deployment, not something a fully
   independent self-facilitated resource server calls into. If you want
   your self-facilitated resource discoverable through Periplo's catalog
   too, you'd need to also route through a Periplo-operated facilitator
