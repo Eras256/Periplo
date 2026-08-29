@@ -289,7 +289,9 @@ Natural-language `query` (not `q`, confirmed against the official
 this doc originally had `q`, corrected during Phase 4 while reading the
 primary source for something else, see `docs/INTEROP.md` §3), cursor
 pagination, `partialResults` when matches were truncated. `GET /discovery/*`
-itself is Phase 5 (search) work, not built yet.
+is live (`apps/facilitator/src/discovery-routes.ts`, Phase 5 work) and
+passed the official x402 e2e suite's own Discovery Validation step
+(`conformance/RESULTS.md`, 2026-08-17).
 
 ```jsonc
 {
@@ -588,7 +590,7 @@ Record every result in `conformance/RESULTS.md` with hashes and timestamps.
 protocol, and Bazaar as extension.
 
 ### Phase 9: Developer hub
-`apps/hub` on Next.js 16.3.0 + Tailwind 4.3.3. See §10 for exact scope.
+`apps/hub` on Next.js 16.3.1 + Tailwind 4.3.3. See §10 for exact scope.
 **Gate:** Playwright E2E covers each role path; Lighthouse accessibility ≥ 95.
 
 ### Phase 10: Examples, deployment, hardening
@@ -645,7 +647,7 @@ Run `osv-scanner` and a licence audit in CI. Fail on any AGPL transitive.
 
 | Layer | Tool | Requirement |
 | --- | --- | --- |
-| Unit | Vitest 4.1.10 | ≥ 85% line coverage on `packages/*` |
+| Unit | Vitest 4.1.11 | ≥ 85% line coverage on `packages/*` |
 | Contract | `cargo test` | Every error variant has a test |
 | Fuzz | `cargo-fuzz` | ≥ 3 targets on authorization decoding and amount arithmetic |
 | Integration | Vitest + testnet | Verify, settle, catalog, search against live RPC |
