@@ -94,9 +94,12 @@ each package's `tsconfig.json`, which extends `tsconfig.base.json`.
 `packages/evidence-check`, `apps/facilitator`, and `eval/` exist so far
 (Phases 0–5; `packages/evidence-check` is a CI-gate addition outside the
 phase numbering, same as `packages/licence-check`, see the Architecture
-section below). Everything else
+section below). `contracts/upto-settlement` also exists and is built
+(Phase 6, deployed to `stellar:testnet`, see below), but deliberately
+outside the pnpm workspace, so it has no `pnpm-workspace.yaml` entry and
+isn't part of this list. Everything else
 in the target layout (`apps/hub`, `packages/mcp`, `packages/helpers`,
-`contracts/`, `spec/`, `conformance/` runner, `examples/`) is **planned,
+`spec/`, `conformance/` runner, `examples/`) is **planned,
 not built**, see `docs/SPEC.md` §3 for what belongs where. Don't create
 empty placeholder directories for phases that haven't started (spec §12:
 no invented scope).
@@ -109,7 +112,7 @@ not unit tests. It deliberately checks the **production** dependency graph
 (`--prod`: `dependencies` + `optionalDependencies`) as the hard, blocking
 gate, and reports devDependency-only copyleft findings as warnings. The
 concrete case that motivated the split is `vitest` → `vite` →
-`lightningcss` (MPL-2.0), unavoidable while pinning `vitest@4.1.10` but
+`lightningcss` (MPL-2.0), unavoidable while pinning `vitest@4.1.11` but
 never bundled into a deployed service.
 
 `packages/bazaar` is the catalog trust boundary (Phase 1):
@@ -426,9 +429,8 @@ shape, same principle as the write path above. Search filters
 (`type`/`payTo`/`network`/`extensions`) apply as an in-process post-filter
 over `hybridSearch`'s ranked rows, since `periplo_hybrid_search` doesn't
 take them as SQL parameters, documented as a real, honest limitation in
-the module's own doc comment. `/supported` still can't report `upto`,
-that needs a real `UptoStellarScheme` registered against
-`x402Facilitator`, not a wiring fix, tracked open in `docs/DEFERRED.md`.
+the module's own doc comment. (`/supported`'s own `upto` support is
+covered later in this file, under `upto-stellar-scheme.ts`.)
 
 `packages/search` (Phase 5) is hybrid retrieval: lexical (`fts`/GIN, from
 Phase 2) fused with semantic (`embedding`/HNSW) via Reciprocal Rank Fusion.
@@ -527,7 +529,7 @@ balance at the end as a genuine runtime check (`Error::
 BalanceInvariantViolated`), not just a test assertion, since Soroban's
 "transaction is the atomicity boundary" guarantee means a non-standard
 (e.g. fee-on-transfer) token would otherwise be able to leave value stuck
-silently. `src/test.rs` (21 unit tests) and `src/property_test.rs` (6
+silently. `src/test.rs` (29 unit tests) and `src/property_test.rs` (6
 proptest properties, ~1,500 randomized cases per run) share one fixture
 path via `test::setup_with_env`, which is also why property tests build
 their own `Env` with `EnvTestConfig { capture_snapshot_at_drop: false }`
@@ -599,7 +601,8 @@ own separately-scoped investigation.
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
 afterward, turned up nine more real, independently verified upstream
-bugs, all filed, all still open as of this writing:
+bugs, all filed, eight still open as of this writing (`#103` merged
+2026-08-28 by @kaankacar):
 [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169)
 (`isValidRouteTemplate`'s traversal/scheme-injection checks decode once,
 so double percent-encoding bypasses both),
