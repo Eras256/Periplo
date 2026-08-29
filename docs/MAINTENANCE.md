@@ -17,10 +17,11 @@ upstream repositories this project builds on, `x402-foundation/x402`
 Soroban side depends on them. This is not a passive stance: this
 project's own history is real evidence of it. `docs/UPTO-CONVERGENCE.md`
 records active engagement with the `upto` scheme spec while it was still
-open, not after it landed; `docs/DEFERRED.md` and `README.md` record six
-real, independently verified bugs found in dependencies this project
-actually runs on top of, filed upstream (four still open as of this
-writing), not just noticed and left alone.
+open, not after it landed; `docs/DEFERRED.md`, `README.md`, and
+`CLAUDE.md` record nine real, independently verified bugs found in
+dependencies this project actually runs on top of, filed upstream
+(eight still open as of this writing, `stellar/stellar-dev-skill#103`
+merged 2026-08-28), not just noticed and left alone.
 
 ## How quickly conformance updates ship
 
@@ -71,7 +72,7 @@ smoothed over.
 
 ## Public communication channels: deliberately not committed to a cadence yet
 
-`docs/SPEC.md` §6 asks for a Matrix room and a Mastodon or Bluesky
+`docs/SPEC.md` §5 (Phase 10) asks for a Matrix room and a Mastodon or Bluesky
 account, linked from the hub, with a committed cadence stated here. None
 of the three exist yet (`docs/DEFERRED.md`): creating them is genuine
 public account creation, held for the project owner's explicit
