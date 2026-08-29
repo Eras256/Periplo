@@ -17,7 +17,7 @@ known to this build has a live, reachable Bazaar index.
 So the diff below is against the next best thing, and arguably the more
 authoritative one: the canonical wire spec itself. That means
 `@x402/extensions/bazaar` (the official TypeScript implementation, pinned
-at the same `2.21.0` this repo already pins for `@x402/core`/`@x402/stellar`)
+at the same `2.22.0` this repo already pins for `@x402/core`/`@x402/stellar`)
 and `e2e/extensions/bazaar.ts` (the x402 project's own conformance test for
 this exact extension). `docs/SPEC.md` §4 names this file directly as the
 authority: "these shapes are validated by `e2e/extensions/bazaar.ts`."
@@ -50,10 +50,9 @@ official package unmodified. This is the one place in Phase 4 where "build
 on the official SDK" was not the full story, documented here rather than
 left as a silent divergence.
 
-This gap is worth filing upstream; it has not been filed yet. Filing a
-GitHub issue on a repository this project does not own is an outward-facing
-action, flagged per working rules and held for confirmation rather than
-done unilaterally. The single-decode gap is a real, if narrow,
+This gap is filed upstream as
+[x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169),
+open as of this writing. The single-decode gap is a real, if narrow,
 catalog-poisoning surface for anyone using `isValidRouteTemplate` directly.
 `%252e%252e%252f` decodes once to `%2e%2e%2f`, which still passes the `..`
 check because that check runs on the once-decoded string, and only fully
@@ -102,46 +101,43 @@ not a spec PR. `CONTRIBUTING.md`'s "issue before spec" requirement is for
 spec changes; a bug report is lighter-weight and is explicitly one of the
 two things GitHub issues are for in that document.
 
-**Fix status, updated 2026-08-14**: a fix is open as
+**Fix status, updated 2026-08-23**: a fix is open as
 [x402-foundation/x402#3138](https://github.com/x402-foundation/x402/pull/3138),
 built scheme-agnostic per whawk46's suggested shape rather than an
 `mcp://`-specific patch, with a regression test on a second, unrelated
-made-up scheme. whawk46 reviewed it and separately found a real
+made-up scheme. whawk46 commented on it and separately found a real
 follow-on gap in the fix itself: the opaque-origin branch skipped the
 query/fragment stripping the function exists to do, reintroducing the
 same per-variant catalog duplication that stripping prevents. We
 implemented the fix they suggested for it (`${url.protocol}//${url.host}${url.pathname}`)
-with a new regression test, and they reviewed that too: "LGTM as it
+with a new regression test, and they commented on that too: "LGTM as it
 stands — merge-ready from my side" (quoted verbatim). The PR is open,
-mergeable, reviewed twice by the person who reported the original bug,
-blocked only on a maintainer's approval to merge, not on anything left
-for this project to do.
+mergeable, commented on three times by the person who reported the
+original bug. GitHub's own review API reports zero formal reviews on
+this PR (`reviews: []`); this is substantive comment text, not a
+submitted GitHub review, and whawk46's maintainer or write-access role
+on this repo has not been confirmed (see `README.md`'s 2026-08-23
+precision check). Still open, blocked on a maintainer actually merging
+it, not on anything left for this project to do.
 
-## 3. `docs/SPEC.md` §4's `GET /discovery/search` param name is wrong
+## 3. `GET /discovery/resources`'s filter list is missing `scheme`
 
-`docs/SPEC.md` §4 was written before this phase, from a wire-contract
-description rather than the source, and says the search endpoint takes a
-`q` parameter. The real wire uses `query`. That is confirmed by both the
-official client's `SearchDiscoveryResourcesParams`
+`docs/SPEC.md` §4 originally said the search endpoint took a `q`
+parameter, from a wire-contract description written before this phase
+rather than the source; the real wire uses `query`, confirmed by both
+the official client's `SearchDiscoveryResourcesParams`
 (`@x402/extensions/bazaar`'s `facilitatorClient.ts`) and the x402 e2e
 test's own probe (`e2e/extensions/bazaar.ts`'s `validateSearchEndpoint`,
-which builds `?query=<term>`). Phase 0's own baseline probe against
-`x402.org` (`conformance/baseline/x402-org/discovery-404.md`) used
-`?q=weather` too, but that request 404'd regardless, since no discovery
-endpoints exist there, so it never had a chance to surface this.
+which builds `?query=<term>`). That's since been corrected in
+`docs/SPEC.md` §4 itself, which now names this section as its source.
 
-`ListDiscoveryResourcesParams` also documents a `scheme` filter (alongside
-`type`, `payTo`, `network`, `extensions`, `limit`, `offset`) that
-`docs/SPEC.md` §4's filter list omits.
-
-This is not corrected in `docs/SPEC.md` yet. `GET /discovery/resources` and
-`GET /discovery/search` are Phase 5 (search) work, not built in Phase 4. It
-is recorded here now, while the primary source was open, so Phase 5 starts
-from the right param name instead of re-deriving it.
+Still open: `ListDiscoveryResourcesParams` also documents a `scheme`
+filter (alongside `type`, `payTo`, `network`, `extensions`, `limit`,
+`offset`) that `docs/SPEC.md` §4's filter list omits.
 
 ## Sources
 
-- `@x402/extensions/bazaar@2.21.0`: `facilitator.ts`, `facilitatorClient.ts`,
+- `@x402/extensions/bazaar@2.22.0`: `facilitator.ts`, `facilitatorClient.ts`,
   `http/types.ts`, `mcp/types.ts` (installed at
   `node_modules/@x402/extensions`, same pin as `@x402/core`/`@x402/stellar`).
 - `e2e/extensions/bazaar.ts`,
