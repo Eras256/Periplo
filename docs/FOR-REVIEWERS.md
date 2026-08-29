@@ -52,9 +52,17 @@ is planned but not yet built.
 
 ## 5. What's actually deployed vs. what's still a plan (2 minutes)
 
-`README.md`'s opening section states the phase status plainly (Phase 6,
-the `upto` Soroban contract, complete; Phase 7 onward not started) and
-says outright that there is no frontend yet. If you want the honest,
+`README.md`'s opening section states the phase status plainly: "Status:
+Phase 6, the `upto` Soroban contract, is complete... The rest of Phase
+10 is not done." That's a broader claim than "nothing since Phase 6":
+Phase 6b (additional evidence beyond the Phase 6 gate, not a tranche
+deliverable), the `upto` HTTP-route wiring, the official x402
+conformance-suite run, and the live demo resource all happened after
+Phase 6 and are documented in this same README, in `CLAUDE.md`, and in
+[`conformance/RESULTS.md`](../conformance/RESULTS.md). What genuinely
+hasn't started is Phase 7 (the MCP discovery server, named as next in
+`CLAUDE.md`'s own status line) and Phase 9, the developer hub; the
+README says so outright for the frontend. If you want the honest,
 itemized list of every deferred piece and every environment-specific
 gotcha encountered along the way, that's
 [`docs/DEFERRED.md`](DEFERRED.md), the project's own running log of
