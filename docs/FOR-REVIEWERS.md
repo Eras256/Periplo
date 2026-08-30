@@ -40,6 +40,18 @@ is the row `conformance/RESULTS.md` itself marks as the strongest
 evidence in that document, ahead of every transaction this project
 settled with its own test accounts.
 
+That same integration found a real bug in the official client itself:
+`HTTPFacilitatorClient` discarded the `EXTENSION-RESPONSES` header
+instead of returning it, filed as
+[x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270)
+and now generating fixes across three separate SDKs
+([`#3278`](https://github.com/x402-foundation/x402/pull/3278) TypeScript,
+[`#3301`](https://github.com/x402-foundation/x402/pull/3301) Go,
+[`PhilBot402/x402#4`](https://github.com/PhilBot402/x402/pull/4) Python,
+draft, all open as of this writing). Full detail in `README.md`, the
+block starting "The first real external seller published and settled
+for real."
+
 ## 4. The evidence table (2 minutes)
 
 [`conformance/RESULTS.md`](../conformance/RESULTS.md) lists every settled
