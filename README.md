@@ -354,6 +354,25 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   workaround, cited on `#3228` with their commit hash. Full writeup in
   `docs/DEFERRED.md`.
 
+  **Update, 2026-08-30: the same finding rippled across three separate
+  SDK implementations.** wnjoon, who triaged `#3270` in the thread,
+  independently confirmed the identical gap in the Go client
+  (`go/http/facilitator_client.go`'s `verifyHTTP`/`settleHTTP` discard
+  the decoded header the same way the TypeScript client does) and
+  opened [`#3301`](https://github.com/x402-foundation/x402/pull/3301)
+  themselves, explicitly refing this issue and `#3278` as its Go parity
+  follow-up, deliberately keeping `#3270` open rather than closing it
+  against a single-language fix. A Python draft addressing the same gap
+  in `python/x402/http/facilitator_client.py`'s
+  `HTTPFacilitatorClient`/`HTTPFacilitatorClientSync` is open as
+  [`PhilBot402/x402#4`](https://github.com/PhilBot402/x402/pull/4) (a
+  fork PR, still a draft, not yet opened against the upstream repo
+  itself), also linking back to `#3270` directly. Three independent
+  SDK-language fixes now trace to the one issue this project opened:
+  TypeScript (`#3278`, Bartok9), Go (`#3301`, wnjoon), Python
+  (`PhilBot402/x402#4`, draft). All three open, none merged as of this
+  writing, verified live before writing this.
+
   It is built on the official
   [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)
   package, for the same reason the facilitator does not reimplement
