@@ -144,13 +144,24 @@ the change in the commit body. Do not silently drift.
 **2026-08-19 re-verification notes, real deviations from a blind bump, not
 silent drift:**
 - `@x402/core`/`@x402/stellar`/`@x402/hono` are pinned to **2.22.0**, not the
-  actual latest (2.23.0, published 2026-08-18, less than 24 hours old at
-  verification time): `pnpm`'s own `minimumReleaseAge` supply-chain check
-  flagged 2.23.0 for exactly this reason. This is the real trust-critical
-  dependency the deployed fee-sponsor signs through; bypassing that check to
-  grab a release published the day before, with no changelog available to
-  review what changed, was judged riskier than the two extra weeks of real
-  usage 2.22.0 already has. Revisit once 2.23.0 clears a reasonable age.
+  actual latest (**2026-08-30 re-check**: 2.24.0, published 2026-08-27,
+  three days old and two releases ahead; a real `pnpm install` against it
+  today pulls it cleanly, so the release-age gate that justified the
+  2026-08-19 wording no longer applies and that reasoning is retired). The
+  real, current reason to stay pinned: `typescript/packages/core/CHANGELOG.md`
+  shows 2.23.0 (the release actually carrying new content; 2.24.0 is "bumped
+  to align version with dependent packages," nothing more) made real,
+  breaking-shaped changes this project hasn't evaluated against its own
+  usage yet, not just accumulated age: `spendControls`, a new default $1 USD
+  cap on non-pegged client assets (the same guard already flagged as a
+  version-skew finding in `docs/DEFERRED.md`, from probing a client built
+  against a newer `@x402/core`); renamed exports
+  (`DEFAULT_STABLECOINS`/`USDC_CONFIG`/`DEFAULT_ASSET_BY_NETWORK` →
+  `DEFAULT_ASSETS`); and `createSIWxPayload` gaining a new required third
+  argument. This is the real trust-critical dependency the deployed
+  fee-sponsor signs through; bumping past those changes without checking
+  Periplo's own usage against each one is a deliberate upgrade decision,
+  not a version-age wait.
 - `soroban-sdk` stays at **27.0.5**, not the actual latest (27.0.6, a plain
   patch bump): the deployed `UptoSettlement` contract
   (`CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`) was built and
