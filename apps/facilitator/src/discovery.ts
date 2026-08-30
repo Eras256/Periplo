@@ -204,7 +204,7 @@ export async function processBazaarExtension(
   // DiscoveredResource union), not on the resource URL's scheme, and never
   // calls `new URL()` on the mcp:// string itself, so it was never
   // vulnerable to the opaque-origin bug the way upstream's own code was.
-  // Still required at the currently pinned `@x402/extensions@2.21.0`: the
+  // Still required at the currently pinned `@x402/extensions@2.22.0`: the
   // upstream fix has a PR open (x402-foundation/x402#3138, closes #3121,
   // scheme-agnostic, skips canonicalization entirely when
   // `url.origin === "null"` instead of an mcp-specific branch) but isn't
