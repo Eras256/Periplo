@@ -885,6 +885,16 @@ hashes, cross-checked against Horizon, not just printed and trusted.
   `~/.claude/plugins/known_marketplaces.json`, is not scoped to one
   project and can't settle the question either way. Ask rather than
   infer from machine state alone.
+- A CI gate failing on a commit that didn't touch related code is not
+  evidence of flakiness; it's a prompt to find the real cause before
+  re-running. `eval/` shares the production Supabase project with no
+  isolated database (`docs/DEFERRED.md`), so two `pnpm eval` runs close
+  together in time can race the same fixture rows; a real instance of
+  this collapsed nDCG@10 from 0.93 to 0.21 on 2026-08-31, on a
+  docs-only commit, and would have looked like ordinary flakiness to a
+  blind re-run. Compare the failing run's own timestamps against the
+  runs immediately before and after it (`gh run list`, `gh run view
+  --log`) before assuming noise.
 
 ## Environment notes specific to this machine
 
