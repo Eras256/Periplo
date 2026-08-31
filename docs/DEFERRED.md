@@ -2198,6 +2198,29 @@ separate eval-only database, or seeding into a schema/tenant the public
 routes never query) is a real infrastructure change, not something to
 retrofit into an unrelated bug-fix commit.
 
+**2026-08-31: the same root cause caused a real CI failure, not just a
+cosmetic polling window.** Two pushes 83 seconds apart
+(`3497edab`/`68141738`) triggered two overlapping GitHub Actions runs,
+confirmed by comparing both runs' own `Seeding`/`Running`/result log
+timestamps: the earlier run's query loop (13:36:54-13:38:11) was still
+active when the later run started seeding (13:37:47) and querying
+(13:38:01) the same 55 deterministic fixture URLs, then the earlier
+run's `finally`-block cleanup (starting ~13:38:11) deleted those shared
+rows while the later run's own 300-query loop was still reading them.
+`nDCG@10` collapsed from 0.9332/0.9346 to 0.2121, correctly failing the
+gate; the live catalog itself was confirmed back to its real 2-resource
+count immediately after, so this was a transient race, not a lasting
+data-loss incident. Root-caused before considering it resolved, not
+just re-run past: `.github/workflows/ci.yml` had no `concurrency` group
+at all, so nothing prevented two pushes from ever racing the same
+production catalog. Fixed with a `concurrency: { group: ci-${{
+github.ref }}, cancel-in-progress: true }` block, which cancels a
+still-running run for the same ref the moment a newer one supersedes
+it, closing this specific race. The underlying "eval and production
+share one database" design this section already flagged is still real
+and still open; the concurrency fix prevents the two-runs-racing
+symptom, not the single-run pollution window above.
+
 ## `@x402/core` has a newer client-side `spendControls` guard than what's pinned, found testing someone else's PR, not our own dependency review
 
 Found live, 2026-08-26, running a real end-to-end check of

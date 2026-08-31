@@ -5,6 +5,20 @@ on:
     branches: [main]
   pull_request:
 
+# Found live, 2026-08-31: two pushes 83 seconds apart triggered two
+# overlapping runs against the same production Supabase project (no
+# separate eval database exists, see docs/DEFERRED.md). `pnpm eval`
+# seeds/queries/deletes 55 shared fixture rows by a deterministic URL;
+# the earlier run's `finally` cleanup deleted those rows mid-flight
+# while the later run's own 300-query loop was still reading them,
+# collapsing its nDCG@10 from 0.93 to 0.21. Not a code or data
+# regression, a concurrency hazard: this cancels a still-running run
+# for the same ref the moment a newer push/PR update supersedes it, so
+# two `pnpm eval` invocations can no longer race the same catalog rows.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 # Phase 0 gate (master spec): pnpm install && pnpm typecheck && pnpm lint && pnpm test
 # must exit 0. licence-check and osv-scan are additional CI-only gates from §6/§7.
 jobs:
