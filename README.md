@@ -188,7 +188,7 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   real gap found in the suite's own client bootstrapping along the way is
   filed as
   [x402-foundation/x402#3187](https://github.com/x402-foundation/x402/issues/3187).
-  **Own PR proposed, mergeable, awaiting maintainer:**
+  **Own PR, merged 2026-08-31 by @phdargen (`dd258756...`):**
   [x402-foundation/x402#3228](https://github.com/x402-foundation/x402/pull/3228)
   scopes EVM/SVM client signer derivation to the selected `--families`,
   the same pattern every other family already followed, plus a second
@@ -206,6 +206,11 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   the same suite this README's own settled transactions above ran
   through. Full transcript and setup for both e2e runs in
   [`docs/conformance/2026-08-17-x402-e2e-stellar-exact.md`](docs/conformance/2026-08-17-x402-e2e-stellar-exact.md).
+  Independently reinforced before it merged: an unrelated Stellar
+  facilitator, stellarsight, hit the identical `#3187` crash in their
+  own conformance run and needed the same decoy-key workaround, cited
+  directly on this PR with their commit hash, full writeup in
+  `docs/DEFERRED.md`.
 
   Reviewing `@x402/core`, the package this facilitator is built directly
   on, as part of a wider pass over the dependency (not triggered by
@@ -346,13 +351,7 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   fallback, which stays covered only by Bartok9's own mocked tests. A
   separate, unrelated version-skew finding from the same run
   (a client-side `spendControls` guard newer than what we pin) is
-  tracked in `docs/DEFERRED.md`, not repeated here. Added a
-  second, independent real-world case for the same underlying bug
-  (`#3187`, the e2e suite's eager EVM/SVM signer derivation): an
-  unrelated Stellar facilitator, stellarsight, hit the identical crash
-  in their own conformance run and needed the same decoy-key
-  workaround, cited on `#3228` with their commit hash. Full writeup in
-  `docs/DEFERRED.md`.
+  tracked in `docs/DEFERRED.md`, not repeated here.
 
   **Update, 2026-08-30: the same finding rippled across three separate
   SDK implementations.** wnjoon, who triaged `#3270` in the thread,

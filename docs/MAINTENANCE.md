@@ -20,8 +20,9 @@ records active engagement with the `upto` scheme spec while it was still
 open, not after it landed; `docs/DEFERRED.md`, `README.md`, and
 `CLAUDE.md` record nine real, independently verified bugs found in
 dependencies this project actually runs on top of, filed upstream
-(eight still open as of this writing, `stellar/stellar-dev-skill#103`
-merged 2026-08-28), not just noticed and left alone.
+(seven still open as of this writing, `stellar/stellar-dev-skill#103`
+merged 2026-08-28 and `#3187` closed 2026-08-31 when its fix merged),
+not just noticed and left alone.
 
 ## How quickly conformance updates ship
 

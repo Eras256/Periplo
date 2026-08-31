@@ -601,8 +601,9 @@ own separately-scoped investigation.
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
 afterward, turned up nine more real, independently verified upstream
-bugs, all filed, eight still open as of this writing (`#103` merged
-2026-08-28 by @kaankacar):
+bugs, all filed, seven still open as of this writing (`#103` merged
+2026-08-28 by @kaankacar; `#3187` closed 2026-08-31 when its fix,
+`#3228`, merged):
 [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169)
 (`isValidRouteTemplate`'s traversal/scheme-injection checks decode once,
 so double percent-encoding bypasses both),
@@ -626,10 +627,11 @@ SVM signers regardless of the `--families` scoping the CLI documents as
 supported, so a single-family run against a non-EVM/SVM network crashes
 unless unrelated-network credentials are set anyway; found running the
 real conformance pass in `docs/conformance/`, not from reading the harness
-cold; own PR proposed, mergeable, awaiting maintainer, not yet merged:
+cold; own PR merged 2026-08-31 by @phdargen:
 [#3228](https://github.com/x402-foundation/x402/pull/3228), rebuilt and
 re-verified against current upstream `main` before opening it, fixing
-the exact suite this project's own conformance evidence runs through),
+the exact suite this project's own conformance evidence runs through,
+closing `#3187` itself as a result),
 and
 [stellar/js-stellar-sdk#1681](https://github.com/stellar/js-stellar-sdk/issues/1681)
 (`AssembledTransaction.signAuthEntries` can't represent a non-master-key
