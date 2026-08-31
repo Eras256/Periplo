@@ -860,8 +860,10 @@ and re-checked incrementally per phase. First verified 2026-08-07;
 submission, done 8 days after the actual 2026-08-11 submission rather
 than before it. `docs/SPEC.md` §2 has the full table and the reasoning
 behind the two versions deliberately not bumped to the latest available
-(`@x402/core`'s family, held back one release for being under 24 hours
-old at check time; `soroban-sdk`, held at the version the already-deployed
+(`@x402/core`'s family, held at 2.22.0 pending evaluation of real,
+breaking-shaped changes in 2.23.0, `spendControls`'s new default cap,
+renamed exports, a new required `createSIWxPayload` argument, not
+release age; `soroban-sdk`, held at the version the already-deployed
 `UptoSettlement` contract was actually built against). See
 [`docs/DEFERRED.md`](docs/DEFERRED.md) for why the first pass ran late.
 
