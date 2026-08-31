@@ -448,8 +448,11 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   on #1655 whether this behavior change (a documented public API now
   reports every unsigned node, not just the top-level one) should ship as
   a v17.x bug fix or wait for v18, given CAP-71 isn't live on any network
-  yet. We replied recommending v17.x. **Still open, not merged**, the
-  version question unresolved. Running the new tests surfaced a second,
+  yet. We replied recommending v17.x. Rebased onto `v17.0.1` on
+  2026-08-28 once upstream cut that release mid-PR-lifetime, settling
+  the question by circumstance rather than a maintainer decision: the PR
+  can now only ship as a later v17.x patch, not v18. Running the new tests
+  surfaced a second,
   genuinely separate bug along the way, not the one we set out to fix:
   `authorizeEntry()`'s bare-signature fallback path infers `publicKey`
   from the entry's top-level address unconditionally, ignoring
@@ -525,6 +528,22 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   different keypair than the one requested and confirms the default
   path still verifies. Both fixed and pushed to the same branch:
   `pnpm exec vitest run test/unit`, 130 files, 6664 tests passing.
+
+  A second Copilot review, 2026-08-29, after the `v17.0.1` rebase, found
+  a real regression we introduced ourselves: resolving the `CHANGELOG.md`
+  conflict during the rebase had deleted the entire `v17.0.0` release
+  section, jumping straight from `v17.0.1` to `v17.0.0-rc.2`. Restored
+  verbatim from upstream `main`, verified byte-for-byte identical to the
+  real released section, fixed and pushed the same day. Three further
+  comments from that review are still open, unresolved design questions
+  on `assembled_transaction.ts` rather than regressions: whether
+  `needsNonInvokerSigningBy()` should exclude a delegate an account's own
+  policy may never require, whether its public documentation should
+  describe contract-address delegates (not just accounts), and whether
+  `signAuthEntries()` should preserve an entry's existing expiration once
+  any node is signed rather than overwrite it with a fresh one on a later
+  signer. **Status: rebased, mergeable, three real review findings from
+  Copilot pending a fix, not a version question anymore.**
 
   Both #1672 and #3215 are the first pair of contributions from this
   project to go through the checklist in
