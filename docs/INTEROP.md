@@ -52,7 +52,9 @@ left as a silent divergence.
 
 This gap is filed upstream as
 [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169),
-open as of this writing. The single-decode gap is a real, if narrow,
+open as of this writing, with a fix open against it as
+[x402-foundation/x402#3213](https://github.com/x402-foundation/x402/pull/3213)
+(ygd58). The single-decode gap is a real, if narrow,
 catalog-poisoning surface for anyone using `isValidRouteTemplate` directly.
 `%252e%252e%252f` decodes once to `%2e%2e%2f`, which still passes the `..`
 check because that check runs on the once-decoded string, and only fully

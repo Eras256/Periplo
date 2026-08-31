@@ -606,7 +606,8 @@ bugs, all filed, seven still open as of this writing (`#103` merged
 `#3228`, merged):
 [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169)
 (`isValidRouteTemplate`'s traversal/scheme-injection checks decode once,
-so double percent-encoding bypasses both),
+so double percent-encoding bypasses both; fix open as
+[#3213](https://github.com/x402-foundation/x402/pull/3213), ygd58),
 [stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655)
 (`needsNonInvokerSigningBy`/`signAuthEntries` only see the top-level node
 of a CAP-71 `SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES` entry, missing
