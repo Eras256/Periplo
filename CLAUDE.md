@@ -1025,6 +1025,17 @@ hashes, cross-checked against Horizon, not just printed and trusted.
   `gpg.ssh.allowedSignersFile` isn't configured locally, even when the
   commit really is signed. Don't report a PR as finished until checks
   are actually green, not just until `gh pr create` returns a URL.
+- Local commit state is not remote state, and a prior read of an
+  external source is not the source. Recurred twice on 2026-09-01: docs
+  committed locally and reported as pushed before `git push` had
+  actually run, caught by the user checking `origin/main`, not by this
+  session; and an external issue's real title was misdescribed in
+  conversation from a partial recollection rather than a fresh re-check.
+  Before reporting a commit as pushed, `git fetch` and compare against
+  `origin/<branch>` (or `gh api repos/<owner>/<repo>/commits`), not just
+  local `git log`. Before citing or paraphrasing any external issue,
+  PR, or file, re-fetch it the same turn, even if already read earlier
+  in the session.
 
 ## Environment notes specific to this machine
 
