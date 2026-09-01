@@ -597,8 +597,12 @@ read about it.
   `forAddress`, proposed error wording, and yes to matching the existing
   fallback rule, with this fix landing in the same PR as #1681's below
   since both converge on the same `{ signature, publicKey }` return shape.
-  **Status: filed, our proposed direction posted in reply to the
-  maintainer's questions, not yet confirmed by roebee, not fixed, open.**
+  **Status: filed; the proposed fix (verify against `forAddress` on the
+  naked-signature path in `base/auth.ts`, exactly the one line proposed
+  in the issue) landed in code as part of #1672 on 2026-09-01, prompted
+  by a second maintainer's review, Ryang-21, see below — not yet
+  confirmed by roebee, and the issue itself stays open on GitHub until
+  #1672 actually merges, not claimed closed early.**
 
   That same `authorizeEntry()` bare-signature fallback path turned up a
   second, separate way to trip it: attempting a genuine classic Stellar
@@ -668,6 +672,89 @@ read about it.
   any node is signed rather than overwrite it with a fresh one on a later
   signer. **Status: rebased, mergeable, three real review findings from
   Copilot pending a fix, not a version question anymore.**
+
+  On 2026-09-01, a second real maintainer, Ryang-21, distinct from
+  roebee's ongoing engagement above, left a formal review on #1672
+  itself: `CHANGES_REQUESTED`, five inline comments, each naming a
+  genuine silent-signature-corruption or dead-end path, not a style nit.
+  In order: reusing a fresh `expiration` default across sequential
+  multi-party signers silently invalidates an earlier signer's signature
+  (`Error(Auth, InvalidAction)` on the real host, no client-side warning
+  first) — the same defect Copilot's own third open question above had
+  already flagged, now confirmed and fixed by a second, independent
+  reviewer; a missing `!signer.signed` guard let a repeat
+  `signAuthEntries()` call for an already-signed address re-sign and
+  re-bump the same shared expiration through a second door; a
+  contract-address (`C...`) delegate target reached an unreachable
+  `signatureScVal` branch, surfacing only an opaque strkey error; a
+  pre-#1672 custom `authorizeEntry` with 4 declared parameters silently
+  dropped the new `forAddress` (5th) argument, writing a delegate's
+  signature to the entry's top level instead of the delegate node; and
+  the #1683 fix belonged in `base/auth.ts` itself, not the narrower
+  `assembled_transaction.ts` workaround this PR had shipped with. All
+  five fixed in one commit, `0dd1c624`, each with its own new regression
+  test (the expiration-reuse test needed a rewrite mid-session from a
+  passthrough mock, which never actually exercised the check, to real
+  signing via `contract.basicNodeSigner`, caught before pushing). Replied
+  inline to each of the five threads plus one summary comment, each
+  referencing the real commit rather than asserting the fix happened.
+  Merged `upstream/main` afterward (`81466fd9`, a merge commit, not a
+  rebase, so Ryang-21's existing comment anchors didn't move) to pick up
+  #1693/#1698, one `CHANGELOG.md` conflict resolved by hand. Re-verified
+  in full post-merge: 132 test files, 6743 tests passing, both `tsc -p`
+  invocations clean, `eslint src/` clean, generated docs confirmed
+  current by the repo's own pre-push hook. Signed and verified:
+  `gh api repos/Eras256/js-stellar-sdk/commits/81466fd9 --jq
+  '.commit.verification.verified'` returns `true`. CI (Tests, CodeQL,
+  Docs build, Code Formatting, Guide snippets, e2e) shows
+  `action_required`, confirmed via the Actions API rather than assumed
+  from the check list alone: the standard GitHub gate for an external PR
+  awaiting a maintainer's manual approval to run workflows, not a failure
+  on this branch. **Status: all five of Ryang-21's review points fixed
+  with dedicated tests and evidence, merge conflict resolved and pushed,
+  signed, nothing further actionable from this side until a maintainer
+  approves CI and review resumes. Copilot's first two open design
+  questions above (excluding a never-required delegate, documenting
+  contract-address delegates) remain genuinely open, distinct from what
+  Ryang-21's review covered.**
+
+  Resuming the broader search this session had paused for the Ryang-21
+  review, the same defect class recurred independently, the same day, in
+  a different official SDK: `StellarCN/py-stellar-base`'s own
+  `authorize_entry()` (`stellar_sdk/auth.py`) signs each CAP-71-01
+  delegate correctly in isolation, but sequential signing across
+  multiple delegates silently overwrites the entry's one shared
+  `signature_expiration_ledger` field, invalidating an earlier
+  delegate's already-stored signature whenever two calls use different
+  expiration values, with no error raised at either call. The library's
+  own docstrings already state the requirement in prose, twice ("every
+  signer of one entry must use the same `valid_until_ledger_sequence`,
+  otherwise earlier signatures are invalidated"), but nothing in code
+  enforces it, and `AssembledTransaction.authorize()`/`sign_auth_entries()`
+  never reach this path at all: they only target the top-level address
+  by design, so `authorize_entry(..., for_address=...)` is the *only*
+  documented way to sign a delegates entry with this library, not a
+  fallback. Reproduced for real against `a0e9f8b7` (the commit last
+  touching `auth.py`): two delegates signed with expirations 1000 and
+  2000, then the payload the network would actually verify the first
+  delegate's stored signature against (rebuilt from the entry's current
+  state, expiration 2000) compared byte-for-byte against the payload it
+  was actually signed with (expiration 1000) — confirmed different.
+  Checked for duplicates first (none found; the PR that added this
+  support, `#1189`, has no discussion of this case in its own review).
+  Filed as
+  [StellarCN/py-stellar-base#1215](https://github.com/StellarCN/py-stellar-base/issues/1215)
+  with a proposed fix (raise a clear `ValueError` in `authorize_entry()`
+  when an already-partially-signed entry's stored expiration disagrees
+  with the one just passed, instead of silently overwriting it), not
+  just the finding. Severity calibrated the same honest way as #1655's
+  own entry above: CAP-71 isn't live on any network yet, so this has no
+  impact on a real transaction today, but the bug is real in code
+  already shipped, in the only path this library offers for it. No PR
+  opened yet, per this repo's own `CONTRIBUTING.md`, which asks
+  contributors to check in before starting work on a significant
+  change; the issue includes a full fix sketch so that step is fast once
+  a maintainer responds.
 
   Both #1672 and #3215 are the first pair of contributions from this
   project to go through the checklist in

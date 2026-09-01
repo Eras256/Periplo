@@ -2388,3 +2388,92 @@ None of these four findings is a security vulnerability; each fails
 closed, degrades functionally, or (`#1699`) turned out not to be a bug
 at all, calibrated the same honest way as every other finding in this
 list.
+
+## A real maintainer review on #1672, then the same defect recurring independently in a different SDK, 2026-09-01
+
+Two more findings the same day, in the base Stellar SDKs rather than
+x402 packages, per a direct instruction to widen the search past
+`x402-foundation/x402` to the tooling the whole Stellar ecosystem builds
+on, not just this project's own SCF-round competitors.
+
+**First, a real human maintainer, not Copilot, reviewed #1672 itself.**
+Ryang-21 left `CHANGES_REQUESTED` and five inline comments on
+[stellar/js-stellar-sdk#1672](https://github.com/stellar/js-stellar-sdk/pull/1672),
+each a genuine silent-signature-corruption or dead-end path on the new
+CAP-71 delegate-signing surface: stale-expiration reuse across
+sequential signers, a missing already-signed guard, an unreachable path
+for a contract-address delegate, a custom `authorizeEntry` silently
+dropping the new `forAddress` argument, and the #1683 fix belonging in
+`base/auth.ts` rather than the narrower workaround #1672 shipped with.
+All five fixed in one commit (`0dd1c624`), each with a dedicated new
+test, `upstream/main` merged afterward (`81466fd9`, a merge commit, not
+a rebase, so Ryang-21's existing comment anchors didn't move), full
+suite re-verified post-merge (132 files, 6743 tests), replied to each
+thread with the real commit. CI shows `action_required`, GitHub's
+standard external-PR gate, not a failure. Full detail in `README.md`'s
+and `CLAUDE.md`'s own #1672 histories; not repeated here since neither
+file's account needed correcting, unlike the retraction above.
+
+**Second, resuming the broader search this review had paused, the same
+defect class turned up independently, the same day, in a different
+official SDK.** `StellarCN/py-stellar-base`'s `authorize_entry()`
+(`stellar_sdk/auth.py`) signs each CAP-71-01 delegate correctly in
+isolation, but silently overwrites the entry's one shared
+`signature_expiration_ledger` field on a later delegate's signing call,
+invalidating an earlier delegate's already-stored signature whenever the
+two calls pass different expirations, with no error raised at either
+step. The library's own docstrings state the requirement in prose twice
+("every signer of one entry must use the same
+`valid_until_ledger_sequence`, otherwise earlier signatures are
+invalidated") but nothing in code enforces it, and
+`AssembledTransaction.authorize()`/`sign_auth_entries()` never reach this
+path at all: by explicit design they only ever target the top-level
+address (`needs_non_invoker_signing_by()`'s own docstring: "delegate
+signers ... are account-specific policy and are not reported"), so
+`authorize_entry(..., for_address=...)` isn't a fallback, it's the only
+documented way to sign a delegates entry with this library.
+
+Reproduced for real, not just read, against `a0e9f8b7` (the commit last
+touching `auth.py`): built a two-delegate entry, signed delegate 1 with
+`valid_until_ledger_sequence=1000`, signed delegate 2 with `2000`, then
+rebuilt the payload the network would actually verify delegate 1's
+already-stored signature against, using the entry's current (now
+`2000`) shared expiration field, and compared it byte-for-byte against
+the payload delegate 1 actually signed (built with `1000`). Confirmed
+different. Checked for duplicates first: nothing found searching for
+"delegate"/"CAP-71"/"expiration" across open and closed issues and PRs,
+and `#1189` (the PR that added this support) has no discussion of this
+case in its own review comments. Filed as
+[StellarCN/py-stellar-base#1215](https://github.com/StellarCN/py-stellar-base/issues/1215)
+with a proposed fix included, not just the finding: raise a clear
+`ValueError` in `authorize_entry()` when an already-partially-signed
+entry's stored expiration disagrees with the value just passed, instead
+of silently overwriting it, favoring an explicit error over silently
+substituting the stored value since `valid_until_ledger_sequence` is
+always an explicit caller argument in this SDK, never library-computed
+the way it is in `js-stellar-sdk`'s higher-level `signAuthEntries()`
+wrapper (where the equivalent #1672 fix does silently reuse the stored
+value, appropriately, since that value was only ever a library-computed
+default in the first place).
+
+No PR opened yet, unlike the three fixable findings in the section
+above: `StellarCN/py-stellar-base`'s own `CONTRIBUTING.md` explicitly
+asks contributors to check in before starting work on a significant
+change, a different convention than `x402-foundation/x402`'s, and the
+issue text carries a full fix sketch so that step is fast once a
+maintainer responds. Severity calibrated the same honest way as every
+other CAP-71 finding this project has filed: not live on any network
+yet, so no impact on a real transaction today, but the bug is real in
+code already shipped, in the only path this specific library offers for
+delegate signing.
+
+Notable for what it says about the underlying skill, not just the
+individual bug: the exact same subtle mistake (a shared, single
+`signature_expiration_ledger` field that every signer's signature
+commits to, with no code-level protection against a later signer
+picking a different value) was independently made by two different
+teams building two different SDKs in two different languages. Neither
+caught it until this session's own accumulated CAP-71 expertise, built
+fixing the `js-stellar-sdk` case first under a real maintainer's review,
+made the Python SDK's version immediately recognizable rather than
+something that had to be rediscovered from scratch.

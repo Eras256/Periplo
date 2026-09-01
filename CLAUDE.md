@@ -829,6 +829,91 @@ with a real alternative sketched (raw `env.crypto().ed25519_verify()`,
 already Stellar's own reference pattern), not a spec commitment. Full
 writeup in `docs/SPEC.md`'s Phase 6 section.
 
+**2026-09-01: a second, real maintainer review landed on #1672 itself,**
+distinct from roebee's ongoing engagement on #1655/#1681/#1683. Ryang-21
+left `CHANGES_REQUESTED` plus five inline comments, each naming a genuine
+silent-signature-corruption or dead-end path on the new delegate-signing
+surface, not a style nit: reusing a stale `expiration` default across
+sequential multi-party signers silently invalidates an earlier signer's
+signature (`Error(Auth, InvalidAction)` on the real host, no client-side
+warning first, the same defect Copilot's own third open question, noted
+above in the #1672 history, had already flagged); a missing
+`!signer.signed` guard let a repeat `signAuthEntries()` call for an
+already-signed address re-sign and re-bump the same shared expiration
+through a second door; a contract-address (`C...`) delegate target
+reached an unreachable `signatureScVal` branch, surfacing only an opaque
+strkey error; a pre-#1672 custom `authorizeEntry` declaring 4 parameters
+silently dropped the new `forAddress` (5th) argument, writing a
+delegate's signature to the entry's top level instead of the delegate
+node; and the #1683 fix belonged in `base/auth.ts` itself (one line, as
+Ryang-21 specified exactly), not the narrower `assembled_transaction.ts`
+workaround #1672 had shipped with. All five fixed in one commit,
+`0dd1c624`, each with a dedicated new regression test — the
+expiration-reuse test needed a mid-session rewrite from a passthrough
+mock, which never actually exercised the already-signed check it was
+meant to cover, to real signing via `contract.basicNodeSigner`, caught
+before pushing. Merged `upstream/main` afterward (`81466fd9`, a merge
+commit, not a rebase, so none of Ryang-21's existing comment anchors
+moved) to pick up #1693/#1698, one `CHANGELOG.md` conflict resolved by
+hand. Re-verified in full post-merge, not just the fix commit in
+isolation: 132 test files, 6743 tests passing, `tsc -p tsconfig.json`
+and `tsc -p test/tsconfig.json` both clean, `eslint src/` clean,
+generated reference docs confirmed current by the repo's own pre-push
+hook. Replied inline to each of the five review threads plus one summary
+PR comment, each referencing the real commit rather than asserting the
+fix happened. Signed and verified:
+`gh api repos/Eras256/js-stellar-sdk/commits/81466fd9 --jq
+'.commit.verification.verified'` returns `true`. CI (Tests, CodeQL, Docs
+build, Code Formatting, Guide snippets, e2e) shows `action_required`,
+confirmed via the Actions API rather than assumed from the check list
+alone: the standard GitHub gate requiring a maintainer to approve
+workflow runs on an external PR, not a failure on this branch. **Status:
+all five of Ryang-21's review points fixed with dedicated tests and
+evidence, merge conflict resolved and pushed, signed, nothing further
+actionable from this side until a maintainer approves CI and review
+resumes.** Copilot's first two open design questions from #1672's
+earlier history (whether `needsNonInvokerSigningBy()` should exclude a
+delegate an account's own policy may never require, and whether public
+docs should describe contract-address delegates) remain genuinely open,
+distinct from what Ryang-21's review covered.
+
+**Resuming the broader search, same day, the same defect class recurred
+independently in a different official SDK.** `StellarCN/py-stellar-base`'s
+`authorize_entry()` (`stellar_sdk/auth.py`) signs each CAP-71-01 delegate
+correctly in isolation, but sequential signing across multiple delegates
+silently overwrites the entry's one shared `signature_expiration_ledger`
+field, invalidating an earlier delegate's already-stored signature
+whenever two calls use different expiration values, with no error raised
+at either call. Two docstrings already state the requirement in prose
+("every signer of one entry must use the same `valid_until_ledger_sequence`,
+otherwise earlier signatures are invalidated"), but nothing in code
+enforces it. `AssembledTransaction.authorize()`/`sign_auth_entries()`
+never reach this path at all, only the top-level address, by explicit
+design (`needs_non_invoker_signing_by()`'s own docstring: "delegate
+signers ... are account-specific policy and are not reported"), so the
+low-level `authorize_entry(..., for_address=...)` primitive checked here
+isn't a fallback, it's the only documented way to sign a delegates entry
+with this library. Reproduced for real against `a0e9f8b7` (the commit
+last touching `auth.py`): two delegates signed with expirations 1000 and
+2000, then the payload the network would verify the first delegate's
+stored signature against (rebuilt from the entry's current state,
+expiration 2000) compared byte-for-byte against the payload it was
+actually signed with (expiration 1000), confirmed different by a real,
+executed script, not reasoned about. Checked for duplicates first (none
+found; `#1189`, the PR that added this support, has no discussion of
+this case in its own review comments). Filed as
+[StellarCN/py-stellar-base#1215](https://github.com/StellarCN/py-stellar-base/issues/1215)
+with a proposed fix (raise a clear `ValueError` in `authorize_entry()`
+when an already-partially-signed entry's stored expiration disagrees
+with the value just passed, instead of silently overwriting it), not
+just the finding. Severity calibrated the same honest way as #1655's own
+entry above: CAP-71 isn't live on any network yet, so this has no impact
+on a real transaction today, but the bug is real in code already
+shipped, in the only path this library offers for it. No PR opened yet:
+this repo's own `CONTRIBUTING.md` asks contributors to check in before
+starting work on a significant change, so the issue carries a full fix
+sketch instead, ready to turn into a PR once a maintainer responds.
+
 `Dockerfile.facilitator` builds and ships `@periplo/bazaar` and
 `@periplo/search` alongside `@periplo/facilitator`. Three things the image
 needs or the deploy crash-loops: `pnpm --filter @periplo/bazaar build`

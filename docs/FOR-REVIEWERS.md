@@ -62,7 +62,39 @@ Reinforced since with a real precedent from Stellar Foundation itself
 Full writeup in
 [`docs/SPEC.md`](SPEC.md#phase-6-upto-on-stellar).
 
-## 5. A real, external seller already uses this (1 minute)
+## 5. A maintainer engaged, and every point got fixed with evidence (1 minute)
+
+Filing bugs is one kind of evidence: real problems, found and reported.
+This is the other kind: a Stellar SDK maintainer engaging directly and a
+same-day, verifiable response. On 2026-09-01, Ryang-21 left a formal
+`CHANGES_REQUESTED` review on
+[stellar/js-stellar-sdk#1672](https://github.com/stellar/js-stellar-sdk/pull/1672)
+(the PR behind the CAP-71 delegate-signing bug filed above), five inline
+comments, each a genuine silent-signature-corruption risk on the new
+code path, not a style nit. All five fixed the same day in one commit,
+each with its own new regression test verified against real signing
+rather than a passthrough mock (a bug in the test itself, caught before
+it was pushed, not shipped). Replied inline to each point with the fix
+and evidence, not a bare "done."
+`gh api repos/Eras256/js-stellar-sdk/commits/81466fd9 --jq
+'.commit.verification.verified'` returns `true` for the resulting,
+signed merge commit; check it, don't take it on trust. CI shows
+`action_required`, GitHub's standard gate for an external PR awaiting a
+maintainer's approval to run workflows, not a failure on this branch.
+Nothing further is actionable from this side until that review resumes.
+Full detail in `README.md`'s #1672 history and in `CLAUDE.md`.
+
+The same defect class recurred the same day in a different official SDK:
+`StellarCN/py-stellar-base`'s `authorize_entry()` silently invalidates an
+earlier CAP-71 delegate's signature when a later delegate signs with a
+different expiration, reproduced for real (not just read) against the
+published source and filed as
+[StellarCN/py-stellar-base#1215](https://github.com/StellarCN/py-stellar-base/issues/1215)
+with a proposed fix. Two independent SDKs, two independent teams,
+the same subtle mistake, caught by the same underlying expertise this
+project built fixing it the first time.
+
+## 6. A real, external seller already uses this (1 minute)
 
 Section 2 is design-level alignment between competing teams. This is
 adoption: [`agentpayments.fi`](https://agentpayments.fi) built its own
@@ -90,7 +122,7 @@ uses the field shape that fix moved away from; migrating is tracked in
 it yet. Full detail in `README.md`, the block starting "The first real
 external seller published and settled for real."
 
-## 6. The evidence table (2 minutes)
+## 7. The evidence table (2 minutes)
 
 [`conformance/RESULTS.md`](../conformance/RESULTS.md) lists every settled
 transaction this project claims, each with a transaction hash checked
@@ -100,7 +132,7 @@ a link, a test, or a hash, never a bare assertion. `README.md`'s "What's
 real right now" section follows the same rule and is explicit about what
 is planned but not yet built.
 
-## 7. What's actually deployed vs. what's still a plan (2 minutes)
+## 8. What's actually deployed vs. what's still a plan (2 minutes)
 
 `README.md`'s opening section states the phase status plainly: "Status:
 Phase 6, the `upto` Soroban contract, is complete... The rest of Phase
@@ -118,7 +150,7 @@ gotcha encountered along the way, that's
 [`docs/DEFERRED.md`](DEFERRED.md), the project's own running log of
 blockers and divergences, not a curated highlight reel.
 
-## 8. Security, if that's your focus (2 minutes)
+## 9. Security, if that's your focus (2 minutes)
 
 [`docs/THREAT-MODEL.md`](THREAT-MODEL.md) is the threat/control/test
 table, each row pointing at the actual code and test file that backs it,
@@ -128,7 +160,7 @@ that file's own status note, and [`docs/DEFERRED.md`](DEFERRED.md)'s
 "Third-party security review: pending via Audit Bank" section for
 exactly where that stands.
 
-## 9. If you want the full architecture
+## 10. If you want the full architecture
 
 [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) has the system diagram and a
 plain-English walk-through of the stack. [`docs/SPEC.md`](SPEC.md) is the
