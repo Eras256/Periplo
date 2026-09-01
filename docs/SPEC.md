@@ -450,6 +450,22 @@ prevention and its own audit; `upto` covers the metered case that `auth-capture`
 would serve). Keep the scheme dispatch open so either can be added later without
 restructuring.
 
+**2026-09-01: the deferral has a real technical reason now, not just scope.**
+`batch-settlement`'s long-lived-channel design needs voucher signatures with
+no meaningful expiry (both the EVM and SVM bindings deliberately give
+vouchers none, bounding redemption through the channel's own state instead).
+`require_auth_for_args`, the mechanism that made `upto` work, cannot do
+this: the Soroban host hard-rejects any `signatureExpirationLedger` beyond
+`current_ledger + max_entry_ttl - 1`, confirmed live against real testnet
+(`stellar network settings --network testnet`) at 3,110,400 ledgers, 180
+days. `upto` never hit this since its own authorizations only need to
+survive minutes. A real path exists (raw `env.crypto().ed25519_verify()`,
+already Stellar's own reference pattern in `rs-soroban-env`'s
+`simple_account` example, mirroring what SVM's own binding already does),
+just not the `upto`-shaped one. Filed as
+[x402-foundation/x402#3341](https://github.com/x402-foundation/x402/issues/3341),
+sketch only, not a commitment to build it next.
+
 **Gate:** a settled transaction hash on `stellar:testnet`, recorded in
 `conformance/RESULTS.md`.
 
