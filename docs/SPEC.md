@@ -547,9 +547,25 @@ Rialto, openx402, LumenGate, and this one), flagged nonce-TTL replay
 handling as a required test vector, citing rail402's specific guard;
 this contract's mechanism was independently verified in response and
 found to prevent the bug class structurally. A concrete consolidation
-direction has since emerged from the same thread (`#3134`). Full sourced
-writeup: `docs/UPTO-CONVERGENCE.md` and README.md's
-"The ecosystem is converging on this spec" section, not repeated here.
+direction has since emerged from the same thread (`#3134`), implemented
+2026-09-01 by rewriting `#3098` itself. Full sourced writeup:
+`docs/UPTO-CONVERGENCE.md` and README.md's "The ecosystem is converging
+on this spec" section, not repeated here.
+
+**A guarantee this spec does not currently make, stated plainly rather
+than left implicit.** `require_auth_for_args` (the mechanism above) is
+documented as dispatching "transparently" to a C-account's own
+`__check_auth`, on both this project's spec draft and the competing one.
+That is verified only for a C-account whose own `__check_auth` signs
+directly. It is **not** verified for a delegated or session-key
+smart-account signer, the pattern an autonomous agent actually needs
+(a scoped key, gated by the account's own spending policy). Building
+exactly that in Phase 6b hit a real, unresolved wall:
+`__check_auth` traps unreachable on every construction tried, filed as
+[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839),
+open. Anything in this spec that reads as "C-accounts work with
+`upto`" means the directly-signing case only, until that issue closes.
+Do not extend the claim to delegated signers without new evidence.
 
 ### Phase 7: MCP discovery server
 `packages/mcp` on `@modelcontextprotocol/sdk` 1.30.0. Let an agent search the

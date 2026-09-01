@@ -110,6 +110,27 @@ dedupe key needs, so it doesn't solve that specific problem the way we'd
 guessed it might, not a flaw in the proposal itself. Full writeup in
 `docs/UPTO-CONVERGENCE.md`.
 
+**2026-09-01: past "two competitors build on our spec" to "we found a gap
+neither of them saw, because we're the only one who actually built the
+hard part."** Both `#3098` and `#3134` claim Stellar C-accounts are
+supported "transparently" by the one Soroban mechanism (
+`require_auth_for_args`) that makes `upto` expressible at all. That claim
+is verified for a C-account whose own `__check_auth` signs directly. It
+is not verified for a delegated or session-key smart-account signer, the
+pattern an autonomous agent actually needs: a scoped key, gated by the
+account's own spending policy. This project already tried to build
+exactly that, in Phase 6b, and hit a real wall no one else in either
+thread has hit or documented: `__check_auth` traps unreachable on every
+construction tried, seven ruled-out hypotheses, filed as
+[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839),
+still open. Rewrote `#3098` to state the caveat plainly rather than let a
+reviewer implement against an unqualified claim, and to actually
+implement the maintainer-agreed consolidation structure (`stateless` as
+the base profile, `contract` as the secondary profile carrying required
+test vectors) that had otherwise sat agreed-but-undrafted for five days.
+Commit signed and verified, `check-verified-commits` passing, full
+writeup with the exact evidence in `docs/UPTO-CONVERGENCE.md`.
+
 ## What's real right now
 
 - Monorepo tooling: pnpm workspaces, TypeScript 7 (strict,

@@ -24,7 +24,26 @@ that it "will not open a third competing spec PR." Read
 or the full [`docs/UPTO-CONVERGENCE.md`](UPTO-CONVERGENCE.md) devlog for
 the sourced, dated version.
 
-## 3. A real, external seller already uses this (1 minute)
+## 3. A gap the ecosystem itself didn't see (1 minute)
+
+Section 2 is two competitors building on this project's spec. This is
+one step further: both that spec and the competing one claim Stellar
+smart accounts (C-accounts) work "transparently" with the mechanism
+`upto` depends on. That claim holds only for a C-account that signs
+directly. It does not hold, as far as anyone has publicly shown, for a
+delegated or session-key smart-account signer, the exact pattern an
+autonomous agent needs. This project tried to build that in Phase 6b
+and hit a real, still-open wall: `__check_auth` traps on every
+construction tried, filed at
+[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
+[The rewritten spec PR](https://github.com/x402-foundation/x402/pull/3098)
+states the caveat plainly rather than let the gap ship silently.
+`gh api repos/Eras256/x402/commits/6a528a5a` returns the same
+`verified: true` any commit in this repo does; check it, don't take it
+on trust. Full writeup in
+[`docs/UPTO-CONVERGENCE.md`](UPTO-CONVERGENCE.md#the-structure-actually-drafted-five-days-later-and-a-new-finding).
+
+## 4. A real, external seller already uses this (1 minute)
 
 Section 2 is design-level alignment between competing teams. This is
 adoption: [`agentpayments.fi`](https://agentpayments.fi) built its own
@@ -52,7 +71,7 @@ uses the field shape that fix moved away from; migrating is tracked in
 it yet. Full detail in `README.md`, the block starting "The first real
 external seller published and settled for real."
 
-## 4. The evidence table (2 minutes)
+## 5. The evidence table (2 minutes)
 
 [`conformance/RESULTS.md`](../conformance/RESULTS.md) lists every settled
 transaction this project claims, each with a transaction hash checked
@@ -62,7 +81,7 @@ a link, a test, or a hash, never a bare assertion. `README.md`'s "What's
 real right now" section follows the same rule and is explicit about what
 is planned but not yet built.
 
-## 5. What's actually deployed vs. what's still a plan (2 minutes)
+## 6. What's actually deployed vs. what's still a plan (2 minutes)
 
 `README.md`'s opening section states the phase status plainly: "Status:
 Phase 6, the `upto` Soroban contract, is complete... The rest of Phase
@@ -80,7 +99,7 @@ gotcha encountered along the way, that's
 [`docs/DEFERRED.md`](DEFERRED.md), the project's own running log of
 blockers and divergences, not a curated highlight reel.
 
-## 6. Security, if that's your focus (2 minutes)
+## 7. Security, if that's your focus (2 minutes)
 
 [`docs/THREAT-MODEL.md`](THREAT-MODEL.md) is the threat/control/test
 table, each row pointing at the actual code and test file that backs it,
@@ -90,7 +109,7 @@ that file's own status note, and [`docs/DEFERRED.md`](DEFERRED.md)'s
 "Third-party security review: pending via Audit Bank" section for
 exactly where that stands.
 
-## 7. If you want the full architecture
+## 8. If you want the full architecture
 
 [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) has the system diagram and a
 plain-English walk-through of the stack. [`docs/SPEC.md`](SPEC.md) is the

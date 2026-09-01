@@ -596,7 +596,12 @@ crate or its own official example. Filed as
 framed as a request for diagnostic help, open. This diagnostic round is
 closed on purpose (the user's own instruction: don't reopen #839 with
 another angle without a new concrete trigger); further attempts get their
-own separately-scoped investigation.
+own separately-scoped investigation. **2026-09-01: cited, not reopened.**
+`#839`'s existing findings turned out to be directly load-bearing for the
+`upto`-on-Stellar spec consolidation (`#3098`/`#3134` both claim
+"C-accounts work transparently," a claim `#839` already shows doesn't
+hold for a delegated smart-account signer); see
+`docs/UPTO-CONVERGENCE.md` before re-investigating #839 itself.
 
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
