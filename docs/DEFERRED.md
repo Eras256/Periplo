@@ -2280,3 +2280,111 @@ time `app.ts` is touched, rather than waiting on a package bump that
 isn't a precondition for it. Acknowledged publicly on
 [x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270#issuecomment-5488304824),
 2026-08-31.
+
+## Proactive dependency audit, 2026-09-01: four filed, three real fixes, one genuine retraction
+
+Following the pattern that already produced `#3121`, `#3169`, `#3172`,
+`#3187`/`#3228`, `#3270`/`#3306`, and the `js-stellar-sdk` auth-entry
+findings, this round searched deliberately rather than waiting to trip
+over the next bug: three background passes over the latest published
+`@x402/core@2.24.0`, `@x402/stellar@2.24.0`, and
+`@stellar/stellar-sdk@17.0.1`, each reading compiled source against its
+own documented type or JSDoc contract and building a real repro before
+reporting anything. Four candidate findings came out of that pass, and
+per direct instruction, each fixable one got a PR opened immediately
+rather than left as a bug report for a maintainer to fix (the lesson
+named explicitly: reporting `#3270` without a proposed fix meant the
+maintainer's own, differently-shaped fix landed instead of this
+project's).
+
+**One finding was wrong, and closing it honestly mattered more than
+the fix count.**
+[stellar/js-stellar-sdk#1699](https://github.com/stellar/js-stellar-sdk/issues/1699)
+originally reported that `XdrLargeInt.toU128()`/`.toU256()`/`.toU64()`
+silently wrap a negative value into a huge unsigned magnitude instead
+of throwing `RangeError`, based on reading `XdrLargeInt`'s own unit
+tests in isolation. Writing the actual fix and running the package's
+*full* test suite (not just the touched file) surfaced
+`test/unit/base/numbers/sc_int.test.ts`, a block explicitly labeled
+"from scint_test.js" (a shared, cross-SDK test-vector file), which
+deliberately constructs a negative `ScInt` and asserts `.toU128()`/
+`.toU256()` return the two's-complement reinterpretation, the exact
+behavior reported as a bug. Combined with an existing `toU64()` test
+already named "reinterprets negative signed value as unsigned," this
+confirmed the wrap is intentional, cross-SDK-consistent design, not an
+oversight. The patch was reverted before ever being pushed; the issue
+was corrected with the full evidence and closed by the same session
+that filed it, rather than left for a maintainer to untangle. Standing
+lesson for any future dependency audit: run the *whole* test suite
+after writing a fix, not just the file the fix touches. A prior round's
+`#3172`/`derivePattern` finding never had this risk since it had no
+adjacent hidden consumer; this one did, and only running everything
+caught it.
+
+**Three real, fixable findings, each with a PR opened the same
+session, not just an issue:**
+
+- [stellar/js-stellar-sdk#1699](https://github.com/stellar/js-stellar-sdk/issues/1699):
+  closed as not-a-bug, see above.
+- [x402-foundation/x402#3332](https://github.com/x402-foundation/x402/issues/3332),
+  fix at
+  [x402-foundation/x402#3336](https://github.com/x402-foundation/x402/pull/3336):
+  `ExactStellarScheme`'s `feeBumpSigner` is documented by `getSigners()`
+  as a facilitator address, but the internal set every facilitator-
+  safety check actually consulted (`signingAddresses`) never included
+  it. Fixed with a separate `facilitatorSafetyAddresses` set rather
+  than merging into `signingAddresses` directly, since that set also
+  backs signer *selection* in `settle()` and `feeBumpSigner` has no
+  entry in the signer map, a distinction that would have been an easy
+  regression to introduce carelessly. Regression test added and run
+  against the real class; full `@x402/stellar` suite green before and
+  after (157 to 158 tests).
+- [x402-foundation/x402#3334](https://github.com/x402-foundation/x402/issues/3334),
+  fix at
+  [x402-foundation/x402#3338](https://github.com/x402-foundation/x402/pull/3338):
+  `resolveSettlementOverrideAmount()` never enforced its own documented
+  invariant, "the resolved amount must be `<=` the authorized maximum
+  in `PaymentRequirements`," for any of its three input formats. Fixed
+  with one check centralized at the end of the function rather than
+  duplicated per branch. Writing this fix surfaced its own lesson: two
+  existing test fixtures and one integration fixture (a `"$10.00"`
+  price that produced a non-integer `PaymentRequirements.amount` the
+  new check's `BigInt()` parse can't accept) needed adjusting, none of
+  it a behavior change, all confirmed by re-reading what each test
+  actually asserted before touching it. Full `@x402/core` suite green
+  before and after (691 to 695 tests), plus a check of every other
+  workspace package that references `SettlementOverrides` to confirm
+  none had hidden dependence on the old, unchecked behavior.
+- [x402-foundation/x402#3333](https://github.com/x402-foundation/x402/issues/3333),
+  addressed at
+  [x402-foundation/x402#3339](https://github.com/x402-foundation/x402/pull/3339):
+  `areFeesSponsored: false` is accepted with no validation at
+  construction time, then breaks every settlement through the official
+  client elsewhere, with no indication the facilitator's own config is
+  the cause. The originally proposed fix (throw at construction) turned
+  out to be wrong for the same reason as the `#1699` retraction above:
+  an existing, clearly deliberate test,
+  `"should use custom areFeesSponsored"`, asserts that constructing
+  with `false` succeeds. Landed as a doc-only PR instead (cross-
+  referencing the limitation on the constructor's own JSDoc, where
+  `getExtra()` already states it two methods away), not a behavior
+  change, so it can't conflict with that test.
+
+A stray fork of `x402-foundation/x402` from an earlier session round
+was 89 commits behind upstream when re-cloned for this round (`gh repo
+fork --clone` does not sync an existing fork before cloning it,
+confirmed via `git rev-list --count`). The `#3332` fix's PR was opened
+from that stale base, but not affected in substance, since the diffed
+file was untouched across those 89 commits (confirmed via `git log`).
+Caught and fixed (fast-forward-merged onto the real upstream `main`,
+pushed to the fork) before starting work on `#3334`, whose target file
+*had* moved between the stale base and current upstream. Worth naming
+as its own environment gotcha: a fork used across multiple sessions can
+silently drift stale, and the safe default is to fetch and
+fast-forward the fork's default branch before branching off it, not
+assume a fresh `--clone` implies a fresh fork.
+
+None of these four findings is a security vulnerability; each fails
+closed, degrades functionally, or (`#1699`) turned out not to be a bug
+at all, calibrated the same honest way as every other finding in this
+list.
