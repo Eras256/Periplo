@@ -2269,13 +2269,14 @@ separate `extension_responses` (Python) / `extensionResponses` (TS,
 after `#3278` was revised to match before its own, later merge) field
 instead, excluded from that encoding.
 
-Worth tracking, not urgent yet: no `@x402/core` release ships this new
-field shape (npm `latest` is `2.24.0`, from 2026-08-27, predates both
-merges). Once one does, a resource server reading
-`settleResult.extensionResponses` (the new, correct field per the
-maintainer's own design) will not see this project's data, since
-`app.ts` only ever populates `extensions`. Revisit `app.ts`'s `/settle`
-response once a `@x402/core` release actually includes this field,
-populating `extensionResponses` (or both, during a transition window)
-rather than leaving sellers relying on the field the maintainer has now
-said is the wrong one for this purpose.
+Worth tracking, not urgent, and not gated on an upstream release: no
+`@x402/core` release ships this new field shape yet (npm `latest` is
+`2.24.0`, from 2026-08-27, predates both merges), but `app.ts`'s own
+`/settle` response body is entirely this project's own code, the same
+way it already sent `extensions` ahead of any client actually reading
+it. Add `extensionResponses` alongside the existing `extensions` field
+(both, during a transition window, not a replacement) the next real
+time `app.ts` is touched, rather than waiting on a package bump that
+isn't a precondition for it. Acknowledged publicly on
+[x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270#issuecomment-5488304824),
+2026-08-31.
