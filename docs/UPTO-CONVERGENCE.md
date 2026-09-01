@@ -272,3 +272,54 @@ document needs the stable `extra.uptoProfile` discriminator (already
 tracked in `docs/DEFERRED.md`) reflected in `/supported` too, or the
 clean base-vs-stateful split leaves the exact client-side ambiguity
 this thread already found unresolved.
+
+## The structure actually drafted, five days later, and a new finding
+
+Neither thread moved between 2026-08-27 and 2026-09-01, checked live
+before doing anything (`gh pr view`, `gh api .../comments`, both PRs
+and `#72`). Agreeing to bomanaps' structure was not the same as anyone
+having drafted it. Rewrote `#3098`'s `scheme_upto_stellar.md` to
+actually implement it, not just agree to it in prose: `stateless`'s
+full protocol flow, wire formats, contract interface, and facilitator
+verification rules pulled inline from `#3134` (previously only
+summarized with a pointer to the other PR), presented first as the
+base profile; `contract` follows as the secondary, stateful profile,
+keeping its verification-status callout and gaining an explicit
+TTL-boundary test vector with concrete numbers against the real
+deployed contract, matching "carrying the required test vectors."
+Also folded in a real, small gap the five-day gap itself surfaced:
+`scheme_upto_evm.md` gained `settlement_pending` handling via `#3083`
+after this branch's base commit, so both Stellar profiles' settlement
+logic now documents the same handling, checked against real current
+upstream `main` before writing it, not assumed still current.
+
+**A new, real finding, not editorial consolidation.** Both `#3098` and
+`#3134` claim C-accounts are supported "transparently" by
+`require_auth_for_args`/`__check_auth`. That claim is verified only for
+a directly-signing custom account. It is not verified for a
+delegated/session-key smart-account signer, the pattern this project's
+own Phase 6b work (`OpenZeppelin/stellar-contracts#839`, filed
+2026-08-13, still open) already found traps `__check_auth` with
+`UnreachableCodeReached` on every construction tried, seven hypotheses
+ruled out with real evidence, no test coverage of this exact path
+found anywhere in that crate or its own official example. Since both
+`upto` profiles on Stellar depend on the same `require_auth_for_args`
+mechanism for the same underlying reason, this isn't specific to
+either profile, it's a property of the shared primitive that neither
+draft spec currently distinguishes from the (verified, working)
+directly-signing case. Added a shared C-account section to the
+consolidated document stating this plainly, with a proposed caveat for
+whichever document the maintainers actually merge onto.
+
+This does not reopen `#839` or add another diagnostic angle to it, per
+the standing instruction to leave that investigation closed absent a
+new concrete trigger. It cites `#839`'s own, already-public findings in
+a new venue, the spec document about to be finalized, where the claim
+those findings contradict is actually load-bearing. Commit
+[`6a528a5a`](https://github.com/Eras256/x402/commit/6a528a5acb72a90d95ce3c027da6733844c7c763)
+on the `docs/upto-stellar-spec` branch, signed and verified
+(`gh api .../commits/6a528a5a`: `verified: true`, `reason: valid`),
+`check-verified-commits` passing.
+[Comment posted on `#3098`](https://github.com/x402-foundation/x402/pull/3098#issuecomment-5497841543)
+crediting Iam0TI and `0d1026/Rialto` throughout for the `stateless`
+content now pulled inline.
