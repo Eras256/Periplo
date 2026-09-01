@@ -56,6 +56,9 @@ than 180 days out, checked directly against real testnet
 at [x402-foundation/x402#3341](https://github.com/x402-foundation/x402/issues/3341)
 with a real, precedented alternative sketched (raw Ed25519 verification,
 already Stellar's own reference pattern), not a promise to build it.
+Reinforced since with a real precedent from Stellar Foundation itself
+(the MPP Channel mode contract), see
+[`docs/UPTO-CONVERGENCE.md`](UPTO-CONVERGENCE.md#the-structure-actually-drafted-five-days-later-and-a-new-finding).
 Full writeup in
 [`docs/SPEC.md`](SPEC.md#phase-6-upto-on-stellar).
 
