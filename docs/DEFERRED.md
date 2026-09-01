@@ -2250,3 +2250,32 @@ verification run initially did. Not urgent (still pinned to `2.22.0`,
 which predates the guard), but a real, concrete thing to check the
 changelog for before the next `@x402/core` version bump, not just
 "upgrade and see what breaks."
+
+## `#3270` closed upstream on a different field shape than this project's own workaround uses
+
+`x402-foundation/x402#3270` closed 2026-08-31, but not via `#3278`
+(TypeScript) or `#3301` (Go), the two community PRs `README.md`
+tracked. The actual fix was a maintainer's own separate PR,
+[`#3306`](https://github.com/x402-foundation/x402/pull/3306) (Python,
+phdargen), which explicitly rejected the shape this project's own
+`/settle` workaround (`apps/facilitator/src/app.ts`,
+`c.json({ ...result, extensions: extensionResponses })`) and the
+original `#3278`/`#3301` all took: merging the `EXTENSION-RESPONSES`
+header data into the existing `extensions` field. `#3306`'s own
+description calls that "the wrong shape," since `extensions` is
+forwarded to buyers via `PAYMENT-RESPONSE`, leaking a server-only
+facilitator sidechannel into buyer-facing data. It introduces a
+separate `extension_responses` (Python) / `extensionResponses` (TS,
+after `#3278` was revised to match before its own, later merge) field
+instead, excluded from that encoding.
+
+Worth tracking, not urgent yet: no `@x402/core` release ships this new
+field shape (npm `latest` is `2.24.0`, from 2026-08-27, predates both
+merges). Once one does, a resource server reading
+`settleResult.extensionResponses` (the new, correct field per the
+maintainer's own design) will not see this project's data, since
+`app.ts` only ever populates `extensions`. Revisit `app.ts`'s `/settle`
+response once a `@x402/core` release actually includes this field,
+populating `extensionResponses` (or both, during a transition window)
+rather than leaving sellers relying on the field the maintainer has now
+said is the wrong one for this purpose.

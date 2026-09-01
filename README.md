@@ -372,6 +372,29 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   (`PhilBot402/x402#4`, draft). All three open, none merged as of this
   writing, verified live before writing this.
 
+  **Resolved upstream, 2026-08-31, not by the three PRs above
+  directly.** `#3270` closed the same day (`stateReason: COMPLETED`),
+  but the fix that actually closed it was a maintainer's own separate
+  PR,
+  [`#3306`](https://github.com/x402-foundation/x402/pull/3306) (Python,
+  phdargen), merged 2026-08-31T15:59:00Z, two seconds before the issue
+  closed. Its own description rejects the shape `#3278`/`#3301`
+  originally shipped, merging the header data into the existing
+  `extensions` field, calling that "the wrong shape" since it leaks a
+  server-only sidechannel into a field the resource server forwards to
+  buyers via `PAYMENT-RESPONSE`. It introduces a separate
+  `extension_responses` field instead, excluded from that buyer-facing
+  encoding. `#3278` was revised to match before merging, confirmed
+  against its real merged diff: it now populates `extensionResponses`,
+  explicitly "Never merges into `extensions`," and merged separately,
+  2026-08-31T17:34:56Z, after the issue had already closed. `#3301`
+  (Go) and the Python draft remain open, unmerged, presumably needing
+  the same realignment. No `@x402/core` release ships this shape yet
+  (npm `latest` is still `2.24.0`, from 2026-08-27); this project's own
+  `apps/facilitator` workaround, which populates `extensions` rather
+  than the new field, will need re-checking against whichever release
+  actually ships it, tracked in `docs/DEFERRED.md`.
+
   It is built on the official
   [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)
   package, for the same reason the facilitator does not reimplement

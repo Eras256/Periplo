@@ -601,9 +601,10 @@ own separately-scoped investigation.
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
 afterward, turned up nine more real, independently verified upstream
-bugs, all filed, seven still open as of this writing (`#103` merged
+bugs, all filed, six still open as of this writing (`#103` merged
 2026-08-28 by @kaankacar; `#3187` closed 2026-08-31 when its fix,
-`#3228`, merged):
+`#3228`, merged; `#3270` closed 2026-08-31, resolved upstream, see
+below):
 [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169)
 (`isValidRouteTemplate`'s traversal/scheme-injection checks decode once,
 so double percent-encoding bypasses both; fix open as
@@ -665,7 +666,15 @@ never attaching it to the object those methods return, even though
 field for exactly this; found live by the first real external seller
 against this facilitator, root-caused by reading the actual compiled
 `@x402/core@2.22.0` source rather than assumed from behavior, a proposed
-fix included). Each was
+fix included. **Closed upstream 2026-08-31**, not by the community PRs
+this file already tracked: the actual fix was a maintainer's own
+separate PR, `#3306` (Python, phdargen), which rejected the community
+PRs' shape (merging into the existing `extensions` field) as wrong,
+introducing a distinct `extension_responses`/`extensionResponses` field
+instead. `#3278` (TypeScript) was revised to match before it merged
+separately, afterward; `#3301` (Go) and the Python draft remain open,
+unmerged. No `@x402/core` release ships this yet. See `README.md` and
+`docs/DEFERRED.md` for the full mechanism). Each was
 verified directly against the real published package before filing,
 not asserted from reading the source alone; severity was calibrated
 honestly in every case (none of the nine is a security vulnerability,
