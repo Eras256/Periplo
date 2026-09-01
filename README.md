@@ -131,6 +131,27 @@ test vectors) that had otherwise sat agreed-but-undrafted for five days.
 Commit signed and verified, `check-verified-commits` passing, full
 writeup with the exact evidence in `docs/UPTO-CONVERGENCE.md`.
 
+**Same day, a second finding, this time about settlement rather than
+authentication.** `batch-settlement` has no Stellar network binding
+upstream at all yet, EVM and SVM only. Its whole design needs voucher
+signatures with no meaningful expiry, deliberately provided by both
+existing bindings. `require_auth_for_args`, the exact mechanism that
+makes `upto` work, cannot provide that: the Soroban host hard-rejects
+any signed authorization whose expiration exceeds 180 days out,
+confirmed directly against real testnet
+(`state_archival.max_entry_ttl`), not assumed. `upto` never hit this
+limit since its own authorizations only need to survive minutes, not
+the months or years a long-lived payment channel implies. A real
+alternative exists and is precedented, not invented: raw Ed25519
+signature verification, already Stellar's own reference pattern in
+`rs-soroban-env`'s own example contract, matching what Solana's binding
+already does for the identical reason. Filed as
+[x402-foundation/x402#3341](https://github.com/x402-foundation/x402/issues/3341)
+with a sketch of the direction, not a spec commitment. Two structurally
+different findings in one day, both requiring the same thing: having
+actually built `require_auth_for_args`-based settlement on Soroban, not
+read about it.
+
 ## What's real right now
 
 - Monorepo tooling: pnpm workspaces, TypeScript 7 (strict,

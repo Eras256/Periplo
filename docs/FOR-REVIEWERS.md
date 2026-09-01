@@ -43,7 +43,23 @@ states the caveat plainly rather than let the gap ship silently.
 on trust. Full writeup in
 [`docs/UPTO-CONVERGENCE.md`](UPTO-CONVERGENCE.md#the-structure-actually-drafted-five-days-later-and-a-new-finding).
 
-## 4. A real, external seller already uses this (1 minute)
+## 4. A second, different gap: settlement, not authentication (1 minute)
+
+Same day, same underlying skill, a different finding. `batch-settlement`
+(deposit once, sign vouchers off-chain, redeem rarely) has no Stellar
+binding upstream yet, and its design needs voucher signatures with no
+real expiry, exactly what EVM's and SVM's existing bindings both give
+it. `require_auth_for_args`, the mechanism `upto` depends on, cannot:
+the Soroban host hard-rejects any signed authorization expiring more
+than 180 days out, checked directly against real testnet
+(`state_archival.max_entry_ttl`), not assumed from a rough guess. Filed
+at [x402-foundation/x402#3341](https://github.com/x402-foundation/x402/issues/3341)
+with a real, precedented alternative sketched (raw Ed25519 verification,
+already Stellar's own reference pattern), not a promise to build it.
+Full writeup in
+[`docs/SPEC.md`](SPEC.md#phase-6-upto-on-stellar).
+
+## 5. A real, external seller already uses this (1 minute)
 
 Section 2 is design-level alignment between competing teams. This is
 adoption: [`agentpayments.fi`](https://agentpayments.fi) built its own
@@ -71,7 +87,7 @@ uses the field shape that fix moved away from; migrating is tracked in
 it yet. Full detail in `README.md`, the block starting "The first real
 external seller published and settled for real."
 
-## 5. The evidence table (2 minutes)
+## 6. The evidence table (2 minutes)
 
 [`conformance/RESULTS.md`](../conformance/RESULTS.md) lists every settled
 transaction this project claims, each with a transaction hash checked
@@ -81,7 +97,7 @@ a link, a test, or a hash, never a bare assertion. `README.md`'s "What's
 real right now" section follows the same rule and is explicit about what
 is planned but not yet built.
 
-## 6. What's actually deployed vs. what's still a plan (2 minutes)
+## 7. What's actually deployed vs. what's still a plan (2 minutes)
 
 `README.md`'s opening section states the phase status plainly: "Status:
 Phase 6, the `upto` Soroban contract, is complete... The rest of Phase
@@ -99,7 +115,7 @@ gotcha encountered along the way, that's
 [`docs/DEFERRED.md`](DEFERRED.md), the project's own running log of
 blockers and divergences, not a curated highlight reel.
 
-## 7. Security, if that's your focus (2 minutes)
+## 8. Security, if that's your focus (2 minutes)
 
 [`docs/THREAT-MODEL.md`](THREAT-MODEL.md) is the threat/control/test
 table, each row pointing at the actual code and test file that backs it,
@@ -109,7 +125,7 @@ that file's own status note, and [`docs/DEFERRED.md`](DEFERRED.md)'s
 "Third-party security review: pending via Audit Bank" section for
 exactly where that stands.
 
-## 8. If you want the full architecture
+## 9. If you want the full architecture
 
 [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) has the system diagram and a
 plain-English walk-through of the stack. [`docs/SPEC.md`](SPEC.md) is the

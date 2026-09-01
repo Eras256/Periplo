@@ -812,6 +812,23 @@ documents twice; needs the project owner to re-authenticate as
 `ticketsafes@gmail.com` first, logged as a real blocker rather than
 worked around.
 
+**2026-09-01: the same `require_auth_for_args` expertise that built this
+turned up a real limit on the mechanism itself, for a different scheme.**
+`batch-settlement` (long-lived payment channels, deposit once, sign many
+off-chain vouchers, redeem rarely) needs voucher signatures with no
+meaningful expiry, which both the EVM and SVM bindings deliberately
+provide. `require_auth_for_args` can't: the Soroban host hard-rejects any
+`signatureExpirationLedger` beyond `current_ledger + max_entry_ttl - 1`,
+confirmed live against real testnet (`stellar network settings --network
+testnet`) at 180 days, not assumed or left at a research agent's ~1-year
+guess, which was checked against the live network and corrected before
+publishing. `upto` never hit this since its own authorizations only need
+to survive minutes. Filed as
+[x402-foundation/x402#3341](https://github.com/x402-foundation/x402/issues/3341)
+with a real alternative sketched (raw `env.crypto().ed25519_verify()`,
+already Stellar's own reference pattern), not a spec commitment. Full
+writeup in `docs/SPEC.md`'s Phase 6 section.
+
 `Dockerfile.facilitator` builds and ships `@periplo/bazaar` and
 `@periplo/search` alongside `@periplo/facilitator`. Three things the image
 needs or the deploy crash-loops: `pnpm --filter @periplo/bazaar build`
