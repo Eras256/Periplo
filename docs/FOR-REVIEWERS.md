@@ -43,14 +43,14 @@ settled with its own test accounts.
 That same integration found a real bug in the official client itself:
 `HTTPFacilitatorClient` discarded the `EXTENSION-RESPONSES` header
 instead of returning it, filed as
-[x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270)
-and now generating fixes across three separate SDKs
-([`#3278`](https://github.com/x402-foundation/x402/pull/3278) TypeScript,
-[`#3301`](https://github.com/x402-foundation/x402/pull/3301) Go,
-[`PhilBot402/x402#4`](https://github.com/PhilBot402/x402/pull/4) Python,
-draft, all open as of this writing). Full detail in `README.md`, the
-block starting "The first real external seller published and settled
-for real."
+[x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270),
+closed 2026-08-31 by a maintainer's own fix
+([`#3306`](https://github.com/x402-foundation/x402/pull/3306)), not the
+community PRs originally tracking it. Periplo's own `/settle` still
+uses the field shape that fix moved away from; migrating is tracked in
+`docs/DEFERRED.md`, not urgent since no `@x402/core` release requires
+it yet. Full detail in `README.md`, the block starting "The first real
+external seller published and settled for real."
 
 ## 4. The evidence table (2 minutes)
 
