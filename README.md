@@ -243,6 +243,65 @@ guessed it might, not a flaw in the proposal itself. Full writeup in
   it with a registered SSH signing key and force-pushing the same branch;
   GitHub's API confirms `verified: true` on the amended commit and the
   check now passes. Still open, awaiting maintainer review.
+
+  **2026-09-01: a deliberate, proactive pass over the latest published
+  `@x402/core@2.24.0`, `@x402/stellar@2.24.0`, and
+  `@stellar/stellar-sdk@17.0.1`**, searched rather than waited for, on the
+  same "reimplementing a check found a gap the type promised" pattern as
+  `derivePattern()` above. `ExactStellarScheme`'s `feeBumpSigner` is
+  documented by `getSigners()` as a facilitator address, but the internal
+  set every facilitator-safety check actually consulted
+  (`signingAddresses`) never included it, filed as
+  [x402-foundation/x402#3332](https://github.com/x402-foundation/x402/issues/3332).
+  **Status: fixed, not just filed.**
+  [x402-foundation/x402#3336](https://github.com/x402-foundation/x402/pull/3336)
+  adds a separate `facilitatorSafetyAddresses` set rather than merging into
+  `signingAddresses` directly, since that set also backs signer selection
+  in `settle()` and `feeBumpSigner` has no entry in the signer map, a
+  distinction that would have been an easy regression to introduce
+  carelessly. `resolveSettlementOverrideAmount()` never enforced its own
+  documented invariant, "the resolved amount must be `<=` the authorized
+  maximum in `PaymentRequirements`," for any of its three input formats
+  (raw atomic units, percent, dollar), filed as
+  [x402-foundation/x402#3334](https://github.com/x402-foundation/x402/issues/3334).
+  **Status: fixed, not just filed.**
+  [x402-foundation/x402#3338](https://github.com/x402-foundation/x402/pull/3338)
+  centralizes one check at the end of the function rather than duplicating
+  it per branch, verified with a real repro against the installed package
+  before writing the fix (a `"500%"` override against a 1,000,000-unit
+  ceiling resolved to 5,000,000 with no error) and the full `@x402/core`
+  suite green before and after (691 to 695 tests). `areFeesSponsored:
+  false` is accepted with no validation at construction time, then breaks
+  every settlement through the official client elsewhere with no
+  indication the facilitator's own config is the cause, filed as
+  [x402-foundation/x402#3333](https://github.com/x402-foundation/x402/issues/3333).
+  The behavior fix we first drafted (throw at construction) turned out to
+  be wrong: an existing test,
+  `"should use custom areFeesSponsored"`, deliberately asserts that
+  constructing with `false` succeeds. So
+  [x402-foundation/x402#3339](https://github.com/x402-foundation/x402/pull/3339)
+  lands as a doc-only PR instead, cross-referencing the limitation on the
+  constructor's own JSDoc where `getExtra()` already states it two methods
+  away.
+
+  **One finding didn't survive its own fix, and that's the correct
+  outcome, not a failure.**
+  [stellar/js-stellar-sdk#1699](https://github.com/stellar/js-stellar-sdk/issues/1699)
+  reported that `XdrLargeInt.toU128()`/`.toU256()`/`.toU64()` silently
+  wrap a negative value instead of throwing `RangeError`, based on reading
+  `XdrLargeInt`'s own unit tests in isolation. Writing the actual fix and
+  running the package's full test suite, not just the touched file, the
+  same discipline `#3172`'s self-correction above already established,
+  surfaced `test/unit/base/numbers/sc_int.test.ts`, a block explicitly
+  labeled "from scint_test.js" (a shared, cross-SDK test-vector file).
+  It deliberately constructs a negative `ScInt` and asserts
+  `.toU128()`/`.toU256()` return exactly the two's-complement
+  reinterpretation reported as a bug: intentional, cross-SDK-consistent
+  design, not an oversight. The patch was reverted before ever being
+  pushed; the issue was corrected with the full evidence and closed by
+  the same session that filed it. Full writeup, including a stray fork
+  found 89 commits behind upstream mid-round and fixed before it could
+  affect anything, in `docs/DEFERRED.md`.
 - **Automatic cataloging** lives in `apps/facilitator/src/discovery.ts`.
   A payment carrying the `bazaar` discovery extension is validated and
   written to the catalog on `/settle`. There is no separate registration
