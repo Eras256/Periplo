@@ -323,3 +323,18 @@ on the `docs/upto-stellar-spec` branch, signed and verified
 [Comment posted on `#3098`](https://github.com/x402-foundation/x402/pull/3098#issuecomment-5497841543)
 crediting Iam0TI and `0d1026/Rialto` throughout for the `stateless`
 content now pulled inline.
+
+**Cross-reference, not a third finding.** The same day's separate
+`batch-settlement` gap
+([x402-foundation/x402#3341](https://github.com/x402-foundation/x402/issues/3341),
+`require_auth_for_args` can't express a no-voucher-expiry channel) got
+stronger evidence from reviewing this account's own prior activity in
+`stellar-mpp-sdk`: the real contract behind MPP's Channel mode,
+[`stellar-experimental/one-way-channel`](https://github.com/stellar-experimental/one-way-channel),
+already ships the exact pattern `#3341` proposes (raw
+`env.crypto().ed25519_verify()`, no auth-entry expiration, a
+`close_start`/`refund_waiting_period` state machine bounding
+redemption), reviewed adversarially with no bug found. Full detail in
+the [comment added to `#3341`](https://github.com/x402-foundation/x402/issues/3341#issuecomment-5498972657)
+itself, not repeated here since it strengthens that issue, not the
+`upto` consolidation this file tracks.
