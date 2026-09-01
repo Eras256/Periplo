@@ -926,6 +926,20 @@ hashes, cross-checked against Horizon, not just printed and trusted.
   blind re-run. Compare the failing run's own timestamps against the
   runs immediately before and after it (`gh run list`, `gh run view
   --log`) before assuming noise.
+- Any PR opened against an upstream repo that requires signed commits
+  (confirmed so far: `x402-foundation/x402`) must be signed from the
+  commit that creates the branch, not fixed up after the fact. A
+  dedicated SSH signing key already exists at
+  `~/.ssh/id_ed25519_signing`, registered on Eras256's GitHub account;
+  set `gpg.format ssh`, `user.signingkey`, `commit.gpgsign true` (local
+  to that clone) before the first commit. Verify with `gh api
+  repos/<owner>/<repo>/commits/<sha> --jq
+  '.commit.verification.verified'` and `gh pr checks <n>` for
+  `check-verified-commits` passing. `git log --show-signature` alone
+  is not reliable: it reports "No signature" whenever
+  `gpg.ssh.allowedSignersFile` isn't configured locally, even when the
+  commit really is signed. Don't report a PR as finished until checks
+  are actually green, not just until `gh pr create` returns a URL.
 
 ## Environment notes specific to this machine
 
