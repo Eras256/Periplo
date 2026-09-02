@@ -1054,6 +1054,28 @@ Baseline transcripts backing the conformance claims above:
 [`conformance/baseline/x402-org/verify-settle-malformed.md`](conformance/baseline/x402-org/verify-settle-malformed.md).
 Settled transaction evidence: [`conformance/RESULTS.md`](conformance/RESULTS.md).
 
+**2026-09-02: checked against Protocol 28 ("Adapter") ahead of its
+2026-09-16 mainnet vote, real testnet (which has run it since
+2026-08-27), not just read about.** `@stellar/stellar-sdk` bumped
+`16.2.0` → `16.3.0`, the real LTS release that backports full Protocol
+28 XDR support (CAP-85's new `ContractExecutable` variant, CAP-83)
+onto the stable v16 API — not the newer `17.0.1`, which `@x402/stellar`
+(this project's own dependency, spec §1: build on it, don't
+reimplement) still hard-pins away from via its own `^16.0.1`
+requirement, checked directly rather than assumed. Reviewed every
+place this project's own code (TS and Rust) could match exhaustively
+on a contract's executable type: nowhere does, confirmed by search, not
+inferred. Then ran the real settlement cycle against live testnet under
+the new protocol: `exact`, and `upto`'s `contract` profile both direct
+against the deployed contract and through this facilitator's own
+HTTP-route code, all three settled and Horizon-verified, recorded in
+`conformance/RESULTS.md`. One real bug found and fixed along the way:
+the `exact` demo script had never read the same fee-ceiling override
+`serve.ts` does, so it failed on the real, current testnet fee
+(95,461 stroops, already above the 72,000 that first required the
+override in August). Full writeup, including a related-but-not-Periplo's-own
+finding in OpenZeppelin's `stellar-accounts` crate, in `CLAUDE.md`.
+
 CI (`.github/workflows/ci.yml`, badge above) runs the same gate on every
 push. We confirmed it green with an
 [organic push-triggered run](https://github.com/Eras256/Periplo/actions/runs/31222406798)

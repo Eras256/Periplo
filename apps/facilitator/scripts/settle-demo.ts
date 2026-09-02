@@ -33,9 +33,23 @@ if (!FEE_SPONSOR_SECRET || !BUYER_SECRET || !SELLER_PUBLIC || !ASSET_ADDRESS) {
   process.exit(1);
 }
 
+// Same optional override `serve.ts` reads for the deployed facilitator
+// (undefined leaves the SDK's own 50,000-stroop default in place). Without
+// this, the script uses that stale default regardless of what the live
+// deployment is actually configured with, and fails on real Soroban
+// resource-fee spikes the deployment already tolerates (found running this
+// under real protocol 28 testnet conditions, 2026-09-02: fees at 95,461
+// stroops, already above the 72,000 that first motivated this override).
+const MAX_TRANSACTION_FEE_STROOPS = process.env.MAX_TRANSACTION_FEE_STROOPS
+  ? Number(process.env.MAX_TRANSACTION_FEE_STROOPS)
+  : undefined;
+
 async function main(): Promise<void> {
   const core = await createFacilitatorCore({
     signers: { "stellar:testnet": FEE_SPONSOR_SECRET as string },
+    ...(MAX_TRANSACTION_FEE_STROOPS !== undefined
+      ? { maxTransactionFeeStroops: MAX_TRANSACTION_FEE_STROOPS }
+      : {}),
   });
 
   const buyerSigner = createEd25519Signer(BUYER_SECRET as string, "stellar:testnet");

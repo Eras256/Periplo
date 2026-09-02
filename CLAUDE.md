@@ -978,6 +978,85 @@ facilitator's behaviour changes, don't hand-edit the transcripts.
 `conformance/RESULTS.md` is the evidence table of settled transaction
 hashes, cross-checked against Horizon, not just printed and trusted.
 
+**2026-09-02: Protocol 28 ("Adapter") readiness check, real testnet
+verified against `stellar.org/blog/developers/adapter-protocol-28-upgrade-guide`,
+two weeks ahead of the 2026-09-16 mainnet vote (`stellar network
+settings --network testnet` confirms testnet has run it since
+2026-08-27).** Three real actions, not just a version bump asserted
+done:
+
+1. **`@stellar/stellar-sdk` upgraded, but not to `latest`.** `17.0.1`
+   is npm `latest`, but `@x402/stellar` (this project's own dependency,
+   pinned `2.22.0`, and still true of the newest published `2.24.0`)
+   hard-pins `"@stellar/stellar-sdk": "^16.0.1"`, so a v17 bump would
+   split the install into two incompatible major versions of the same
+   package (v17 rebuilt the entire `xdr` namespace on `@stellar/js-xdr`
+   v5, a breaking change `@x402/stellar` hasn't adopted). Checked
+   `pnpm-lock.yaml` directly for the real resolution, not assumed. The
+   actual safe target, found reading the real `CHANGELOG.md` at the
+   `v16.3.0` tag (not `main`'s, which has no `v16.3.0` section at all,
+   an LTS-branch release): `16.2.0` → `16.3.0` backports the full
+   Protocol 28 XDR schema (CAP-85's `ContractExecutableExternalRef`,
+   CAP-83's `StellarValueEmptyTxSet`) onto the stable v16 API shape,
+   `#1694`, "ported from #1665". One dependency bump
+   (`apps/facilitator/package.json`), `pnpm install` deduped it to a
+   single shared resolution satisfying both this project's own range
+   and `@x402/stellar`'s, `pnpm run ci` green after, no code changes
+   needed since it's purely additive. `contracts/*`'s `soroban-sdk`:
+   left alone, correctly. No stable `28.x` exists yet on crates.io
+   (`28.0.0-rc.1` is the newest, an RC, checked live), and no Rust code
+   was touched this round, so there's nothing to rebuild against a
+   version that doesn't exist as a release yet.
+2. **`ContractExecutable` exhaustive-match check: doesn't apply to
+   Periplo's own code, checked, not assumed.** A repo-wide grep (TS and
+   Rust) for `ContractExecutable`, `CreateContractHostFn`, and
+   `create_contract` returns nothing: `apps/facilitator` never inspects
+   a contract's executable type (it calls already-deployed contracts,
+   it never creates one), and neither does `contracts/upto-settlement`
+   (its own `require_auth_for_args` covers only its own call's
+   argument tuple, never a nested contract-creation sub-invocation).
+   One real, adjacent finding worth naming, not Periplo's own code:
+   OpenZeppelin's `stellar_accounts::smart_account::storage::
+   get_validated_context_by_id` (the function `contracts/
+   agent-smart-account`'s `__check_auth` delegates to entirely) does
+   match on `Context::CreateContractHostFn`/`CreateContractWithCtorHostFn`
+   with a pattern that destructures `executable: ContractExecutable::Wasm(wasm)`
+   specifically — read directly from the real source at the pinned
+   `stellar-accounts@0.7.2` tag. Not currently broken: `agent-smart-account`
+   pins `soroban-sdk = "26.1.1"`, whose own `ContractExecutable` enum
+   (checked directly) has exactly one variant, `Wasm`, so the match is
+   trivially exhaustive today and compiles fine. It would need a real
+   fix from OpenZeppelin's side (a wildcard arm, or explicit handling)
+   the day `stellar-accounts` itself moves to a soroban-sdk version
+   whose `ContractExecutable` has more than one variant, unrelated to
+   whether Periplo's own `agent-smart-account` bumps its pin. Not filed
+   anywhere: `agent-smart-account` is Phase 6b research with no live
+   testnet transaction ever achieved (`#839`, below), so this doesn't
+   change any deployed or working code path, surfaced here for the
+   record rather than as an action item.
+3. **Real testnet cycle run under Protocol 28, not just asserted
+   compatible.** `exact` (`settle-demo.ts`), `upto`'s `contract`
+   profile direct against the deployed contract
+   (`upto-settle-demo.ts`), and `upto`'s `contract` profile through
+   this facilitator's own HTTP-route code path
+   (`upto-http-route-settle-demo.ts`) all settled for real, each
+   independently confirmed on Horizon (`successful: true`, source
+   account the fee-sponsor), recorded in `conformance/RESULTS.md`. One
+   real bug found and fixed along the way: `settle-demo.ts` had never
+   read `MAX_TRANSACTION_FEE_STROOPS` the way `serve.ts` does, so it
+   used the SDK's stale 50,000-stroop default and failed on the real,
+   current testnet fee (`95,461` stroops that day, confirmed live,
+   already above the `72,000` that first motivated the override on
+   2026-08-19), fixed by reading the same env var. `upto`'s own
+   300,000-stroop default already covered the current fee, no change
+   needed there. The `smartAccount` profile (`agent-smart-account`)
+   was not attempted: it has never produced a real signed testnet
+   transaction at all (`__check_auth` traps, `#839`), a blocker
+   unrelated to Protocol 28 specifically, and re-attempting it isn't
+   "running an existing cycle," it's reopening a closed diagnostic
+   round without the new concrete trigger the standing instruction
+   requires.
+
 ## Working rules (spec §12)
 
 - One phase per session block; report the gate command and its exit code
