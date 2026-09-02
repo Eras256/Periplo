@@ -1030,10 +1030,23 @@ done:
    the day `stellar-accounts` itself moves to a soroban-sdk version
    whose `ContractExecutable` has more than one variant, unrelated to
    whether Periplo's own `agent-smart-account` bumps its pin. Not filed
-   anywhere: `agent-smart-account` is Phase 6b research with no live
-   testnet transaction ever achieved (`#839`, below), so this doesn't
-   change any deployed or working code path, surfaced here for the
-   record rather than as an action item.
+   from this session: `agent-smart-account` is Phase 6b research with
+   no live testnet transaction ever achieved (`#839`, below), so this
+   doesn't change any deployed or working code path, and Nirium (same
+   GitHub identity, a separate project, real Stellar/x402 work of its
+   own) hit the identical root cause independently the same day, with a
+   materially stronger repro: an actual minimal crate compiled against
+   both `soroban-sdk = "27.0.2"` (clean) and `"28.0.0-rc.1"` (real
+   `error[E0004]: non-exhaustive patterns`), not just source-reading.
+   Filed as
+   [OpenZeppelin/stellar-contracts#865](https://github.com/OpenZeppelin/stellar-contracts/issues/865).
+   Periplo's own case doesn't get a separate issue, that would be a
+   duplicate of a stronger repro of the same bug; instead, [a
+   corroborating comment](https://github.com/OpenZeppelin/stellar-contracts/issues/865#issuecomment-5515054181)
+   on `#865` itself notes the second, independent hit at a different
+   `soroban-sdk` pin (`26.1.1` here vs. `27.0.2` there), the same
+   underlying gap surfacing regardless of which pre-28.x pin a project
+   happens to be on.
 3. **Real testnet cycle run under Protocol 28, not just asserted
    compatible.** `exact` (`settle-demo.ts`), `upto`'s `contract`
    profile direct against the deployed contract
