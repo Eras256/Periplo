@@ -2281,6 +2281,28 @@ isn't a precondition for it. Acknowledged publicly on
 [x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270#issuecomment-5488304824),
 2026-08-31.
 
+**Done, 2026-09-01** (`ddc2a38`): `/settle` sends `extensionResponses`
+alongside `extensions`, `extensions` itself untouched, per the plan
+above. Re-verified the shape against the real merged source before
+writing the change, not from this file's own prior description alone:
+`typescript/packages/core/src/types/facilitator.ts` and
+`http/httpFacilitatorClient.ts` on `x402-foundation/x402`'s current
+`main`. One thing that description above didn't say, found doing the
+verification: the official `HTTPFacilitatorClient` doesn't read
+`extensionResponses` from the response body at all.
+`settleResponseSchema`/`verifyResponseSchema` don't declare it as a
+field, so Zod strips it from the parsed body, and
+`attachExtensionResponsesFromHeader` sets it afterward purely from the
+`EXTENSION-RESPONSES` header, which this facilitator already sends
+correctly (the original `#3270` fix). That client gets
+`extensionResponses` for free, from the header, with no body change
+needed; sending it in the body is for any other caller reading the
+JSON directly, the same reasoning `extensions` was added under
+originally. New regression test in `app.test.ts` covers the body
+shape (`extensionResponses` present, equal to `extensions`), not
+client-side header parsing, which was already covered by the existing
+`EXTENSION-RESPONSES` header tests. `pnpm run ci` green, 258 tests.
+
 ## Proactive dependency audit, 2026-09-01: four filed, three real fixes, one genuine retraction
 
 Following the pattern that already produced `#3121`, `#3169`, `#3172`,

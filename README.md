@@ -491,10 +491,17 @@ read about it.
   2026-08-31T17:34:56Z, after the issue had already closed. `#3301`
   (Go) and the Python draft remain open, unmerged, presumably needing
   the same realignment. No `@x402/core` release ships this shape yet
-  (npm `latest` is still `2.24.0`, from 2026-08-27); this project's own
-  `apps/facilitator` workaround, which populates `extensions` rather
-  than the new field, will need re-checking against whichever release
-  actually ships it, tracked in `docs/DEFERRED.md`.
+  (npm `latest` is still `2.24.0`, from 2026-08-27), not a precondition
+  either way: `/settle` now sends `extensionResponses` alongside the
+  existing `extensions` field (neither replaces the other), the same
+  way it already sent `extensions` ahead of any client reading it.
+  Verified against the real merged `httpFacilitatorClient.ts` on `main`
+  before writing this, not assumed: the official `HTTPFacilitatorClient`
+  doesn't actually read `extensionResponses` from the body at all,
+  `settleResponseSchema` doesn't declare it, so it gets populated purely
+  from the `EXTENSION-RESPONSES` header this facilitator already sends
+  correctly, no body change needed for that client specifically. The
+  body field is for any other caller reading the JSON directly.
 
   It is built on the official
   [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)
