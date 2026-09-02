@@ -639,16 +639,49 @@ address). An OZ maintainer (brozorec) confirmed the same root cause via
 `stellar-accounts`' own docs (its "Transaction Simulation Behavior"
 section already states plainly that `require_auth_for_args` calls
 inside `__check_auth` aren't included in simulation output) and closed
-`#839` itself on that basis. **What this means for Periplo specifically,
-stated precisely, not overclaimed:** the mechanism that unblocked Nirium
-is generic, not specific to their contract, so it should apply equally
-to `contracts/agent-smart-account` + `UptoSettlement`'s real `settle()`
-call plus its nested SEP-41 `transfer` — but Periplo has not yet
-attempted hand-constructing those two auth entries against its own
-contract. The blocker changed from "an unexplained trap with seven ruled
--out hypotheses" to "a known SDK discovery gap with a demonstrated
-workaround, not yet applied here" — real progress, but not yet a real
-signed transaction on Periplo's own side.
+`#839` itself on that basis.
+
+**2026-09-02, same day: Periplo's own attempt, real partial success, not
+overclaimed.** The mechanism that unblocked Nirium is generic, so it was
+tried directly against this project's own contracts, at the user's
+explicit direction. Deployed a fresh `agent-smart-account` instance
+(`CDGCOHRV6XIFGQ2ZYCIOCJ3GDLOEYFWUP3UICE6DD5HQQTEO3OWRK243`, a local,
+uncommitted `Signer::Delegated` build, not the `Signer::External` source
+on `main`) with both `ContextRule`s the real `settle()` flow needs (id 0
+for `UptoSettlement`, id 1 for the asset's nested `transfer`), and
+hand-constructed both required auth entries exactly as
+`smart-account-kit`'s real source does (transcribed, not re-derived): the
+smart account's own entry with an `AuthPayload` signature (`context_rule
+_ids` + an empty-bytes `signers` entry for the delegate), and a second,
+separate entry for the agent key targeting `__check_auth(auth_digest)`
+directly, signed with a plain Ed25519 signature. The full two-context
+`settle()` call still failed, but with a clean, typed
+`Error(Contract, #3002)` (`SmartAccountError::UnvalidatedContext`), not
+the opaque `UnreachableCodeReached` trap #839 documented — real progress
+either way. To isolate the cause, built a single-context probe scenario
+with the identical construction code (a trivial `probe` contract,
+`fn ping(caller: Address) { caller.require_auth(); }`, one `ContextRule`
+instead of two): **this settled for real and confirmed on-chain**,
+[`428021a6ef648937bf0edeec96d42f13e44447eac9b036c127c90cf4bebdd71b`](https://stellar.expert/explorer/testnet/tx/428021a6ef648937bf0edeec96d42f13e44447eac9b036c127c90cf4bebdd71b),
+Horizon-verified (`successful: true`, source account the fee-sponsor).
+**This is Periplo's own first real signed testnet transaction where a
+`Signer::Delegated` smart account authorized a call** — the discovery-gap
+fix genuinely transfers to this project's own environment, confirmed
+empirically, not assumed from Nirium's result alone. Reversing
+`context_rule_ids` order (`[1, 0]` instead of `[0, 1]`) as a quick
+diagnostic on the two-context case changed nothing, inconclusive about
+which of the two contexts actually fails
+`get_validated_context_by_id`'s checks (`storage.rs`'s own
+`Vec::from_iter` panics on the first failing iteration, so which index
+caused it isn't visible from the error alone). **Genuinely open, not
+resolved this round:** why the two-context `settle()`+`transfer` case
+still fails `UnvalidatedContext` when the identical single-context
+construction succeeds. `contracts/agent-smart-account/src/lib.rs` was
+reverted to its committed `Signer::External` state afterward, no
+permanent contract change made; the test instance, the isolation `probe`
+contract, and the verification script
+(`apps/facilitator/scripts/agent-smart-account-settle-demo.ts`,
+`contracts/probe-contract/`) are local and uncommitted as of this entry.
 
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds

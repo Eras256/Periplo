@@ -1264,6 +1264,103 @@ all) instead of `Signer::Delegated`, or a working example from
 OpenZeppelin directly, since their own documentation names this exact
 gap without supplying one.
 
+### 2026-09-02: the trap explained by a third party, then a real partial success against this project's own contract
+
+The "working example from OpenZeppelin directly" this section asked for
+arrived, from an unexpected direction: Nirium (same GitHub identity, a
+separate project) independently hit the identical `Signer::Delegated`
+trap and root-caused it for real, filed as
+[OpenZeppelin/stellar-contracts#863](https://github.com/OpenZeppelin/stellar-contracts/issues/863),
+closing this project's own
+[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
+The trap was never inside `__check_auth` at all: `AssembledTransaction.
+needsNonInvokerSigningBy()`/`signAuthEntries()` never surface a
+`Signer::Delegated`'s own signing requirement, because Soroban's
+recording-mode simulation never actually invokes `__check_auth`'s body,
+so `require_auth_for_args()` calls that only happen inside it can't be
+discovered ahead of time. A caller trusting the standard discovery flow
+submits a transaction missing the delegate's entry entirely, which
+`authenticate()` then traps on — this exact symptom, now explained.
+Nirium's own repro (a trivial `probe` contract, one `ContextRule`, hand-
+constructed entries via `smart-account-kit`) settled for real:
+[`f5835897d8b42544f2c98efbef7110be9d50308717885012b5a6bc9c20644d9f`](https://stellar.expert/explorer/testnet/tx/f5835897d8b42544f2c98efbef7110be9d50308717885012b5a6bc9c20644d9f).
+Full attribution and the mechanism's exact shape are in `CLAUDE.md`'s
+Phase 6b section; this is Periplo's own record of what was tried against
+this project's own contracts, not a repeat of that writeup.
+
+Tried the same day, at the user's direction, against this project's own
+deployed contracts: a fresh `agent-smart-account` instance
+(`CDGCOHRV6XIFGQ2ZYCIOCJ3GDLOEYFWUP3UICE6DD5HQQTEO3OWRK243`, a local,
+uncommitted rebuild of the original `Signer::Delegated` constructor with
+both `ContextRule`s the real `settle()` flow needs — id 0 for the
+deployed `UptoSettlement` instance, id 1 for the `PTEST` asset, matching
+this contract's own doc comment about why two rules exist), funded with
+`0.5 PTEST`. Both required auth entries were hand-constructed exactly as
+`smart-account-kit`'s real source does it (transcribed from
+`src/managers/multi-signer-manager.ts` and `src/kit/auth-payload.ts`,
+not re-derived from scratch a second time, unlike the original attempt
+above): the smart account's own top-level entry with an `AuthPayload`
+signature (`context_rule_ids: [0, 1]`, a `signers` map with an
+empty-bytes entry for the delegate, its real authorization living
+elsewhere), and a second, entirely separate entry for the agent key
+whose `rootInvocation` targets `__check_auth(auth_digest)` on the smart
+account directly, signed with a plain Ed25519 signature over that
+entry's own preimage hash.
+
+The full two-context call (`settle()`'s root invocation plus its nested
+SEP-41 `transfer`) still failed — but with a clean, typed
+`Error(Contract, #3002)` (`SmartAccountError::UnvalidatedContext`), not
+the opaque `UnreachableCodeReached` this section already documents.
+Real progress on its own: the trap itself is gone, replaced by a
+`stellar-accounts`-native, typed rejection.
+
+To isolate whether the construction technique itself was sound, a
+minimal single-context test was built: a fresh `probe` contract
+(identical to Nirium's own, `fn ping(caller: Address) {
+caller.require_auth(); }`, deployed at
+`CCYTDGYRDN2SYNTYLIP743TKJZ6W77RM2XC74U22NKQ7UNH27A343SEE`) and a
+single-`ContextRule` `agent-smart-account` instance
+(`CCDUCHKB2QKM5U7LHXWJOKJAPYIMEJ5WCFR4NRKYY5LEPMMFX3XUUH52`), same
+construction code, `context_rule_ids: [0]` only. **This settled for real
+and confirmed on-chain**:
+[`428021a6ef648937bf0edeec96d42f13e44447eac9b036c127c90cf4bebdd71b`](https://stellar.expert/explorer/testnet/tx/428021a6ef648937bf0edeec96d42f13e44447eac9b036c127c90cf4bebdd71b),
+Horizon-verified independently (`successful: true`, source account the
+fee-sponsor, `fee_charged: 203541` stroops). **This is Periplo's own
+first real signed testnet transaction where a `Signer::Delegated` smart
+account genuinely authorized a call** — proof the discovery-gap fix
+transfers to this project's own environment, confirmed empirically
+rather than assumed from Nirium's result alone.
+
+One quick diagnostic tried on the still-failing two-context case:
+reversing `context_rule_ids` to `[1, 0]`. No change, and inconclusive by
+construction — `stellar_accounts::smart_account::storage`'s own
+`do_check_auth` collects validated contexts via `Vec::from_iter` over a
+mapping closure that panics inside `get_validated_context_by_id` on the
+first failing iteration, so which of the two contexts (the `settle`
+root call or the nested `transfer`) actually fails
+`UnvalidatedContext`'s checks (rule expiry, context-type match, or
+signer match) isn't visible from the panic alone, in either id order.
+
+**Genuinely open, not resolved this round**: why the two-context
+`settle()` + nested `transfer` case still fails `UnvalidatedContext`
+when the identical single-context construction succeeds cleanly.
+Candidates not yet checked: whether the SEP-41 token's own `transfer`
+implementation constructs its `require_auth_for_args` call in a shape
+`get_validated_context_by_id`'s type-matching doesn't expect, or
+something specific to validating two contexts against two distinct
+rules in one `__check_auth` invocation that the single-rule case never
+exercises. `contracts/agent-smart-account/src/lib.rs` was reverted to
+its committed `Signer::External` state afterward — no permanent contract
+change was made. Local, uncommitted artifacts from this round:
+`apps/facilitator/scripts/agent-smart-account-settle-demo.ts`,
+`contracts/probe-contract/` (the isolation contract), and
+`smart-account-kit` added as an `apps/facilitator` devDependency
+(`package.json`/`pnpm-lock.yaml`) — kept only for its exported, real
+`computeEntryAuthDigest`/`signerToScVal`/`createDelegatedSigner`
+helpers, not the full SDK's wallet/relayer machinery, which this
+project's own deployed contracts (created outside the kit's own
+deployer flow) don't fit anyway.
+
 ### The `soroban-sdk ^26.1` vs `27.x` mismatch was tested directly as a cause of the trap, and ruled out
 
 Before treating the trap above as a real, independent problem worth an
