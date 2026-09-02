@@ -202,17 +202,30 @@ export function createFacilitatorApp(
       if (bazaarResult) {
         const extensionResponses = { [BAZAAR.key]: bazaarResult };
         c.header("EXTENSION-RESPONSES", encodeExtensionResponsesHeader(extensionResponses));
-        // Also echoed in the body's own `extensions` field (already part
-        // of @x402/core's SettleResponse type, just never populated by
-        // this facilitator before), not only the header. Found live,
-        // 2026-08-26: the installed @x402/core@2.22.0's own
-        // HTTPFacilitatorClient.settle() reads the header only to
-        // console.log a summary, then discards it, so a seller calling
-        // settle() through the official client has no way to read the
-        // header at all, only server-side logs. The body field the same
-        // client already parses and returns costs nothing extra to send
-        // and needs no upstream fix to start working today.
-        return c.json({ ...result, extensions: extensionResponses });
+        // Echoed in the body two ways, both already part of @x402/core's
+        // SettleResponse type: the existing `extensions` field (below,
+        // populated since 2026-08-26, untouched here) and, as of
+        // x402-foundation/x402#3306 (merged 2026-08-31), a distinct
+        // `extensionResponses` field. #3306 rejected the community PRs'
+        // shape (folding this into `extensions`) and introduced
+        // `extensionResponses` instead, so both fields carry the same
+        // content here during the transition window: `extensions` for a
+        // caller still on the pre-#3306 shape, `extensionResponses` for
+        // one on the new shape. Neither replaces the other.
+        //
+        // Sending `extensionResponses` in the body has no effect on the
+        // official HTTPFacilitatorClient, though, confirmed reading the
+        // real merged source (`httpFacilitatorClient.ts` on `main`):
+        // `extensionResponses` isn't a field in `settleResponseSchema`/
+        // `verifyResponseSchema` at all, so Zod strips it from the
+        // parsed body, and `attachExtensionResponsesFromHeader` then
+        // sets it purely from the `EXTENSION-RESPONSES` header this
+        // facilitator already sends correctly. That client gets
+        // `extensionResponses` for free, from the header, no body change
+        // needed. Sending it here is for any other caller reading the
+        // JSON body directly, the same reasoning `extensions` itself was
+        // added under originally.
+        return c.json({ ...result, extensions: extensionResponses, extensionResponses });
       }
     }
 

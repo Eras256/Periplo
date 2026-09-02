@@ -372,6 +372,26 @@ describe("bazaar discovery extension: EXTENSION-RESPONSES header (spec Phase 4)"
     expect(body.extensions).toEqual({ bazaar: { status: "success" } });
   });
 
+  // Regression coverage for the transition window x402-foundation/x402#3306
+  // (merged 2026-08-31) opened: SettleResponse now declares a distinct
+  // `extensionResponses` field alongside `extensions`, not a replacement.
+  // Sent here for any caller reading the body directly; the official
+  // HTTPFacilitatorClient itself gets this field for free from the
+  // EXTENSION-RESPONSES header instead (confirmed against the real merged
+  // source, see the comment on the /settle handler), so this test only
+  // covers Periplo's own body shape, not client-side parsing.
+  it("also echoes the extension outcome in the response body's extensionResponses field, alongside extensions", async () => {
+    const app = createFacilitatorApp(fakeCore());
+    const res = await app.request("/settle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBodyWithExtensions(validExtension())),
+    });
+    const body = (await res.json()) as { extensions?: unknown; extensionResponses?: unknown };
+    expect(body.extensionResponses).toEqual({ bazaar: { status: "success" } });
+    expect(body.extensionResponses).toEqual(body.extensions);
+  });
+
   it("emits a rejected header with a specific reason for a hostile routeTemplate", async () => {
     const extension = validExtension();
     (extension["bazaar"] as Record<string, unknown>)["routeTemplate"] = "/../../etc/passwd";
