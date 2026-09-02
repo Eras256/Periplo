@@ -576,11 +576,14 @@ Phase 4/5/6: zero-settlement is done and evidenced (a real
 recorded in `conformance/RESULTS.md`); the OpenZeppelin `stellar-accounts`
 smart-account integration (an agent key that can only spend through
 `UptoSettlement`, within a reserved budget reconciled against the actual
-charge) is built and unit-tested at the contract level but has **no real,
-signed testnet transaction yet**, a genuinely open blocker, not a silent
-gap. `__check_auth` traps (`UnreachableCodeReached`) on every construction
-tried: `Signer::Delegated` (the original attempt) and `Signer::External`
-(the retry, informed by reviewing `authenticate`'s two arms in
+charge) is built and unit-tested at the contract level but **Periplo's
+own `agent-smart-account` still has no real, signed testnet transaction
+of its own** — the blocker below is now understood and has a known
+workaround, not an open mystery, but that workaround has not yet been
+applied to this contract's own `settle()` call. `__check_auth` traps
+(`UnreachableCodeReached`) on every construction tried at the time:
+`Signer::Delegated` (the original attempt) and `Signer::External` (the
+retry, informed by reviewing `authenticate`'s two arms in
 `stellar_accounts::smart_account::storage`, not by reading any
 competitor's code), both against the real target contract and against a
 trivial single-line `probe` contract used to isolate the trap from
@@ -592,16 +595,60 @@ signer type, and `Client.from` vs. `AssembledTransaction.build`
 directly), plus independent confirmation that `stellar-accounts` itself
 has no test coverage of this real, host-driven auth path in either the
 crate or its own official example. Filed as
-[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839),
-framed as a request for diagnostic help, open. This diagnostic round is
-closed on purpose (the user's own instruction: don't reopen #839 with
-another angle without a new concrete trigger); further attempts get their
-own separately-scoped investigation. **2026-09-01: cited, not reopened.**
-`#839`'s existing findings turned out to be directly load-bearing for the
-`upto`-on-Stellar spec consolidation (`#3098`/`#3134` both claim
-"C-accounts work transparently," a claim `#839` already shows doesn't
-hold for a delegated smart-account signer); see
-`docs/UPTO-CONVERGENCE.md` before re-investigating #839 itself.
+[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
+This diagnostic round was closed on purpose (the user's own instruction:
+don't reopen #839 with another angle without a new concrete trigger);
+further attempts got their own separately-scoped investigation.
+**2026-09-01: cited, not reopened.** `#839`'s existing findings turned
+out to be directly load-bearing for the `upto`-on-Stellar spec
+consolidation (`#3098`/`#3134` both claim "C-accounts work
+transparently," a claim `#839` already shows doesn't hold for a
+delegated smart-account signer); see `docs/UPTO-CONVERGENCE.md`.
+
+**2026-09-02: `#839` closed as COMPLETED, root cause found — attribution
+matters here, get it right.** Nirium (same GitHub identity, a separate
+project, its own real Stellar/x402 agent-key work) independently
+investigated the identical underlying question on 2026-09-01 — "from
+the Nirium side of this account rather than Periplo," stated explicitly
+in the thread, not inferred. **Nirium's own repro, not Periplo's**: a
+`Signer::Delegated` on a `ContextRule::CallContract`, hand-constructing
+both required `SorobanAuthorizationEntry` objects (the smart account's
+own entry and the delegate's) via
+[`smart-account-kit`](https://github.com/stellar/smart-account-kit)
+rather than trusting standard SDK discovery, submitted for real and
+**confirmed on-chain**:
+[`f5835897d8...`](https://stellar.expert/explorer/testnet/tx/f5835897d8b42544f2c98efbef7110be9d50308717885012b5a6bc9c20644d9f).
+The real root cause, found the same round: `__check_auth` was never the
+problem. `AssembledTransaction.needsNonInvokerSigningBy()`/
+`signAuthEntries()` never surface a `Signer::Delegated`'s signing
+requirement at all for a plain `SOROBAN_CREDENTIALS_ADDRESS` entry,
+because Soroban's own recording-mode simulation never actually invokes
+`__check_auth`'s body, so a `require_auth_for_args()` call that only
+happens inside it can't be discovered ahead of time. A caller trusting
+the standard discovery flow builds a transaction that looks complete,
+submits it missing the delegate's signature entirely, and
+`authenticate()`'s `require_auth_for_args()` then traps on the missing
+authorization — the exact `UnreachableCodeReached` symptom `#839`
+documented, now explained. Filed by Nirium as
+[OpenZeppelin/stellar-contracts#863](https://github.com/OpenZeppelin/stellar-contracts/issues/863)
+(closed, `stateReason: COMPLETED`) and
+[stellar/js-stellar-sdk#1700](https://github.com/stellar/js-stellar-sdk/issues/1700)
+(open, generalized beyond `Signer::Delegated` to any custom account
+whose `__check_auth` calls `require_auth_for_args()` on a second
+address). An OZ maintainer (brozorec) confirmed the same root cause via
+`stellar-accounts`' own docs (its "Transaction Simulation Behavior"
+section already states plainly that `require_auth_for_args` calls
+inside `__check_auth` aren't included in simulation output) and closed
+`#839` itself on that basis. **What this means for Periplo specifically,
+stated precisely, not overclaimed:** the mechanism that unblocked Nirium
+is generic, not specific to their contract, so it should apply equally
+to `contracts/agent-smart-account` + `UptoSettlement`'s real `settle()`
+call plus its nested SEP-41 `transfer` — but Periplo has not yet
+attempted hand-constructing those two auth entries against its own
+contract. The blocker changed from "an unexplained trap with seven ruled
+-out hypotheses" to "a known SDK discovery gap with a demonstrated
+workaround, not yet applied here" — real progress, but not yet a real
+signed transaction on Periplo's own side.
 
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
