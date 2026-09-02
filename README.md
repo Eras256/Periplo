@@ -503,6 +503,38 @@ read about it.
   correctly, no body change needed for that client specifically. The
   body field is for any other caller reading the JSON directly.
 
+  **Protocol 28 ("Adapter") readiness, checked for real against testnet
+  ahead of the 2026-09-16 mainnet vote, not just a version bump.**
+  Commit [`32f5d56`](https://github.com/Eras256/Periplo/commit/32f5d56):
+  `@stellar/stellar-sdk` upgraded `16.2.0` → `16.3.0`, the LTS release
+  backporting full Protocol 28 XDR support (CAP-85's new
+  `ContractExecutable` variant, CAP-83) onto the stable v16 API, not
+  `17.0.1` (npm `latest`), because `@x402/stellar`, this project's own
+  dependency, still hard-pins `^16.0.1`; a v17 bump would have split the
+  install into two incompatible major versions of the same package. The
+  same commit settled three real transactions on `stellar:testnet`
+  under the new protocol, each Horizon-verified: `exact`
+  ([`e102cf87...`](https://stellar.expert/explorer/testnet/tx/e102cf87e49228935ac77edc3584a9926c3c0769bb2a5fbe32b3b19831328b42)),
+  `upto`'s `contract` profile direct against the deployed contract
+  ([`265d5c4e...`](https://stellar.expert/explorer/testnet/tx/265d5c4e49a201fac9113ecdf91e4767fcd5e800c58ab6dfc38c2a350d701469)),
+  and `upto`'s `contract` profile through this facilitator's own
+  HTTP-route code
+  ([`383b8319...`](https://stellar.expert/explorer/testnet/tx/383b8319b04d58481fd94f2a2810b6f498d365d714c5a2db5bc226936b286799)).
+  The run wasn't cosmetic: the same commit fixes a real bug it found,
+  `apps/facilitator/scripts/settle-demo.ts` had never read
+  `MAX_TRANSACTION_FEE_STROOPS` the way the deployed `serve.ts` does,
+  so it failed on the real, current testnet fee (`95,461` stroops that
+  day, already above the `72,000` that first required the override in
+  August). Also left [a corroborating
+  comment](https://github.com/OpenZeppelin/stellar-contracts/issues/865#issuecomment-5515054181)
+  on `OpenZeppelin/stellar-contracts#865`, filed independently the same
+  day by a different project on the same GitHub account with a
+  stronger repro (a real `error[E0004]` compiling against
+  `soroban-sdk 28.0.0-rc.1`): the same `ContractExecutable` match gap,
+  hit at a different `soroban-sdk` pin (`26.1.1`), a second,
+  independent confirmation of the same root cause. Full detail in
+  `CLAUDE.md`.
+
   It is built on the official
   [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)
   package, for the same reason the facilitator does not reimplement
