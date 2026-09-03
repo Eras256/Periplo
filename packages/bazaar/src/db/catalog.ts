@@ -206,3 +206,19 @@ export async function upsertCatalogResource(
     throw new Error(`Failed to upsert catalog row: ${writeError.message}`);
   }
 }
+
+/**
+ * Catalog size (spec §8/§10: `/status`'s "catalog size" field). `{ head:
+ * true }` asks PostgREST for the exact count via the response header
+ * only, no rows returned, the standard lightweight way to count a table
+ * through Supabase without fetching its contents.
+ */
+export async function countCatalogResources(client: SupabaseClient<Database>): Promise<number> {
+  const { count, error } = await client
+    .from("resources")
+    .select("*", { count: "exact", head: true });
+  if (error) {
+    throw new Error(`Failed to count catalog rows: ${error.message}`);
+  }
+  return count ?? 0;
+}

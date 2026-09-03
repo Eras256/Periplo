@@ -145,11 +145,17 @@ listings specifically.
   your self-facilitated resource discoverable through Periplo's catalog
   too, you'd need to also route through a Periplo-operated facilitator
   for that purpose, a different, additional integration, not this one.
-- **No channel accounts, no burst-throughput handling.** `docs/SPEC.md`
-  §2 notes the facilitator's own account sequence number is the
-  bottleneck under bursty traffic; this guide's minimal example doesn't
-  address that, same as `apps/facilitator/src/core.ts` doesn't yet
-  either.
+- **Channel accounts exist in `core.ts` now, but this guide's minimal
+  example doesn't configure any.** `docs/SPEC.md` §2 notes the
+  facilitator's own account sequence number is the bottleneck under
+  bursty traffic; `createFacilitatorCore`'s `channelAccountSecrets`
+  option pools extra signer accounts per network so concurrent
+  settlements each get their own sequence number (real evidence: 4
+  concurrent `settle()` calls against a 4-account pool, all 4 succeeded
+  using 4 distinct source accounts, `conformance/RESULTS.md`). A
+  self-facilitated resource server that expects real concurrent traffic
+  should configure a pool sized to its own expected burst, not just the
+  single primary signer this guide's example uses.
 - **`stellar:pubnet` needs your own funded fee-sponsor key on mainnet.**
   Nothing here is Stellar-testnet-specific, but nothing here funds a
   mainnet account for you either.

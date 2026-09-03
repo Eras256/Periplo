@@ -324,10 +324,17 @@ facilitator.
 phase sequence because the project owner asked for it directly. **This is
 not "Phase 10 complete"**: it's the one piece (facilitator deployment)
 pulled forward; the rest of Phase 10's scope (an equivalent
-`periplo-mainnet` app, the runbook, monitoring beyond a bare `/health`,
-public telemetry endpoint, both example integrations, hardening pass,
-Matrix/Mastodon channels) is still not built, and shouldn't be inferred
-from the app being live.
+`periplo-mainnet` app, the runbook, both example integrations, hardening
+pass, Matrix/Mastodon channels) is still not built, and shouldn't be
+inferred from the app being live. Two more pieces were pulled forward
+the same way on 2026-09-03, found real and missing against a competitor
+comparison rather than assumed still-fine because they're "later phase":
+the channel-account pool (spec §2/§7) and `GET /status` (spec §8/§9,
+"monitoring beyond a bare `/health`, public telemetry endpoint" above,
+now real, not a gap) — both real, tested, and evidenced (CLAUDE.md's own
+2026-09-03 entries), neither yet configured/reflected on the live Fly
+deployment, which needs a redeploy either way once the Fly account gap
+(recurring, see below) is resolved for this session.
 
 - **`@hono/node-server@2.1.0` (MIT) added.** This closes the gap flagged
   in Phase 3's entry above ("No Node HTTP adapter for Hono chosen yet").

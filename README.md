@@ -213,6 +213,23 @@ read about it.
   configured because no mainnet key exists yet. See
   [Deployment](#deployment-what-actually-runs) below for how it runs.
 
+  Two more pieces, both real and evidenced, not just described:
+  `createFacilitatorCore`'s `channelAccountSecrets` option pools extra
+  signer accounts per network on top of the primary fee-sponsor — the
+  library's own `ExactStellarScheme`/`UptoStellarScheme` already
+  round-robin across whatever signers they're given, using each one's
+  own account (and so its own sequence number) as the transaction
+  source, this just configures more than one. 4 concurrent `settle()`
+  calls against a 4-account pool all succeeded, landed in the **same
+  ledger**, using 4 distinct source accounts, real evidence in
+  [`conformance/RESULTS.md`](conformance/RESULTS.md), addressing spec
+  §2/§7's own "the facilitator's sequence number is the bottleneck under
+  bursty traffic" requirement. `GET /status` reports operational
+  telemetry (uptime, latency p50/p95, error rate, catalog size, last
+  settled transaction per network), self-hosted and aggregate-only, spec
+  §8/§9. Neither is configured on the live deployment yet
+  (`docs/DEFERRED.md`).
+
   Beyond our own settlement scripts, the **official x402 e2e conformance
   suite** (`x402-foundation/x402`'s own `e2e/`, not a Periplo-authored
   equivalent) was run end to end against the live deployment above via its

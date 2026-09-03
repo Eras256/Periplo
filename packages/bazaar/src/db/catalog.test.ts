@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   type CatalogAcceptsEntry,
   type CatalogResourceInput,
+  countCatalogResources,
   InvalidCatalogUrlError,
   mergeAccepts,
   upsertCatalogResource,
@@ -145,5 +146,32 @@ describe("upsertCatalogResource: rejects an invalid url before touching the data
     await expect(
       upsertCatalogResource(poisonedClient(), input("https://example.com/weather"))
     ).rejects.toThrow("must reject before calling client.from()");
+  });
+});
+
+describe("countCatalogResources", () => {
+  /** Fake `.from("resources").select(..., { count, head })` chain. */
+  function fakeCountClient(count: number | null, error: { message: string } | null = null) {
+    const builder: Record<string, unknown> = {};
+    builder.select = () => builder;
+    // biome-ignore lint/suspicious/noThenProperty: mirrors the real thenable postgrest-js builder, same pattern as discovery-routes.test.ts's fakeListClient.
+    builder.then = (
+      resolve: (v: { data: null; error: typeof error; count: number | null }) => void
+    ) => resolve({ data: null, error, count });
+    return { from: () => builder } as unknown as Parameters<typeof countCatalogResources>[0];
+  }
+
+  it("returns the real count from PostgREST's response", async () => {
+    await expect(countCatalogResources(fakeCountClient(42))).resolves.toBe(42);
+  });
+
+  it("returns 0 when PostgREST reports a null count (empty table edge case)", async () => {
+    await expect(countCatalogResources(fakeCountClient(null))).resolves.toBe(0);
+  });
+
+  it("throws with the real error message when the count query fails", async () => {
+    await expect(
+      countCatalogResources(fakeCountClient(null, { message: "connection refused" }))
+    ).rejects.toThrow(/connection refused/);
   });
 });

@@ -53,6 +53,24 @@ export interface FacilitatorCoreConfig {
    * reachable support must match).
    */
   readonly signers: Partial<Record<StellarNetwork, string>>;
+  /**
+   * Additional channel accounts per network (spec §2/§7: "the facilitator
+   * is the transaction source, so its sequence number is the bottleneck
+   * under bursty agent traffic. Use channel accounts"), pooled together
+   * with `signers[network]` and handed as one array to
+   * `ExactStellarScheme`/`UptoStellarScheme`. Both already accept an array
+   * of signers and round-robin across them (`selectSigner`, default
+   * round-robin, `@x402/stellar`'s own mechanism, not reimplemented here),
+   * using the selected signer's own account — and so its own sequence
+   * number — as the rebuilt transaction's source (confirmed reading
+   * `ExactStellarScheme.settle()`'s real compiled source:
+   * `server.getAccount(signer.address)`). Configuring N extra secrets here
+   * is the whole mechanism: no custom pool/lock code needed. Each entry
+   * must be fee-only (spec §1 constraint 3), enforced the same
+   * `assertNonCustodialSigner` way as the primary signer, one call per
+   * pool member, before the facilitator is considered booted.
+   */
+  readonly channelAccountSecrets?: Partial<Record<StellarNetwork, readonly string[]>>;
   readonly rpcConfig?: { readonly url?: string };
   /** Safety ceiling in stroops passed through to ExactStellarScheme (default: library default, 50_000). */
   readonly maxTransactionFeeStroops?: number;
@@ -103,43 +121,72 @@ export async function createFacilitatorCore(
 
   const loadAccountFor = config.loadAccount ?? defaultLoadAccount;
 
-  const signers = await Promise.all(
+  // One signer pool PER network, never combined across networks. Each
+  // network's `ExactStellarScheme`/`UptoStellarScheme` instance below is
+  // constructed from, and registered only for, its own pool: passing a
+  // single shared instance to `facilitator.register([testnet, pubnet],
+  // scheme)` with both networks' addresses pooled together (this file's
+  // prior shape, harmless only because production has only ever
+  // configured one network at a time) would let the library's own
+  // round-robin `selectSigner` pick a *pubnet* signer address for a
+  // *testnet* settlement or vice versa, since it round-robins over
+  // whatever address set the scheme was built with, with no network
+  // awareness of its own (confirmed reading `ExactStellarScheme`'s real
+  // compiled source: `this.selectSigner([...this.signingAddresses])`,
+  // no network filter). Not a fund-safety bug (the mismatched account
+  // simply doesn't exist on the wrong network's RPC, so settlement fails
+  // closed), but a real availability hazard, found and fixed while adding
+  // the channel-account pool below, not before it.
+  const networkPools = await Promise.all(
     configuredNetworks.map(async (network) => {
       const secret = config.signers[network];
       if (!secret) {
         throw new Error(`Unreachable: ${network} was filtered as configured but has no secret`);
       }
-      const signer = createEd25519Signer(secret, network);
-      await assertNonCustodialSigner(signer.address, network, loadAccountFor(network));
-      return { network, signer };
+      const primary = createEd25519Signer(secret, network);
+      const additionalSecrets = config.channelAccountSecrets?.[network] ?? [];
+      const additional = additionalSecrets.map((channelSecret) =>
+        createEd25519Signer(channelSecret, network)
+      );
+      const pool = [primary, ...additional];
+      await Promise.all(
+        pool.map((signer) =>
+          assertNonCustodialSigner(signer.address, network, loadAccountFor(network))
+        )
+      );
+      return { network, pool };
     })
   );
 
   const facilitator = new x402Facilitator();
-  const scheme = new ExactStellarScheme(
-    signers.map(({ signer }) => signer),
-    {
+  for (const { network, pool } of networkPools) {
+    const scheme = new ExactStellarScheme(pool, {
       areFeesSponsored: true,
       ...(config.rpcConfig ? { rpcConfig: config.rpcConfig } : {}),
       ...(config.maxTransactionFeeStroops !== undefined
         ? { maxTransactionFeeStroops: config.maxTransactionFeeStroops }
         : {}),
-    }
-  );
-  facilitator.register(
-    signers.map(({ network }) => network),
-    scheme
-  );
+    });
+    facilitator.register([network], scheme);
+  }
 
   const uptoNetworks = configuredNetworks.filter(
     (network) => config.uptoSettlementContracts?.[network]
   );
-  if (uptoNetworks.length > 0) {
+  for (const network of uptoNetworks) {
+    const pool = networkPools.find((entry) => entry.network === network)?.pool;
+    if (!pool) {
+      throw new Error(`Unreachable: ${network} was filtered as upto-configured but has no pool`);
+    }
+    const contractAddress = config.uptoSettlementContracts?.[network];
+    if (!contractAddress) {
+      throw new Error(
+        `Unreachable: ${network} was filtered as upto-configured but has no contract`
+      );
+    }
     const uptoScheme = new UptoStellarScheme(
-      signers.map(({ signer }) => signer),
-      Object.fromEntries(
-        uptoNetworks.map((network) => [network, config.uptoSettlementContracts?.[network]])
-      ),
+      pool,
+      { [network]: contractAddress },
       {
         ...(config.rpcConfig ? { rpcConfig: config.rpcConfig } : {}),
         ...(config.uptoMaxTransactionFeeStroops !== undefined
@@ -147,7 +194,7 @@ export async function createFacilitatorCore(
           : {}),
       }
     );
-    facilitator.register(uptoNetworks, uptoScheme);
+    facilitator.register([network], uptoScheme);
   }
 
   return {

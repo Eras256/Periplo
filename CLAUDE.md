@@ -1150,6 +1150,89 @@ done:
    round without the new concrete trigger the standing instruction
    requires.
 
+**2026-09-03: channel-account pool, spec §2/§7's sequence-number
+bottleneck under bursty traffic, pulled forward from Phase 10 at
+explicit request, same pattern as the Fly.io deploy in Phase 3.**
+`@x402/stellar`'s own `ExactStellarScheme` (and this project's own
+`UptoStellarScheme`, deliberately mirroring it) already accept an array
+of signers and round-robin across them (`selectSigner`, default
+round-robin), using the selected signer's own account, and so its own
+sequence number, as the rebuilt transaction's source, confirmed reading
+the real compiled source (`server.getAccount(signer.address)`), not
+guessed. Configuring a pool was the whole gap: `core.ts`'s prior shape
+only ever passed one signer per network. `createFacilitatorCore`'s new
+`channelAccountSecrets` option (`serve.ts`'s
+`STELLAR_CHANNEL_ACCOUNT_SECRETS_TESTNET`/`_PUBNET`, comma-separated,
+optional) pools N extra signer accounts per network on top of the
+primary, each checked by the same `assertNonCustodialSigner` boot-time
+gate as the primary, one call per pool member. Found and fixed a real,
+adjacent design issue while building this, not before: the prior
+one-shared-scheme-instance-across-all-configured-networks shape
+(harmless only because production has only ever configured one network
+at a time) would have let the round-robin pick a *pubnet* signer for a
+*testnet* settlement or vice versa once both networks were configured
+together, since `selectSigner` has no network awareness of its own.
+Fixed by constructing one `ExactStellarScheme`/`UptoStellarScheme`
+instance **per network**, each registered only for its own network, each
+built from only its own pool — not a fund-safety bug (the mismatched
+account simply doesn't exist on the wrong network's RPC, so settlement
+fails closed), but a real availability hazard closed as a side effect.
+
+Real evidence, not just configured: 3 fresh testnet channel accounts
+generated and funded via friendbot
+(`GAZROUSFXRTCDUWL6HDGQDFAL5V2VZOQF25RYESIKZPHZQREPY7MWARE`,
+`GCGA5WSVEEEVNNZ37ADIUZ5YO3UE6NLNA7EH7W4NG3PM5H7GRXXV7545`,
+`GDOKGMQP4TYKJ6ZMDYTCIWQAV5BUTG5KJ2PCUJ4OQ6YS466IWBEDHJVV`), pooled with
+the primary fee-sponsor (4 total).
+`apps/facilitator/scripts/channel-accounts-burst-demo.ts` fired 4
+concurrent `settle()` calls against the 4-member pool: all 4 succeeded,
+landed in the **same ledger** (`4490654`), and Horizon confirms all 4
+used different source accounts, genuine concurrent settlement with zero
+serialization, recorded in `conformance/RESULTS.md`. A follow-up run
+deliberately oversubscribed the pool (5 concurrent calls against 4
+accounts): 4 succeeded, 1 failed cleanly with
+`settle_exact_stellar_transaction_submission_failed` (a sequence
+collision on the account the round-robin wrapped back onto) — the
+honest, expected limit, reported as such rather than hidden:
+concurrency safety extends exactly to pool size, and oversubscription
+fails closed per colliding call, not systemically. 5 new unit tests
+(`core.channel-accounts.test.ts`, throwaway keypairs, no live network),
+`pnpm run ci` green throughout, 263 tests. Not yet configured on the
+live `https://periplo-testnet.fly.dev` deployment (same optional,
+additive pattern as `upto`; the facilitator boots and serves fine
+without it), tracked in `docs/DEFERRED.md`.
+
+**Same day: `GET /status`, spec §8/§9/§10's operational telemetry
+endpoint (uptime, latency p50/p95, error rate, catalog size, last
+settled transaction per network), also pulled forward from Phase 10/
+Phase 9 at the same request.** A JSON endpoint on `apps/facilitator`
+itself, not the full `apps/hub` `/status` page spec §10 describes (that
+page would render this data; `apps/hub` itself is still Phase 9,
+genuinely not started, no invented scope here). `apps/facilitator/src/telemetry.ts`
+is a small in-process tracker (`createTelemetryTracker`): a global Hono
+middleware (`app.ts`) times every request and records whether it errored
+(status ≥ 400), a bounded ring buffer (1,000 samples) backs the p50/p95
+estimate, and `/settle` calls `telemetry.recordSettlement(network,
+transaction)` on real success, the same "settle-only, not verify"
+cataloging gate this file already documents applying here too. In-memory
+by design, not persisted (spec §9 asks for aggregate operational metrics,
+not a durable time series; resets on restart, an honest limitation, not
+a bug, noted in the module's own doc comment). Catalog size is a new
+`countCatalogResources` export from `packages/bazaar` (PostgREST's
+`{ count: "exact", head: true }`, no rows fetched); both it and the
+whole route degrade to `null`/no request rather than 500ing if no
+`catalogClient` is configured or the count query itself fails, same
+posture `/discovery/*` already uses. Verified live, not just unit
+tested: booted `serve.ts` locally against the real fee-sponsor env, hit
+`/health` a few times, confirmed `/status` reporting real
+`requestsServed`/latency numbers that moved between calls. 15 new unit/
+route tests (`telemetry.test.ts`, `catalog.test.ts`'s new
+`countCatalogResources` cases, `app.test.ts`'s new `GET /status`
+describe block), `pnpm run ci` green throughout, 278 tests. Not yet on
+the live `https://periplo-testnet.fly.dev` deployment (a redeploy is
+needed either way; tracked alongside the channel-account pool above in
+`docs/DEFERRED.md`, not a separate blocker).
+
 ## Working rules (spec §12)
 
 - One phase per session block; report the gate command and its exit code

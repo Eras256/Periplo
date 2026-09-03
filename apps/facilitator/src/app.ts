@@ -6,7 +6,7 @@
  * entirely: no HTTP hop needed when the caller is in the same process.
  */
 
-import type { Database } from "@periplo/bazaar";
+import { countCatalogResources, type Database } from "@periplo/bazaar";
 import { embedQuery } from "@periplo/search";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
@@ -17,6 +17,7 @@ import { type DemoResourceConfig, mountDemoResource } from "./demo-resource.js";
 import { processBazaarExtension } from "./discovery.js";
 import { listDiscoveryResources, searchDiscoveryResources } from "./discovery-routes.js";
 import { type VerifyOrSettleRequestBody, verifyOrSettleRequestSchema } from "./schemas.js";
+import { createTelemetryTracker } from "./telemetry.js";
 
 /**
  * `zod` validates the wire shape at the boundary; the SDK's own types are
@@ -72,6 +73,19 @@ export function createFacilitatorApp(
 ): Hono {
   const app = new Hono();
   const catalogClient = options.catalogClient ?? null;
+  const telemetry = createTelemetryTracker();
+
+  // Global, wraps every route registered below it (Hono middleware order:
+  // a `use("*", ...)` applies to routes matched after its own
+  // registration). Records real wall-clock latency and whether the
+  // response was an error (>= 400), the two request-level fields
+  // `/status` reports (spec §8/§9/§10), aggregate only, no request body
+  // or path captured.
+  app.use("*", async (c, next) => {
+    const startedAt = Date.now();
+    await next();
+    telemetry.recordRequest(Date.now() - startedAt, c.res.status >= 400);
+  });
 
   if (options.demoResource) {
     mountDemoResource(app, core, options.demoResource, catalogClient);
@@ -94,6 +108,7 @@ export function createFacilitatorApp(
       description: "x402 facilitator for Stellar: verify/settle/supported, schemes per /supported.",
       endpoints: {
         health: "/health",
+        status: "/status",
         supported: "/supported",
         verify: "POST /verify",
         settle: "POST /settle",
@@ -106,6 +121,35 @@ export function createFacilitatorApp(
   );
 
   app.get("/health", (c) => c.json({ status: "ok" }));
+
+  // Operational telemetry (spec §8/§9/§10): uptime, latency p50/p95,
+  // error rate, catalog size, last settled transaction per network.
+  // Aggregate only, self-hosted, no PII: nothing here is per-request
+  // identity, just counters and timing. `catalogSize` is `null` (not an
+  // error status) when no `catalogClient` is configured, the same
+  // degrade-rather-than-fail posture `/discovery/*` uses for the same
+  // reason, or when the live count query itself fails, so a transient
+  // Supabase hiccup doesn't take `/status` itself down.
+  app.get("/status", async (c) => {
+    const snapshot = telemetry.getSnapshot();
+    let catalogSize: number | null = null;
+    if (catalogClient) {
+      try {
+        catalogSize = await countCatalogResources(catalogClient);
+      } catch {
+        catalogSize = null;
+      }
+    }
+    return c.json({
+      uptimeSeconds: snapshot.uptimeSeconds,
+      requestsServed: snapshot.requestsServed,
+      errorRate: snapshot.errorRate,
+      latencyP50Ms: snapshot.latencyP50Ms,
+      latencyP95Ms: snapshot.latencyP95Ms,
+      catalogSize,
+      lastSettledTransaction: snapshot.lastSettledTransaction,
+    });
+  });
 
   // Always advertised: the extension mechanism (validate + report via
   // EXTENSION-RESPONSES) works whether or not `catalogClient` is
@@ -194,6 +238,7 @@ export function createFacilitatorApp(
     // actually settled, real funds moved. This is deliberately the whole
     // gate, not "verify or settle" — see the comment on /verify above.
     if (result.success) {
+      telemetry.recordSettlement(result.network, result.transaction);
       const bazaarResult = await processBazaarExtension(
         paymentPayload,
         paymentRequirements,

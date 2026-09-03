@@ -2,6 +2,7 @@ export { type CatalogUrlCheckResult, checkCatalogUrl } from "./catalog-url.js";
 export {
   type CatalogAcceptsEntry,
   type CatalogResourceInput,
+  countCatalogResources,
   InvalidCatalogUrlError,
   mergeAccepts,
   upsertCatalogResource,

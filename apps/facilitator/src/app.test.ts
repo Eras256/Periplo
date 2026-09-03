@@ -470,3 +470,89 @@ describe("GET /discovery/search", () => {
     expect(body.error).toBeTruthy();
   });
 });
+
+interface StatusResponseBody {
+  uptimeSeconds?: number;
+  requestsServed?: number;
+  errorRate?: number;
+  latencyP50Ms?: number | null;
+  latencyP95Ms?: number | null;
+  catalogSize?: number | null;
+  lastSettledTransaction?: Record<string, { network?: string; transaction?: string }>;
+}
+
+describe("GET /status", () => {
+  it("counts prior requests (not itself, which is still in flight when its own snapshot is taken) and reports null catalogSize with no catalogClient configured", async () => {
+    const app = createFacilitatorApp(fakeCore());
+    await app.request("/health"); // one completed request before /status is ever hit
+    const res = await app.request("/status");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as StatusResponseBody;
+    expect(body.requestsServed).toBe(1);
+    expect(body.uptimeSeconds).toBeGreaterThanOrEqual(0);
+    expect(body.errorRate).toBe(0);
+    expect(body.catalogSize).toBeNull();
+    expect(body.lastSettledTransaction).toEqual({});
+  });
+
+  it("reports a real catalogSize when a catalogClient is configured", async () => {
+    const app = createFacilitatorApp(fakeCore(), {
+      catalogClient: fakeCatalogClient([], 7),
+    });
+    const res = await app.request("/status");
+    const body = (await res.json()) as StatusResponseBody;
+    expect(body.catalogSize).toBe(7);
+  });
+
+  it("records the last settled transaction per network after a real /settle success", async () => {
+    const app = createFacilitatorApp(
+      fakeCore({
+        settle: async () => ({
+          success: true,
+          transaction: "settledhash1",
+          network: "stellar:testnet",
+        }),
+      })
+    );
+    await app.request("/settle", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(validRequestBody),
+    });
+    const res = await app.request("/status");
+    const body = (await res.json()) as StatusResponseBody;
+    expect(body.lastSettledTransaction?.["stellar:testnet"]).toMatchObject({
+      network: "stellar:testnet",
+      transaction: "settledhash1",
+    });
+  });
+
+  it("does not record a settlement when /settle fails", async () => {
+    const app = createFacilitatorApp(
+      fakeCore({
+        settle: async () => ({
+          success: false,
+          transaction: "",
+          network: "stellar:testnet",
+          errorReason: "some_failure",
+        }),
+      })
+    );
+    await app.request("/settle", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(validRequestBody),
+    });
+    const res = await app.request("/status");
+    const body = (await res.json()) as StatusResponseBody;
+    expect(body.lastSettledTransaction).toEqual({});
+  });
+
+  it("counts a 4xx/5xx response toward errorRate", async () => {
+    const app = createFacilitatorApp(fakeCore());
+    await app.request("/discovery/search"); // 503, no catalogClient configured
+    const res = await app.request("/status");
+    const body = (await res.json()) as StatusResponseBody;
+    expect(body.errorRate).toBeGreaterThan(0);
+  });
+});

@@ -33,6 +33,35 @@ function loadSigners(): FacilitatorCoreConfig["signers"] {
 }
 
 /**
+ * Channel-account pool per network (spec §2/§7: sequence-number bottleneck
+ * under bursty traffic). Optional, comma-separated, same convention as
+ * every other list-shaped env var this file reads; an unset var means no
+ * extra pool for that network, not a boot error — the primary fee-sponsor
+ * signer alone is still a valid (if unpooled) configuration, same as
+ * before this existed. See `core.ts`'s `channelAccountSecrets` doc
+ * comment for the actual mechanism (round-robin over the whole pool,
+ * `@x402/stellar`'s own, not reimplemented here).
+ */
+function loadChannelAccountSecrets(): NonNullable<FacilitatorCoreConfig["channelAccountSecrets"]> {
+  const parseList = (raw: string | undefined): readonly string[] | undefined =>
+    raw
+      ?.split(",")
+      .map((secret) => secret.trim())
+      .filter((secret) => secret.length > 0);
+
+  const channelAccountSecrets: NonNullable<FacilitatorCoreConfig["channelAccountSecrets"]> = {};
+  const testnetPool = parseList(process.env.STELLAR_CHANNEL_ACCOUNT_SECRETS_TESTNET);
+  if (testnetPool && testnetPool.length > 0) {
+    channelAccountSecrets["stellar:testnet"] = testnetPool;
+  }
+  const pubnetPool = parseList(process.env.STELLAR_CHANNEL_ACCOUNT_SECRETS_PUBNET);
+  if (pubnetPool && pubnetPool.length > 0) {
+    channelAccountSecrets["stellar:pubnet"] = pubnetPool;
+  }
+  return channelAccountSecrets;
+}
+
+/**
  * `null` (not a boot-time error) when `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`
  * aren't set: automatic cataloging (spec Phase 4) degrades to
  * validate-without-persist rather than the whole facilitator refusing to
@@ -122,6 +151,7 @@ async function main(): Promise<void> {
   const maxTransactionFeeStroops = loadMaxTransactionFeeStroops();
   const core = await createFacilitatorCore({
     signers: loadSigners(),
+    channelAccountSecrets: loadChannelAccountSecrets(),
     uptoSettlementContracts: loadUptoSettlementContracts(),
     ...(maxTransactionFeeStroops !== undefined ? { maxTransactionFeeStroops } : {}),
   });
