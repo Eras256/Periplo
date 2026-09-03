@@ -94,6 +94,49 @@ ahora hay algo concreto que contradecir si alguien la chequea.
 Aplica desde ya en cualquier comentario nuevo. No hace falta corregir
 retroactivamente los ya publicados.
 
+## Recuperar una PR que quedó con commits sin firmar — regla añadida 02-sep-2026
+
+Pasó dos veces ya en `x402-foundation/x402`: una PR con commits firmados
+correctamente termina con un commit sin firmar encima (un `chore: add
+changeset` normal, o un intento de arreglo vía API/web que no pasa por
+git local con la key configurada). El síntoma es siempre el mismo:
+`check-verified-commits` en rojo aunque el fix real ya esté ahí.
+
+1. **Confirmar el estado real vía API antes de tocar nada**, no asumir
+   desde el mensaje de quien reporta el problema:
+   `gh api repos/<fork>/commits?sha=<rama>&per_page=5 --jq '.[] |
+   {sha, verified: .commit.verification.verified, message}'` — identifica
+   exactamente cuál es el último commit realmente firmado (`verified:
+   true, reason: valid`).
+2. **`git reset --hard <ese-sha>` + `git push --force` es una acción
+   destructiva que el clasificador de auto-mode de Claude Code bloquea
+   por diseño** — y bloquea también que el propio agente se autoconceda
+   el permiso para hacerlo. No hay manera de rodear esto desde el agente,
+   ni debe intentarse. Estos dos comandos puntuales los corre la persona,
+   a mano, en una terminal aparte (no la misma donde corre la sesión de
+   Claude Code — esa terminal está ocupada por el chat). El agente
+   verifica el SHA objetivo antes, y el resultado después, pero no
+   ejecuta el reset/force-push él mismo.
+3. **Antes de reintentar si algo falla con `.git/index.lock`**, confirmar
+   que no hay dos procesos tocando la misma carpeta a la vez — un IDE
+   como Antigravity puede tener más de un panel de agente abierto sobre
+   el mismo repo, y cada uno con su propia terminal cuenta como un
+   proceso git independiente. Cerrar los paneles/terminales de más,
+   confirmar con `ps aux | grep git` que no queda nada corriendo, recién
+   ahí borrar el lock (`rm -f <repo>/.git/index.lock`) y reintentar en
+   una sola terminal.
+4. **El trabajo que se perdió en el commit descartado se recupera de su
+   propio diff antes de tirarlo** (`git show <sha-descartado>`), no se le
+   pide a la persona que lo reescriba de memoria si el contenido ya
+   existe en el historial.
+5. **El resto sí lo hace el agente**: recrear el contenido recuperado,
+   `git commit -S`, y `git push` normal (sin `--force`, es un commit
+   nuevo sobre una rama que ya no diverge) — esto no es una reescritura
+   de historial, así que no dispara el mismo bloqueo. Verificar la firma
+   del commit nuevo vía API antes de dar el paso por cerrado, y
+   `check-verified-commits` en verde en la PR real antes de reportarlo
+   como resuelto.
+
 ## Antes de publicar cualquier PR/issue/comentario — checklist
 
 1. ¿Se lee como lo escribiría la persona que de verdad encontró esto, o
