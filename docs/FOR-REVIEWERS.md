@@ -166,3 +166,11 @@ exactly where that stands.
 plain-English walk-through of the stack. [`docs/SPEC.md`](SPEC.md) is the
 full, phased build specification everything above is built against, for
 when ten minutes becomes an hour.
+
+## 11. If you're scoring against the RFP listing directly
+
+[`docs/RFP-COMPLIANCE.md`](RFP-COMPLIANCE.md) quotes every requirement
+and evaluation criterion from the SCF Handbook's RFP Track page and the
+"X402 Facilitator with Bazaar" listing, one row per requirement, mapped
+to real evidence, with the genuinely open items named rather than
+implied covered.

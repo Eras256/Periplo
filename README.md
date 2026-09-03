@@ -1240,3 +1240,7 @@ release age; `soroban-sdk`, held at the version the already-deployed
   human-written index for a panel reviewer, not a Claude Code session:
   what to look at, in what order, and what each link confirms, in under
   ten minutes.
+- [`docs/RFP-COMPLIANCE.md`](docs/RFP-COMPLIANCE.md): every RFP Track
+  requirement and evaluation criterion, quoted from the SCF Handbook,
+  mapped one row at a time to real evidence in this repo, and every
+  genuinely open item stated plainly.
