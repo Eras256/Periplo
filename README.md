@@ -295,7 +295,7 @@ read about it.
   set every facilitator-safety check actually consulted
   (`signingAddresses`) never included it, filed as
   [x402-foundation/x402#3332](https://github.com/x402-foundation/x402/issues/3332).
-  **Status: fixed, not just filed.**
+  **Own PR, merged 2026-09-03T07:02:08Z by @phdargen:**
   [x402-foundation/x402#3336](https://github.com/x402-foundation/x402/pull/3336)
   adds a separate `facilitatorSafetyAddresses` set rather than merging into
   `signingAddresses` directly, since that set also backs signer selection
@@ -470,8 +470,9 @@ read about it.
   itself), also linking back to `#3270` directly. Three independent
   SDK-language fixes now trace to the one issue this project opened:
   TypeScript (`#3278`, Bartok9), Go (`#3301`, wnjoon), Python
-  (`PhilBot402/x402#4`, draft). All three open, none merged as of this
-  writing, verified live before writing this.
+  (`PhilBot402/x402#4`, draft). All three open, none merged as of
+  2026-08-30, verified live before writing this (see the 2026-09-02
+  update below for what actually merged).
 
   **Resolved upstream, 2026-08-31, not by the three PRs above
   directly.** `#3270` closed the same day (`stateReason: COMPLETED`),
@@ -490,7 +491,21 @@ read about it.
   explicitly "Never merges into `extensions`," and merged separately,
   2026-08-31T17:34:56Z, after the issue had already closed. `#3301`
   (Go) and the Python draft remain open, unmerged, presumably needing
-  the same realignment. No `@x402/core` release ships this shape yet
+  the same realignment.
+
+  **Resolved in full, 2026-09-02.** `#3301` (Go) merged
+  `2026-09-02T12:57:19Z` by phdargen, confirmed against its real merged
+  diff, not assumed from the "presumably" above: it carries the same
+  realignment `#3278`/`#3306` did, populating `ExtensionResponses` (not
+  `extensions`) with a dedicated regression test,
+  `TestEncodePaymentResponseHeaderOmitsExtensionResponses`, that fails
+  outright if any extension data leaks into `PAYMENT-RESPONSE`. The
+  Python draft, `PhilBot402/x402#4`, remains open in its author's own
+  fork, never opened against the upstream repo itself. Three SDK-language
+  fixes now trace to this one issue: TypeScript and Go both merged
+  upstream, Python resolved separately by `#3306`, with a fourth,
+  independent Python attempt left open in a fork that was never proposed
+  upstream. No `@x402/core` release ships this shape yet
   (npm `latest` is still `2.24.0`, from 2026-08-27), not a precondition
   either way: `/settle` now sends `extensionResponses` alongside the
   existing `extensions` field (neither replaces the other), the same
