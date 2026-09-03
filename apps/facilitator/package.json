@@ -21,10 +21,12 @@
     "@x402/extensions": "2.22.0",
     "@x402/hono": "2.22.0",
     "@x402/stellar": "2.22.0",
+    "esbuild": "0.28.2",
     "hono": "4.13.3",
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
     "smart-account-kit": "^0.6.2"
   }
 }

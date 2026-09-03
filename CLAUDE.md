@@ -1233,6 +1233,96 @@ the live `https://periplo-testnet.fly.dev` deployment (a redeploy is
 needed either way; tracked alongside the channel-account pool above in
 `docs/DEFERRED.md`, not a separate blocker).
 
+**Same round: `GET /demo/play`, a wallet-less one-click demo, also
+pulled forward from Phase 9/10, real interoperability proof
+(`interop-x402-org-demo.ts`) added the same round, and a real RFP
+requirement mapping written (`docs/RFP-COMPLIANCE.md`), all three
+prompted by a competitor comparison (Vellar-Wallet, discussed in chat,
+not named in the public repo per the standing competitive-analysis
+rule).** Real problem found before writing any code: a fresh browser
+keypair funded via friendbot has native XLM only, never a custom asset,
+so it can't pay `/demo/temperature-convert`'s `PTEST`-denominated price
+without a trustline and a balance neither friendbot nor the visitor can
+provide. `apps/facilitator/src/demo-faucet.ts`'s `prepareFaucetTransaction`
+solves this without ever touching the visitor's secret: one transaction
+with two operations (`changeTrust`, source: the visitor's key;
+`payment`, source: this project's own `PTEST`-holding faucet, reusing
+`STELLAR_TEST_BUYER_SECRET` rather than provisioning a second secret for
+the same testnet-only purpose), signed server-side by the faucet only;
+the browser adds its own signature and submits directly to Horizon
+itself, so the ephemeral secret never reaches this server.
+`apps/facilitator/src/browser/` (`demo-play-client.ts`'s `runDemoPlay`,
+`demo-play-main.ts`'s thin DOM wiring) is a genuinely new browser-target
+build: `demo-play.ts` bundles it with `esbuild` in-process at first
+request (cached in memory, not a committed artifact, not rebuilt per
+request), served at `GET /demo/play` (the page) and
+`GET /demo/play/client.js` (the bundle). Required its own nested
+`src/browser/tsconfig.json` (DOM lib, excluded from the main package's
+Node-targeted build/emit, still type-checked via project references) —
+found live, not assumed, when `pnpm typecheck` failed on `document`/
+`window`/`HTMLElement` against the base Node-only `lib`.
+
+Wire format (`PAYMENT-SIGNATURE` request header, `PAYMENT-REQUIRED`/
+`PAYMENT-RESPONSE` response headers, all `base64(JSON.stringify(...))`)
+read directly from the installed `@x402/core@2.22.0`'s own compiled
+source before writing any browser code, not assumed: x402 v2 uses
+`PAYMENT-SIGNATURE`, **not** `X-PAYMENT` (the v1 fallback), a real
+correction to how this feature was originally specified in chat.
+Verified for real, twice, end to end from Node before trusting the
+browser bundle at all (`scripts/demo-play-full-verify.ts`): a fresh
+ephemeral keypair, friendbot-funded, onboarded via the faucet
+transaction, paid `/demo/temperature-convert` for real, settled,
+Horizon-confirmed, `payer` in the settlement result matching the
+one-time key. Measured wall-clock, both runs: **~15 seconds**, not the
+"under 10 seconds" a first framing of this feature assumed — Stellar's
+own ~5-second ledger close time, multiplied across three sequential
+real transactions (friendbot, onboarding, the actual payment), makes
+single digits physically unreachable on testnet regardless of code
+efficiency; corrected in README rather than silently built to a target
+that couldn't be hit.
+
+Real interoperability evidence, distinct from the demo above:
+`scripts/interop-x402-org-demo.ts` built and signed a payment with this
+project's own client code, then verified and **settled it through
+`x402.org`'s own independent, third-party reference facilitator**, not
+this project's, confirmed live beforehand (`GET /supported` still lists
+`exact`/`stellar:testnet`/`areFeesSponsored:true`) and independently
+confirmed on Horizon afterward: the settling transaction's source
+account is x402.org's own fee-sponsor, not Periplo's. Recorded in
+`conformance/RESULTS.md` alongside the demo-play evidence.
+
+`docs/RFP-COMPLIANCE.md` maps the real RFP Track requirements and
+X402-specific evaluation criteria (quoted from the SCF Handbook's own
+RFP Track page, fetched and checked live, not from a stale memory of
+it) to real evidence already in this repo, row by row, every genuinely
+open item named rather than implied covered. Explicitly does **not**
+use the section numbers ("3.2", "3.5", "3.6") the competitor-comparison
+prompt cited: traced those to Periplo's own internal budget table's
+person-weeks column (a coincidental "3.5" for an unrelated line item,
+"Conformance + e2e both networks"), not any real RFP clause structure,
+confirmed by fetching both the build prompt and the live SCF Handbook
+page rather than assumed correct. Corrected in the response to the
+user rather than silently building a mapping around invented numbers.
+
+Playwright (`@playwright/test@1.62.1`, matching `docs/SPEC.md`'s own
+Phase 9 pin) added as a devDependency; a real Chromium is cached in
+this environment, but the system shared libraries it needs to actually
+launch (`libnspr4`, `libnss3`, others) aren't installed and there's no
+root access in this session's sandbox to install them.
+`scripts/demo-play-browser-verify.mjs` is real, correct, ready to run
+in any environment with a working Chromium (or CI, which typically has
+these preinstalled) — it was written and is believed correct, but has
+**not actually been run successfully against a real browser this
+session**, an honest, stated gap, not smoothed over: DOM wiring is
+low-risk (a button click calling already-proven logic), but "low-risk"
+is not "verified." 25 new tests across `demo-faucet.test.ts` (a real
+testnet integration suite, gated on `STELLAR_TEST_BUYER_SECRET`, proves
+the faucet transaction's structure and signatures without spending
+anything) and `demo-play.test.ts` (route-level, Hono's in-memory
+`app.request()`), `pnpm run ci` green throughout, 290 tests. Not yet on
+the live `https://periplo-testnet.fly.dev` deployment, same recurring
+Fly account gap as the two items above.
+
 ## Working rules (spec §12)
 
 - One phase per session block; report the gate command and its exit code

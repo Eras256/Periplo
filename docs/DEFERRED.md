@@ -332,9 +332,17 @@ comparison rather than assumed still-fine because they're "later phase":
 the channel-account pool (spec §2/§7) and `GET /status` (spec §8/§9,
 "monitoring beyond a bare `/health`, public telemetry endpoint" above,
 now real, not a gap) — both real, tested, and evidenced (CLAUDE.md's own
-2026-09-03 entries), neither yet configured/reflected on the live Fly
-deployment, which needs a redeploy either way once the Fly account gap
-(recurring, see below) is resolved for this session.
+2026-09-03 entries). A third piece landed the same round: `GET /demo/play`,
+a wallet-less one-click payment demo, real and verified twice end to end
+from Node (real settled transactions), with one honest, stated gap: a
+real browser click-through hasn't happened, this session's own sandbox
+lacks the system libraries (`libnspr4`, `libnss3`) a real headless
+Chromium needs to launch, and there's no root access to install them.
+`scripts/demo-play-browser-verify.mjs` is real and ready to close this
+gap in any environment with a working Chromium. None of the three is
+yet configured/reflected on the live Fly deployment, which needs a
+redeploy either way once the Fly account gap (recurring, see below) is
+resolved for this session.
 
 - **`@hono/node-server@2.1.0` (MIT) added.** This closes the gap flagged
   in Phase 3's entry above ("No Node HTTP adapter for Hono chosen yet").

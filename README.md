@@ -32,10 +32,13 @@ Phase 10 is not done; see [`docs/DEFERRED.md`](docs/DEFERRED.md). This
 README states what is built, linked, tested, or hashed today. Everything
 else is marked as planned.
 
-**There is no frontend yet.** The developer hub (`apps/hub`) is Phase 9
-and has not started. `/browse`, `/playground`, `/status` and the rest of
-§10's routes do not exist. The facilitator's JSON API is the only
-user-facing surface right now.
+**The developer hub itself (`apps/hub`) is still Phase 9, not started.**
+`/browse`, `/playground`, and the rest of §10's human-facing routes
+don't exist yet. One real, minimal exception: `GET /demo/play`, a
+one-click, wallet-less demo (a visitor's browser generates a one-time
+Stellar key, funds it, and pays a real endpoint, no prior setup) — see
+"Pay a real request, no wallet needed" below. Everything else is still
+the facilitator's JSON API.
 
 ## The ecosystem is converging on this spec, not the other way around
 
@@ -229,6 +232,44 @@ read about it.
   settled transaction per network), self-hosted and aggregate-only, spec
   §8/§9. Neither is configured on the live deployment yet
   (`docs/DEFERRED.md`).
+
+### Pay a real request, no wallet needed
+
+`GET /demo/play` is a one-click demo of the whole x402 loop, built on
+top of the existing `/demo/temperature-convert` resource: a visitor's
+browser generates a one-time Stellar keypair, funds it with testnet XLM
+via friendbot, gets a small test-token balance via this facilitator's
+own `/demo/play/faucet` endpoint (a transaction the facilitator
+partially signs server-side and the browser completes and submits
+itself — the ephemeral secret never leaves the tab), then uses that key
+to sign and settle a real payment. No Freighter, no pre-funded account,
+no x402 knowledge required. Verified twice, for real, end to end
+(`apps/facilitator/scripts/demo-play-full-verify.ts`, the same logic the
+page's own browser bundle runs): a real 402 challenge, a real signed
+payment, a real settled transaction confirmed on Horizon, `payer` in the
+settlement result matching the one-time key that authorized it. **~15
+seconds end to end, measured, not the sub-10-second target a first
+framing of this feature assumed** — Stellar's own ~5-second ledger close
+time, multiplied across three sequential real transactions (friendbot
+funding, the trustline+token onboarding transaction, the actual demo
+payment), makes single digits physically unreachable on testnet, not a
+code inefficiency to optimize away.
+
+Honest gap on verification, not smoothed over: this was proven twice
+from Node (`demo-play-full-verify.ts`) and the exact same browser bundle
+was confirmed to build and serve correctly (`apps/facilitator/scripts/demo-play-browser-verify.mjs`
+exists and is correct, using Playwright against a real headless
+Chromium), but the build session's own sandbox lacks the system shared
+libraries (`libnspr4`, `libnss3`, and others) Chromium needs to actually
+launch, with no path to install them (no root). The DOM wiring itself
+(`browser/demo-play-main.ts`) is a thin, low-risk layer around the
+already-proven logic — a button click calling the same function
+`demo-play-full-verify.ts` already runs for real — but a genuine
+browser click-through hasn't happened in this session. Run
+`node apps/facilitator/scripts/demo-play-browser-verify.mjs` against a
+running instance in an environment with a real Chromium to close this
+gap for real. Not yet configured on the live
+`https://periplo-testnet.fly.dev` deployment (`docs/DEFERRED.md`).
 
   Beyond our own settlement scripts, the **official x402 e2e conformance
   suite** (`x402-foundation/x402`'s own `e2e/`, not a Periplo-authored

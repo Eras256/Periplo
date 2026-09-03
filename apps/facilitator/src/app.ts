@@ -13,6 +13,7 @@ import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 import { BAZAAR } from "@x402/extensions/bazaar";
 import { type Context, Hono } from "hono";
 import type { FacilitatorCore } from "./core.js";
+import { type DemoPlayConfig, mountDemoPlay } from "./demo-play.js";
 import { type DemoResourceConfig, mountDemoResource } from "./demo-resource.js";
 import { processBazaarExtension } from "./discovery.js";
 import { listDiscoveryResources, searchDiscoveryResources } from "./discovery-routes.js";
@@ -65,6 +66,14 @@ export interface CreateFacilitatorAppOptions {
    * evaluated against), not a facilitator capability.
    */
   readonly demoResource?: DemoResourceConfig | null;
+  /**
+   * The wallet-less, one-click `/demo/play` page (`demo-play.ts`). Pays
+   * `demoResource`'s own endpoint using a browser-generated ephemeral
+   * key, so this only mounts when `demoResource` is also configured;
+   * `null`/omitted serves the facilitator (and `demoResource`, if set)
+   * unchanged.
+   */
+  readonly demoPlay?: DemoPlayConfig | null;
 }
 
 export function createFacilitatorApp(
@@ -91,6 +100,10 @@ export function createFacilitatorApp(
     mountDemoResource(app, core, options.demoResource, catalogClient);
   }
 
+  if (options.demoPlay) {
+    mountDemoPlay(app, options.demoPlay);
+  }
+
   // No claim beyond what's true today: this is an API-only service
   // (apps/hub, the human-facing developer hub, is Phase 9 and doesn't
   // exist yet, spec §5). The root route exists so hitting the bare host
@@ -115,6 +128,7 @@ export function createFacilitatorApp(
         discoveryResources: "GET /discovery/resources",
         discoverySearch: "GET /discovery/search",
         ...(options.demoResource ? { demoResource: "GET /demo/temperature-convert" } : {}),
+        ...(options.demoPlay ? { demoPlay: "GET /demo/play" } : {}),
       },
       repository: "https://github.com/Eras256/Periplo",
     })

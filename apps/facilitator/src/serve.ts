@@ -14,6 +14,7 @@ import { embedDocument } from "@periplo/search";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createFacilitatorApp } from "./app.js";
 import { createFacilitatorCore, type FacilitatorCoreConfig } from "./core.js";
+import type { DemoPlayConfig } from "./demo-play.js";
 import type { DemoResourceConfig } from "./demo-resource.js";
 
 const PORT = Number(process.env.PORT ?? 8402);
@@ -101,6 +102,36 @@ function loadDemoResourceConfig(): DemoResourceConfig | null {
 }
 
 /**
+ * `null` unless `demoResourceConfig` is also configured and
+ * `STELLAR_TEST_BUYER_SECRET` is set. Reuses the same buyer secret
+ * `scripts/settle-demo.ts` already spends from as this page's faucet
+ * source (see `demo-faucet.ts`'s own doc comment for why: it already
+ * holds a large `PTEST` balance, no separate secret needed for the same
+ * testnet-only purpose). `STELLAR_TEST_ASSET_CODE`/`_ISSUER` default to
+ * the same `PTEST` fixture every other demo script targets (its classic
+ * asset code and issuer, public information, not secrets — the SAC
+ * contract address `STELLAR_TEST_ASSET_ADDRESS` already configures is a
+ * *different* piece of data the faucet's own `changeTrust`/`payment`
+ * operations don't use, since those are classic-asset operations, not
+ * Soroban invocations).
+ */
+function loadDemoPlayConfig(demoResourceConfig: DemoResourceConfig | null): DemoPlayConfig | null {
+  const faucetSecret = process.env.STELLAR_TEST_BUYER_SECRET;
+  if (!faucetSecret || !demoResourceConfig) {
+    return null;
+  }
+  return {
+    resourceUrl: `${demoResourceConfig.baseUrl}/demo/temperature-convert`,
+    faucetSecret,
+    assetCode: process.env.STELLAR_TEST_ASSET_CODE ?? "PTEST",
+    assetIssuer:
+      process.env.STELLAR_TEST_ASSET_ISSUER ??
+      "GDRTPOXBIW7JXFR7KMBTGIBOLV66I6XOKMTR3OMFYSZZF2V2HUSGPTZX",
+    grantAmount: process.env.DEMO_PLAY_GRANT_AMOUNT ?? "1",
+  };
+}
+
+/**
  * `{}` unless `UPTO_SETTLEMENT_CONTRACT_TESTNET`/`_PUBNET` are set: same
  * "advertised support and reachable support must match" principle as
  * `loadSigners()` above, and the same env var name
@@ -155,9 +186,11 @@ async function main(): Promise<void> {
     uptoSettlementContracts: loadUptoSettlementContracts(),
     ...(maxTransactionFeeStroops !== undefined ? { maxTransactionFeeStroops } : {}),
   });
+  const demoResourceConfig = loadDemoResourceConfig();
   const app = createFacilitatorApp(core, {
     catalogClient: loadCatalogClient(),
-    demoResource: loadDemoResourceConfig(),
+    demoResource: demoResourceConfig,
+    demoPlay: loadDemoPlayConfig(demoResourceConfig),
   });
 
   // Explicit 0.0.0.0: @hono/node-server's default hostname isn't
