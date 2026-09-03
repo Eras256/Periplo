@@ -38,6 +38,17 @@ COPY apps/facilitator apps/facilitator
 RUN pnpm --filter @periplo/bazaar build
 RUN pnpm --filter @periplo/search build
 RUN pnpm --filter @periplo/facilitator build
+# demo-play.ts resolves its esbuild entry point relative to its own
+# `import.meta.url`, so the compiled dist/demo-play.js needs a `browser/`
+# sibling too, not just src/demo-play.ts's own. src/browser is excluded
+# from the facilitator's own tsc build (it targets DOM, not Node, see
+# apps/facilitator/tsconfig.json), so nothing above copies it: esbuild
+# bundles these .ts files directly at request time, no pre-compilation
+# needed, just presence at the same relative path dist/ expects. Missing
+# this crashes GET /demo/play/client.js with ENOENT in production while
+# working fine under `tsx` in dev, where src/demo-play.ts and
+# src/browser/ are already real siblings on disk.
+RUN cp -r apps/facilitator/src/browser apps/facilitator/dist/browser
 
 FROM base AS runtime
 ENV NODE_ENV=production
