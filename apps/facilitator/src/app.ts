@@ -97,7 +97,7 @@ export function createFacilitatorApp(
   });
 
   if (options.demoResource) {
-    mountDemoResource(app, core, options.demoResource, catalogClient);
+    mountDemoResource(app, core, options.demoResource, catalogClient, telemetry);
   }
 
   if (options.demoPlay) {

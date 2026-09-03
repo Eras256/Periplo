@@ -52,6 +52,7 @@ import { ExactStellarScheme as ExactStellarServerScheme } from "@x402/stellar/ex
 import type { Context, Hono } from "hono";
 import type { FacilitatorCore } from "./core.js";
 import { processBazaarExtension } from "./discovery.js";
+import type { TelemetryTracker } from "./telemetry.js";
 
 export interface DemoResourceConfig {
   readonly payTo: string;
@@ -127,7 +128,8 @@ export function mountDemoResource(
   app: Hono,
   core: FacilitatorCore,
   config: DemoResourceConfig,
-  catalogClient: SupabaseClient<Database> | null
+  catalogClient: SupabaseClient<Database> | null,
+  telemetry?: TelemetryTracker
 ): void {
   // `core`'s own `getSupported()` returns `SupportedResponse` directly
   // (its type is `ReturnType<x402Facilitator["getSupported"]>`, which is
@@ -154,7 +156,18 @@ export function mountDemoResource(
   resourceServer.registerExtension(bazaarResourceServerExtension);
 
   resourceServer.onAfterSettle(async (ctx) => {
-    if (!ctx.result.success || !catalogClient) {
+    if (!ctx.result.success) {
+      return;
+    }
+    // Self-facilitation never touches app.ts's own /settle HTTP handler
+    // (that's the whole point: same process, no HTTP hop), so it's also
+    // the only path that can miss telemetry if this call isn't here too —
+    // found live, not assumed, against the real deployed /status
+    // endpoint reporting an empty lastSettledTransaction right after a
+    // real settlement through this exact resource, confirmed on Horizon.
+    telemetry?.recordSettlement(ctx.result.network, ctx.result.transaction);
+
+    if (!catalogClient) {
       return;
     }
     // DeepReadonly on the hook context, not on processBazaarExtension's own

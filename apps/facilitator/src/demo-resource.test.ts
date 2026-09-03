@@ -150,3 +150,41 @@ describe("GET /demo/temperature-convert: verified and settled payment", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("GET /demo/temperature-convert: telemetry", () => {
+  it("records the settlement on /status, even though self-facilitation never touches the /settle HTTP route", async () => {
+    // Real regression: found live against the deployed facilitator, where
+    // GET /status kept reporting an empty lastSettledTransaction right
+    // after a real, Horizon-confirmed settlement through this exact
+    // resource, because the telemetry call only lived in app.ts's own
+    // /settle handler, a route self-facilitation (this resource) never
+    // calls -- it settles in-process via x402ResourceServer's own
+    // onAfterSettle hook instead.
+    const app = createFacilitatorApp(fakeCore(), { demoResource: DEMO_CONFIG });
+    const paymentPayload: PaymentPayload = {
+      x402Version: 2,
+      accepted: {
+        scheme: "exact",
+        network: DEMO_CONFIG.network,
+        asset: DEMO_CONFIG.assetAddress,
+        amount: "1000",
+        payTo: DEMO_CONFIG.payTo,
+        maxTimeoutSeconds: 300,
+        extra: { areFeesSponsored: true },
+      },
+      payload: { transaction: "base64tx" },
+    };
+    await app.request("/demo/temperature-convert?value=100&from=celsius&to=fahrenheit", {
+      headers: { "PAYMENT-SIGNATURE": encodePaymentSignatureHeader(paymentPayload) },
+    });
+
+    const statusRes = await app.request("/status");
+    const status = (await statusRes.json()) as {
+      lastSettledTransaction?: Record<string, { network?: string; transaction?: string }>;
+    };
+    expect(status.lastSettledTransaction?.["stellar:testnet"]).toMatchObject({
+      network: "stellar:testnet",
+      transaction: "abc123", // fakeCore()'s default settle() response
+    });
+  });
+});
