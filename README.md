@@ -230,10 +230,14 @@ read about it.
   ledger**, using 4 distinct source accounts, real evidence in
   [`conformance/RESULTS.md`](conformance/RESULTS.md), addressing spec
   §2/§7's own "the facilitator's sequence number is the bottleneck under
-  bursty traffic" requirement. `GET /status` reports operational
-  telemetry (uptime, latency p50/p95, error rate, catalog size, last
-  settled transaction per network), self-hosted and aggregate-only, spec
-  §8/§9. **Both live on `https://periplo-testnet.fly.dev`** as of
+  bursty traffic" requirement. Not a novel idea, and not presented as
+  one: a channel-account pool is a documented mitigation for this exact
+  bottleneck, and several other teams in this same RFP round ship or
+  design one too. What's here is real and evidenced, not just planned.
+  `GET /status` reports operational telemetry (uptime, latency p50/p95,
+  error rate, catalog size, last settled transaction per network),
+  self-hosted and aggregate-only, spec §8/§9. **Both live on
+  `https://periplo-testnet.fly.dev`** as of
   2026-09-03: try [`GET /status`](https://periplo-testnet.fly.dev/status)
   or [`GET /supported`](https://periplo-testnet.fly.dev/supported)
   directly (the latter now lists 4 signer addresses, the channel pool).
@@ -241,9 +245,20 @@ read about it.
   reporting an empty `lastSettledTransaction` after a real settlement,
   because the telemetry call only lived in the HTTP `/settle` route,
   which self-facilitation (the demo resource below) never calls. Fixed,
-  redeployed, re-verified live: see `conformance/RESULTS.md`.
+  redeployed, re-verified live: see `conformance/RESULTS.md`. Several
+  other teams in this round document plans for a similar operational
+  telemetry surface; this one is real, live, and returning real numbers
+  today, not a roadmap item.
 
 ### Pay a real request, no wallet needed
+
+**Not a unique idea, said plainly:** at least one other real submission
+in this same RFP round already ships a live, browser-based, no-wallet
+demo, more developed than this one — multiple payment scenarios
+including a metered `upto` ceiling and a deliberate failure case, and
+real testnet USDC rather than this project's own self-issued test
+asset. What follows is real and verified, not a claim to being first or
+only.
 
 `GET /demo/play` is a one-click demo of the whole x402 loop, built on
 top of the existing `/demo/temperature-convert` resource: a visitor's
@@ -296,6 +311,46 @@ hash.
 Deployed 2026-09-03. Full history — three real transactions from this
 round alone, the query-param bug, the telemetry bug, and the real
 browser verification — in `conformance/RESULTS.md`.
+
+### A real payment settled through someone else's facilitator
+
+Wire-format compliance is usually shown by comparing what a facilitator
+returns against a reference response, or by pointing an unmodified
+canonical client at your own deployment. Both are real evidence, and
+other teams in this round do exactly that. This is a different, more
+concrete claim: a payment built and signed with this project's own
+client code was `verify()`-ed and **settled** through a completely
+independent, third-party facilitator this project doesn't operate,
+confirmed live beforehand and independently re-confirmed on Horizon
+afterward, with the settling transaction's source account belonging to
+that third party, not this one. See
+[`apps/facilitator/scripts/interop-x402-org-demo.ts`](apps/facilitator/scripts/interop-x402-org-demo.ts)
+and the evidence row in `conformance/RESULTS.md`.
+
+Worth naming a different, real kind of interoperability this project
+does not have: at least one other team in this round has built and
+deployed actual catalog federation between cooperating facilitator
+instances — one operator's Bazaar registering and ingesting another's
+listings over a real HTTP API, live today. A further, more ambitious
+design for fully decentralized peer discovery is documented in that
+same project as an explicit, honestly-labeled proposal, not yet
+implemented. Federation and a single completed cross-facilitator
+settlement are different claims; this project has only demonstrated
+the second.
+
+### Mapped against the RFP itself, not just described in prose
+
+[`docs/RFP-COMPLIANCE.md`](docs/RFP-COMPLIANCE.md) quotes every
+requirement and evaluation criterion from the SCF Handbook's own RFP
+Track page and the "X402 Facilitator with Bazaar" listing, and maps
+each one, row by row, to real evidence already in this repo — a link,
+a test, or a transaction hash, the same standard as everywhere else in
+this README — with every genuinely open item named rather than implied
+covered. Reviewing the other real submissions in this round, none
+appears to publish a dedicated requirement-by-requirement mapping as
+its own document; several cite specific parts of their own response
+inline within a longer architecture write-up, a real but different
+thing.
 
   Beyond our own settlement scripts, the **official x402 e2e conformance
   suite** (`x402-foundation/x402`'s own `e2e/`, not a Periplo-authored
