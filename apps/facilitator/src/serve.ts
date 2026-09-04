@@ -115,13 +115,26 @@ function loadDemoResourceConfig(): DemoResourceConfig | null {
  * operations don't use, since those are classic-asset operations, not
  * Soroban invocations).
  */
-function loadDemoPlayConfig(demoResourceConfig: DemoResourceConfig | null): DemoPlayConfig | null {
+export function loadDemoPlayConfig(
+  demoResourceConfig: DemoResourceConfig | null
+): DemoPlayConfig | null {
   const faucetSecret = process.env.STELLAR_TEST_BUYER_SECRET;
   if (!faucetSecret || !demoResourceConfig) {
     return null;
   }
   return {
-    resourceUrl: `${demoResourceConfig.baseUrl}/demo/temperature-convert`,
+    // Real bug found live, by a real click, not this session's own
+    // scripts: the 402 challenge succeeds with no query string at all
+    // (the price doesn't depend on it), so an unparameterized request
+    // gets all the way through payment before demo-resource.ts's own
+    // conversion handler 400s on the missing value/from/to — a real
+    // visitor would be charged and then shown an error. This session's
+    // own verification scripts always hardcoded
+    // `?value=100&from=celsius&to=fahrenheit` directly in their own
+    // fetch URL, which never exercised this default. Baked in here
+    // instead, the one place every caller (the browser page included)
+    // actually shares.
+    resourceUrl: `${demoResourceConfig.baseUrl}/demo/temperature-convert?value=100&from=celsius&to=fahrenheit`,
     faucetSecret,
     assetCode: process.env.STELLAR_TEST_ASSET_CODE ?? "PTEST",
     assetIssuer:
@@ -214,11 +227,17 @@ async function main(): Promise<void> {
   });
 }
 
-main().catch((error) => {
-  // Includes CustodialKeyError from the boot-time non-custodial check
-  // (spec §1 constraint 3): the process must refuse to start, and this
-  // is the top-level catch that actually makes it exit non-zero rather
-  // than silently hang.
-  console.error("Facilitator failed to start:", error);
-  process.exit(1);
-});
+// Entrypoint guard: without this, importing this module for `loadDemoPlayConfig`'s
+// own unit test (serve.test.ts) would try to boot a real server against
+// whatever secrets happen to be in the test process's own env. Standard
+// Node idiom for "only run main() when this file is executed directly."
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    // Includes CustodialKeyError from the boot-time non-custodial check
+    // (spec §1 constraint 3): the process must refuse to start, and this
+    // is the top-level catch that actually makes it exit non-zero rather
+    // than silently hang.
+    console.error("Facilitator failed to start:", error);
+    process.exit(1);
+  });
+}
