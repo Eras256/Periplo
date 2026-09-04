@@ -1323,6 +1323,49 @@ anything) and `demo-play.test.ts` (route-level, Hono's in-memory
 the live `https://periplo-testnet.fly.dev` deployment, same recurring
 Fly account gap as the two items above.
 
+**Same day, resolved: the Fly account gap, a real deploy, and two more
+real bugs found live.** The user re-authenticated `fly` as
+`ticketsafes@gmail.com` (this session's own CLI had been on
+`amadoregios@gmail.com`, a *third* distinct account from the two
+`docs/DEFERRED.md` already tracked recurring). Secrets staged
+(`STELLAR_TEST_BUYER_SECRET`, `STELLAR_CHANNEL_ACCOUNT_SECRETS_TESTNET`)
+and `fly deploy` run for real. First bug, caught before deploying, not
+after: `demo-play.ts` resolves its esbuild entry point relative to its
+own `import.meta.url`, correct under `tsx` in dev (`src/demo-play.ts`
+and `src/browser/` are real siblings) but broken in the compiled
+`dist/` the Docker image actually runs, since `src/browser` is
+deliberately excluded from the facilitator's own Node-targeted `tsc`
+build. Fixed in `Dockerfile.facilitator` itself
+(`RUN cp -r apps/facilitator/src/browser apps/facilitator/dist/browser`,
+commit `4954869`), verified by rebuilding the real compiled output and
+running the actual `dist/serve.js` (not `tsx`) locally before ever
+deploying — confirmed the exact ENOENT this would have caused in
+production. Deployed; live verification against the real URL confirmed
+`GET /supported` listing all 4 channel-pool signer addresses and
+`GET /demo/play`/`GET /demo/play/client.js` both serving correctly.
+
+Second bug, found live, not before: `apps/facilitator/scripts/demo-play-full-verify.ts`
+run against the real live URL settled a real transaction
+([`40b489d4...`](https://stellar.expert/explorer/testnet/tx/40b489d462d717083ce2bd50d9f61c2ce9f1e3c7432fb96464e573e319d7cb50)),
+but `GET /status` still showed an empty `lastSettledTransaction`
+afterward. Root cause: `telemetry.recordSettlement` was only wired into
+`app.ts`'s own `POST /settle` HTTP route; self-facilitation
+(`demo-resource.ts`, the exact path `/demo/play` pays) never calls that
+route, settling in-process via `x402ResourceServer`'s own
+`onAfterSettle` hook instead, which already existed for bazaar
+cataloging but never recorded telemetry and was incorrectly gated on
+`catalogClient` being configured at all. Fixed by passing the same
+`TelemetryTracker` into `mountDemoResource` and recording the
+settlement unconditionally on success, before the cataloging-specific
+logic (commit `9f0067a`, new regression test in
+`demo-resource.test.ts`). Redeployed, re-verified live: a second real
+settlement
+([`10a46759...`](https://stellar.expert/explorer/testnet/tx/10a467594be999d7fe3cc82b08c924c7555b5db841f070759507749a5a6b198b))
+now shows up correctly in the live `GET /status` response. All three
+features from this round — channel-account pool, `/status`, `/demo/play`
+— are genuinely live on `https://periplo-testnet.fly.dev` as of this
+writing, not just merged. Full evidence in `conformance/RESULTS.md`.
+
 ## Working rules (spec §12)
 
 - One phase per session block; report the gate command and its exit code

@@ -4,11 +4,14 @@
 
 The discovery layer for x402-payable services on Stellar.
 
-**Live now:** [periplo-testnet.fly.dev](https://periplo-testnet.fly.dev),
-the facilitator running on `stellar:testnet`. Try
-[`GET /`](https://periplo-testnet.fly.dev/) or
-[`GET /supported`](https://periplo-testnet.fly.dev/supported) directly,
-no setup required.
+**Try it now, no setup:**
+[periplo-testnet.fly.dev/demo/play](https://periplo-testnet.fly.dev/demo/play) —
+one click, no wallet, a real Stellar payment settles in ~15 seconds and
+you get a real transaction hash. The facilitator itself runs on
+`stellar:testnet` at [periplo-testnet.fly.dev](https://periplo-testnet.fly.dev);
+try [`GET /`](https://periplo-testnet.fly.dev/),
+[`GET /supported`](https://periplo-testnet.fly.dev/supported), or
+[`GET /status`](https://periplo-testnet.fly.dev/status) directly.
 
 **The Bazaar has a real external seller in it, not just our own demo
 resource.** [`agentpayments.fi`](https://agentpayments.fi) built its
@@ -34,7 +37,7 @@ else is marked as planned.
 
 **The developer hub itself (`apps/hub`) is still Phase 9, not started.**
 `/browse`, `/playground`, and the rest of §10's human-facing routes
-don't exist yet. One real, minimal exception: `GET /demo/play`, a
+don't exist yet. One real, minimal, **live** exception: `GET /demo/play`, a
 one-click, wallet-less demo (a visitor's browser generates a one-time
 Stellar key, funds it, and pays a real endpoint, no prior setup) — see
 "Pay a real request, no wallet needed" below. Everything else is still
@@ -230,8 +233,15 @@ read about it.
   bursty traffic" requirement. `GET /status` reports operational
   telemetry (uptime, latency p50/p95, error rate, catalog size, last
   settled transaction per network), self-hosted and aggregate-only, spec
-  §8/§9. Neither is configured on the live deployment yet
-  (`docs/DEFERRED.md`).
+  §8/§9. **Both live on `https://periplo-testnet.fly.dev`** as of
+  2026-09-03: try [`GET /status`](https://periplo-testnet.fly.dev/status)
+  or [`GET /supported`](https://periplo-testnet.fly.dev/supported)
+  directly (the latter now lists 4 signer addresses, the channel pool).
+  A real bug found and fixed the same day deploying this: `/status` kept
+  reporting an empty `lastSettledTransaction` after a real settlement,
+  because the telemetry call only lived in the HTTP `/settle` route,
+  which self-facilitation (the demo resource below) never calls. Fixed,
+  redeployed, re-verified live: see `conformance/RESULTS.md`.
 
 ### Pay a real request, no wallet needed
 
@@ -268,8 +278,19 @@ already-proven logic — a button click calling the same function
 browser click-through hasn't happened in this session. Run
 `node apps/facilitator/scripts/demo-play-browser-verify.mjs` against a
 running instance in an environment with a real Chromium to close this
-gap for real. Not yet configured on the live
-`https://periplo-testnet.fly.dev` deployment (`docs/DEFERRED.md`).
+gap for real (the DOM-wiring gap; the underlying payment flow is proven
+live below).
+
+**Live now: try it yourself at
+[periplo-testnet.fly.dev/demo/play](https://periplo-testnet.fly.dev/demo/play).**
+Deployed 2026-09-03, verified against the real URL, twice, with
+[`apps/facilitator/scripts/demo-play-full-verify.ts`](apps/facilitator/scripts/demo-play-full-verify.ts):
+real settled transactions
+[`40b489d4...`](https://stellar.expert/explorer/testnet/tx/40b489d462d717083ce2bd50d9f61c2ce9f1e3c7432fb96464e573e319d7cb50)
+and
+[`10a46759...`](https://stellar.expert/explorer/testnet/tx/10a467594be999d7fe3cc82b08c924c7555b5db841f070759507749a5a6b198b),
+both Horizon-confirmed. Full history, including the `/status` telemetry
+bug the first live run surfaced and its fix, in `conformance/RESULTS.md`.
 
   Beyond our own settlement scripts, the **official x402 e2e conformance
   suite** (`x402-foundation/x402`'s own `e2e/`, not a Periplo-authored

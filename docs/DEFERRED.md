@@ -339,10 +339,39 @@ real browser click-through hasn't happened, this session's own sandbox
 lacks the system libraries (`libnspr4`, `libnss3`) a real headless
 Chromium needs to launch, and there's no root access to install them.
 `scripts/demo-play-browser-verify.mjs` is real and ready to close this
-gap in any environment with a working Chromium. None of the three is
-yet configured/reflected on the live Fly deployment, which needs a
-redeploy either way once the Fly account gap (recurring, see below) is
-resolved for this session.
+gap in any environment with a working Chromium (still not run
+successfully in this session; the Fly account gap below is a different,
+now-resolved blocker, not this one).
+
+**Resolved the same day: the Fly account gap.** The user re-authenticated
+`fly` as `ticketsafes@gmail.com` (the account that actually owns
+`periplo-testnet`, this session's own CLI had been on `amadoregios@gmail.com`,
+yet a third distinct account from the two this file already documented
+recurring — `xvaiosx7@gmail.com` and `ticketsafes@gmail.com` itself
+earlier). All three pieces above deployed for real
+(`STELLAR_TEST_BUYER_SECRET`/`STELLAR_CHANNEL_ACCOUNT_SECRETS_TESTNET`
+set via `fly secrets set`, `fly deploy`), verified against the live URL,
+not just the deploy command's own success output: `GET /supported`
+lists all 4 channel-pool signer addresses, `GET /demo/play` serves the
+real page, and `apps/facilitator/scripts/demo-play-full-verify.ts` run
+against the live URL settled two real transactions. One real bug found
+deploying, not before: `GET /status` kept reporting an empty
+`lastSettledTransaction` after the first live settlement, because
+`telemetry.recordSettlement` only lived in the HTTP `/settle` route,
+which self-facilitation (the route `/demo/play` actually pays) never
+calls. Fixed (`demo-resource.ts`'s own `onAfterSettle` hook now records
+it too, commit `9f0067a`), redeployed, re-verified: the second live run
+shows up correctly. Also caught and fixed before this deploy, not
+after: `demo-play.ts` resolves its esbuild entry point relative to its
+own `import.meta.url`, which works under `tsx` in dev but has no
+`browser/` sibling in the compiled `dist/` the Docker image actually
+runs (`src/browser` is intentionally excluded from the facilitator's
+own Node-targeted `tsc` build). Fixed in the Dockerfile itself
+(`RUN cp -r apps/facilitator/src/browser apps/facilitator/dist/browser`,
+commit `4954869`), verified by rebuilding the real compiled output
+locally and running the actual `dist/serve.js` (not `tsx`) before ever
+deploying. Full evidence (all four real transaction hashes) in
+`conformance/RESULTS.md`.
 
 - **`@hono/node-server@2.1.0` (MIT) added.** This closes the gap flagged
   in Phase 3's entry above ("No Node HTTP adapter for Hono chosen yet").
