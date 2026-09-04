@@ -2666,3 +2666,17 @@ caught it until this session's own accumulated CAP-71 expertise, built
 fixing the `js-stellar-sdk` case first under a real maintainer's review,
 made the Python SDK's version immediately recognizable rather than
 something that had to be rediscovered from scratch.
+
+## Three deliverables shipped ahead of the tranche originally scheduled to fund them
+
+`GET /discovery/resources` (Phase 4, shipped 2026-08-17), hybrid search
+(Phase 5, shipped closing that phase), and the `UptoSettlement` Soroban
+contract (Phase 6, deployed and later wired into the facilitator's own
+HTTP routes) were all completed and evidenced in this repo before the
+submission's own funding schedule reached the tranche each one was
+originally scoped under, since engineering work here has run ahead of
+tranche approval throughout. This is a scheduling fact about this
+repo's own build order, not a claim about submission budget or tranche
+line items, which is intentionally kept out of this repo per
+`docs/SPEC.md`'s own stated boundary; how that gets reflected in the
+actual submission is tracked separately, outside this repo.
