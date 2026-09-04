@@ -1366,6 +1366,44 @@ features from this round — channel-account pool, `/status`, `/demo/play`
 — are genuinely live on `https://periplo-testnet.fly.dev` as of this
 writing, not just merged. Full evidence in `conformance/RESULTS.md`.
 
+**Same day, immediately after: a real user's real click found a third
+bug, and the browser-verification gap above got closed for real.** A
+person actually clicked "Pay and convert" on the live deployed page and
+hit a real error: `resourceUrl`'s default carried no `value`/`from`/`to`
+query string. The 402 challenge succeeds either way (the price doesn't
+depend on the query), so an unparameterized request pays in full and
+only then 400s on the actual conversion — a real visitor charged for
+nothing. `demo-play-full-verify.ts` never caught this because it
+hardcoded its own query string directly in its own fetch call, never
+exercising `loadDemoPlayConfig`'s real default. Fixed by baking the
+query string into `resourceUrl` itself, the one place every caller
+(the browser page included) shares (commit `71c595b`). Required
+exporting `loadDemoPlayConfig` for a direct unit test
+(`serve.test.ts`), which in turn required an entrypoint guard around
+`main()` (`import.meta.url === file://${process.argv[1]}`, the
+standard Node idiom) so importing the file for the test doesn't try to
+boot a real server. Verified against both the `tsx` dev path and the
+real compiled `dist/serve.js` production path before committing, same
+discipline as the Dockerfile fix above.
+
+Redeployed, then the genuine browser click-through this round's own
+evidence had explicitly flagged as unverified was closed for real, not
+re-asserted: this session's sandbox still lacks the system libraries
+(`libnspr4`, `libnss3`, others) a real headless Chromium needs, with no
+root to `apt install` them, but `apt-get download` works without
+privileges even when a plain `apt install` doesn't — downloaded each
+`.deb` individually, extracted with `dpkg-deb -x` (also no root needed)
+into a local directory, and pointed `LD_LIBRARY_PATH` at it.
+`scripts/demo-play-browser-verify.mjs` then ran for real, in an actual
+launched Chromium, against the real live URL: navigated to
+`/demo/play`, clicked the real button, waited on the real DOM, got a
+real result — transaction
+[`5d020d7e...`](https://stellar.expert/explorer/testnet/tx/5d020d7ecfe9c97adc8168558a45825d52b4b3435828891ad1dad8fc9aacae7d),
+Horizon-confirmed, `GET /status` on the live deployment shows the same
+hash. The DOM-wiring gap this file previously called "low-risk but not
+verified" is now genuinely verified, not just argued to be low-risk.
+`pnpm run ci` green throughout, 294 tests.
+
 ## Working rules (spec §12)
 
 - One phase per session block; report the gate command and its exit code

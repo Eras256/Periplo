@@ -373,6 +373,32 @@ locally and running the actual `dist/serve.js` (not `tsx`) before ever
 deploying. Full evidence (all four real transaction hashes) in
 `conformance/RESULTS.md`.
 
+**Same day, immediately after: a real user's real click found a real
+third bug, and the browser-verification gap above got closed for
+real.** A person actually clicked "Pay and convert" on the live page
+and hit an error: `resourceUrl`'s default carried no `value`/`from`/
+`to` query string. The 402 challenge succeeds either way (price doesn't
+depend on the query), so an unparameterized request paid in full and
+only then 400'd on the actual conversion, a real visitor charged for
+nothing. `demo-play-full-verify.ts` never caught this, since it always
+hardcoded its own query string directly, never exercising
+`loadDemoPlayConfig`'s real default. Fixed by baking the query string
+into `resourceUrl` itself (commit `71c595b`); needed exporting
+`loadDemoPlayConfig` and, for that, an entrypoint guard around
+`main()` in `serve.ts` so importing it for the new `serve.test.ts`
+doesn't try to boot a real server. Redeployed, then closed the
+DOM-wiring gap for real, not just argued as low-risk: this session's
+sandbox still has no root to `apt install` the missing Chromium system
+libraries (`libnspr4`, `libnss3`, others), but `apt-get download`
+fetches individual `.deb` files without privileges, `dpkg-deb -x`
+extracts them without privileges too; pointed `LD_LIBRARY_PATH` at the
+extracted directory and ran `scripts/demo-play-browser-verify.mjs` for
+real, in an actual launched Chromium, against the real live URL —
+navigated to `/demo/play`, clicked the real button, waited on the real
+DOM, got a real result, transaction `5d020d7e...`, Horizon-confirmed.
+Five real transaction hashes now in `conformance/RESULTS.md` for this
+round alone.
+
 - **`@hono/node-server@2.1.0` (MIT) added.** This closes the gap flagged
   in Phase 3's entry above ("No Node HTTP adapter for Hono chosen yet").
   It's outside spec §2's manifest; flagged here rather than silently

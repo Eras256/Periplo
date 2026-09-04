@@ -265,32 +265,37 @@ funding, the trustline+token onboarding transaction, the actual demo
 payment), makes single digits physically unreachable on testnet, not a
 code inefficiency to optimize away.
 
-Honest gap on verification, not smoothed over: this was proven twice
-from Node (`demo-play-full-verify.ts`) and the exact same browser bundle
-was confirmed to build and serve correctly (`apps/facilitator/scripts/demo-play-browser-verify.mjs`
-exists and is correct, using Playwright against a real headless
-Chromium), but the build session's own sandbox lacks the system shared
-libraries (`libnspr4`, `libnss3`, and others) Chromium needs to actually
-launch, with no path to install them (no root). The DOM wiring itself
-(`browser/demo-play-main.ts`) is a thin, low-risk layer around the
-already-proven logic — a button click calling the same function
-`demo-play-full-verify.ts` already runs for real — but a genuine
-browser click-through hasn't happened in this session. Run
-`node apps/facilitator/scripts/demo-play-browser-verify.mjs` against a
-running instance in an environment with a real Chromium to close this
-gap for real (the DOM-wiring gap; the underlying payment flow is proven
-live below).
+**A real user found a real bug this session's own Node scripts couldn't
+have caught, by actually clicking the button.** `resourceUrl`'s default
+had no `value`/`from`/`to` query string; the 402 challenge succeeds
+without one (the price doesn't depend on it), so an unparameterized
+click paid in full and then hit a 400 on the actual conversion —
+charged for nothing. `demo-play-full-verify.ts` never exercised this
+because it hardcoded its own query string directly, bypassing the real
+default entirely. Fixed (query string baked into `resourceUrl` itself,
+the one place every caller shares), redeployed.
+
+**The genuine browser click-through this feature's own first draft had
+flagged as unverified is now closed for real, not just re-asserted.**
+This build session's own sandbox lacks the system libraries a real
+headless Chromium needs (`libnspr4`, `libnss3`, others) with no root to
+`apt install` them — worked around without root by `apt-get
+download`-ing each `.deb` individually and extracting with
+`dpkg-deb -x` into a local directory, then pointing `LD_LIBRARY_PATH`
+at it.
+[`demo-play-browser-verify.mjs`](apps/facilitator/scripts/demo-play-browser-verify.mjs)
+then ran for real: navigated to the live `/demo/play`, clicked the
+actual "Pay and convert" button, waited on the real DOM, got a real
+result — transaction
+[`5d020d7e...`](https://stellar.expert/explorer/testnet/tx/5d020d7ecfe9c97adc8168558a45825d52b4b3435828891ad1dad8fc9aacae7d),
+Horizon-confirmed, `GET /status` on the live deployment shows the same
+hash.
 
 **Live now: try it yourself at
 [periplo-testnet.fly.dev/demo/play](https://periplo-testnet.fly.dev/demo/play).**
-Deployed 2026-09-03, verified against the real URL, twice, with
-[`apps/facilitator/scripts/demo-play-full-verify.ts`](apps/facilitator/scripts/demo-play-full-verify.ts):
-real settled transactions
-[`40b489d4...`](https://stellar.expert/explorer/testnet/tx/40b489d462d717083ce2bd50d9f61c2ce9f1e3c7432fb96464e573e319d7cb50)
-and
-[`10a46759...`](https://stellar.expert/explorer/testnet/tx/10a467594be999d7fe3cc82b08c924c7555b5db841f070759507749a5a6b198b),
-both Horizon-confirmed. Full history, including the `/status` telemetry
-bug the first live run surfaced and its fix, in `conformance/RESULTS.md`.
+Deployed 2026-09-03. Full history — three real transactions from this
+round alone, the query-param bug, the telemetry bug, and the real
+browser verification — in `conformance/RESULTS.md`.
 
   Beyond our own settlement scripts, the **official x402 e2e conformance
   suite** (`x402-foundation/x402`'s own `e2e/`, not a Periplo-authored
