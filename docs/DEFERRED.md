@@ -1431,6 +1431,18 @@ helpers, not the full SDK's wallet/relayer machinery, which this
 project's own deployed contracts (created outside the kit's own
 deployer flow) don't fit anyway.
 
+**Watch-item, opened 2026-09-07:** OpenZeppelin maintainer brozorec
+confirmed on `#839`'s thread that
+[OpenZeppelin/stellar-contracts#868](https://github.com/OpenZeppelin/stellar-contracts/pull/868)
+("Smart account: auth payload digest", still draft as of this note) will
+add `Signer::Delegated` test coverage and docs. When `#868` leaves
+draft, re-check whether its new tests or docs explain (or bound) the
+open two-context `UnvalidatedContext #3002` failure above. A
+multi-`ContextRule` `__check_auth` validation path with real delegate
+signing is exactly what has had no upstream test coverage. Until then
+the two-context `settle()` + nested `transfer` case stays a genuinely
+open blocker, not a resolved one.
+
 ### The `soroban-sdk ^26.1` vs `27.x` mismatch was tested directly as a cause of the trap, and ruled out
 
 Before treating the trap above as a real, independent problem worth an
@@ -2470,6 +2482,19 @@ shape (`extensionResponses` present, equal to `extensions`), not
 client-side header parsing, which was already covered by the existing
 `EXTENSION-RESPONSES` header tests. `pnpm run ci` green, 258 tests.
 
+**Upstream follow-up, verified live 2026-09-07:**
+[`#3301`](https://github.com/x402-foundation/x402/pull/3301) (Go) merged
+`2026-09-02T12:57:19Z` (merge commit `eb0d899e`, by phdargen), carrying
+the same `extensionResponses`/`extension_responses` sidechannel shape
+`#3278` (TypeScript) and `#3306` (Python) landed, not the
+merge-into-`extensions` shape the original community PRs took. Three
+SDK-language fixes now trace to `#3270`: TypeScript and Go merged
+upstream, Python resolved via `#3306`; one further Python attempt stays
+open in its author's own fork, never proposed upstream. No `@x402/core`
+npm release ships this shape yet (`latest` is still `2.24.0`), and it
+isn't a precondition for anything here: `/settle` already sends both
+fields. `README.md` carries the full writeup; this is the dated pointer.
+
 ## Proactive dependency audit, 2026-09-01: four filed, three real fixes, one genuine retraction
 
 Following the pattern that already produced `#3121`, `#3169`, `#3172`,
@@ -2680,3 +2705,37 @@ repo's own build order, not a claim about submission budget or tranche
 line items, which is intentionally kept out of this repo per
 `docs/SPEC.md`'s own stated boundary; how that gets reflected in the
 actual submission is tracked separately, outside this repo.
+
+## An OpenZeppelin fee-abstraction finding was filed with a fix and not accepted upstream, 2026-09-07
+
+A bug-hunt pass over `OpenZeppelin/stellar-contracts` (the crate behind
+`contracts/agent-smart-account`) produced
+[OpenZeppelin/stellar-contracts#840](https://github.com/OpenZeppelin/stellar-contracts/issues/840),
+with a fix at
+[`#844`](https://github.com/OpenZeppelin/stellar-contracts/pull/844):
+the Lazy-mode `expiration_ledger` check added in `#546`
+(`fee_abstraction`) was read as validating the wrong value rather than
+the actual allowance. `#844` was CI-green and mergeable from 2026-08-24
+(`b68a9ab`).
+
+Maintainer brozorec closed both `#840` and `#844` on 2026-09-07,
+reading the check as intentional: it covers the case where allowance is
+sufficient but `expiration_ledger` is stale, for the path that does not
+rely on `token.approve()`. A counter-example was left on the issue (a
+real allowance of 100, not expired, that still reverts with error
+`#5006`); it is awaiting a maintainer response and the issue is not
+resolved either way.
+
+**Do not record this as an accepted upstream fix in any doc.** It is a
+filed finding with a proposed fix that a maintainer disagreed with;
+whether the counter-evidence reopens it is out of this project's hands.
+Nothing in Periplo's own code path depends on the outcome:
+`agent-smart-account` is Phase 6b research with no live testnet
+transaction of its own regardless (see the Phase 6b section above).
+
+Same live check, same day, no doc change needed for either:
+`OpenZeppelin/stellar-contracts#865` (Protocol 28 non-exhaustive
+`ContractExecutable` match, `CLAUDE.md` carries the writeup) had no
+maintainer response since 2026-09-02; `x402-foundation/x402#3301` (Go)
+is covered above. The Periplo repo itself is CI-green with no open PRs
+or issues, last commit `2a12856` (2026-09-04).
