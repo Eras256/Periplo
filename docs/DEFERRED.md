@@ -2670,16 +2670,34 @@ wrapper (where the equivalent #1672 fix does silently reuse the stored
 value, appropriately, since that value was only ever a library-computed
 default in the first place).
 
-No PR opened yet, unlike the three fixable findings in the section
-above: `StellarCN/py-stellar-base`'s own `CONTRIBUTING.md` explicitly
-asks contributors to check in before starting work on a significant
-change, a different convention than `x402-foundation/x402`'s, and the
-issue text carries a full fix sketch so that step is fast once a
+No PR opened from this side, unlike the three fixable findings in the
+section above: `StellarCN/py-stellar-base`'s own `CONTRIBUTING.md`
+explicitly asks contributors to check in before starting work on a
+significant change, a different convention than `x402-foundation/x402`'s,
+and the issue text carries a full fix sketch so that step is fast once a
 maintainer responds. Severity calibrated the same honest way as every
 other CAP-71 finding this project has filed: not live on any network
 yet, so no impact on a real transaction today, but the bug is real in
 code already shipped, in the only path this specific library offers for
 delegate signing.
+
+**Fixed upstream 2026-09-08.** Maintainer `overcat` opened
+[`#1218`](https://github.com/StellarCN/py-stellar-base/pull/1218)
+("fix: guard CAP-71 delegate signing against expiration mismatch",
+merged `2026-09-08T02:49:53Z`, `Fixes #1215`): inline the expiration
+guard in `authorize_entry()` so a delegate signer is rejected when the
+requested expiration does not match the entry, and only write signed
+auth entries back after every entry has been signed. Essentially the
+proposed fix; `#1215` closed COMPLETED. Same outcome shape as
+`#3270`/`#3306` (maintainer's own PR, not this project's), but here the
+adopted fix matches what the issue asked for rather than taking a
+different shape. This is the Python-SDK parity of the same CAP-71
+delegated-signing bug class this project worked in `js-stellar-sdk`:
+the discovery-gap generalization
+[`#1700`](https://github.com/stellar/js-stellar-sdk/issues/1700), and
+for this exact shared-`expiration` mechanism, the reuse defect
+Ryang-21's `#1672` review already had fixed in `base/auth.ts` this
+session.
 
 Notable for what it says about the underlying skill, not just the
 individual bug: the exact same subtle mistake (a shared, single

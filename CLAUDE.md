@@ -989,10 +989,22 @@ with the value just passed, instead of silently overwriting it), not
 just the finding. Severity calibrated the same honest way as #1655's own
 entry above: CAP-71 isn't live on any network yet, so this has no impact
 on a real transaction today, but the bug is real in code already
-shipped, in the only path this library offers for it. No PR opened yet:
-this repo's own `CONTRIBUTING.md` asks contributors to check in before
-starting work on a significant change, so the issue carries a full fix
-sketch instead, ready to turn into a PR once a maintainer responds.
+shipped, in the only path this library offers for it. No PR opened
+from this side: this repo's own `CONTRIBUTING.md` asks contributors to
+check in before starting work on a significant change, so the issue
+carried a full fix sketch instead. **Fixed upstream 2026-09-08:**
+maintainer `overcat` opened
+[`#1218`](https://github.com/StellarCN/py-stellar-base/pull/1218)
+(merged, `Fixes #1215`), inlining the expiration guard in
+`authorize_entry()` so a delegate signer is rejected on an expiration
+mismatch, and only writing signed auth entries back after every entry
+is signed, essentially the proposed fix. Issue closed COMPLETED. This
+is the Python parity of the same CAP-71 delegated-signing bug class
+this project worked in `js-stellar-sdk`: the discovery-gap generalization
+[`#1700`](https://github.com/stellar/js-stellar-sdk/issues/1700) and,
+for this exact shared-`expiration` mechanism, the reuse defect
+Ryang-21's `#1672` review already had fixed in `base/auth.ts` this
+session.
 
 `Dockerfile.facilitator` builds and ships `@periplo/bazaar` and
 `@periplo/search` alongside `@periplo/facilitator`. Three things the image
