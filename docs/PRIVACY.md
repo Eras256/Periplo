@@ -25,13 +25,18 @@ never a payer's identity or a request's contents.
   policies, not something this codebase controls or reads from. Stated
   here so the distinction is explicit, not blurred into "Periplo collects
   nothing at all.")
-- **Aggregate operational metrics only, when they exist.** `docs/SPEC.md`
-  §8 calls for publishing requests served, error rate, latency, and
-  catalog size, aggregate numbers, never per-request detail. **Real
-  state: this doesn't exist yet.** There is no telemetry endpoint beyond
-  the bare `GET /health` (`{"status":"ok"}`, no counts, no timings).
-  Tracked as still-open Phase 10 scope in `docs/DEFERRED.md`, not
-  claimed here as built.
+- **Aggregate operational metrics only.** `docs/SPEC.md` §8 calls for
+  publishing requests served, error rate, latency, and catalog size,
+  aggregate numbers, never per-request detail. `GET /status` (live on
+  `periplo-testnet.fly.dev` since 2026-09-03, pulled forward from Phase
+  10) reports exactly that shape: uptime, request count, latency
+  p50/p95, error rate, catalog size, and the last settled transaction
+  hash per network. It is in-memory only, resets on restart, and holds
+  no per-request records, no IPs, no request bodies, just running
+  counters and a bounded latency ring buffer (`apps/facilitator/src/telemetry.ts`).
+  The full `apps/hub` `/status` page that would render this (spec §10)
+  is still Phase 9, not started. `GET /health` (`{"status":"ok"}`)
+  remains the bare liveness check.
 
 ## What the Bazaar catalog stores, and why none of it is personal
 

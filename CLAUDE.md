@@ -16,7 +16,8 @@ that must exit 0 before the next phase starts. **Current status: Phase 6
 (`upto` on Stellar) complete, Phase 6b (additional evidence, not a tranche
 deliverable) has real contract-level results and a genuinely open blocker,
 Phase 7 (MCP discovery server) next. The SCF Build Award was submitted
-2026-08-11; prescreen is pending.** See
+2026-08-11, passed prescreen 2026-08-20 (email-confirmed), now in panel
+review for SCF #45.** See
 [`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md) (the `upto` wire-spec
 convergence story: `#3098`/`#3134`/`stellar/x402-stellar#72`, consolidated
