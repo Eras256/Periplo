@@ -158,6 +158,20 @@ different findings in one day, both requiring the same thing: having
 actually built `require_auth_for_args`-based settlement on Soroban, not
 read about it.
 
+**2026-09-08: a third party turned the convergence into a document, and
+credited a section to work done here.** `davedumto` opened
+[x402-foundation/x402#3428](https://github.com/x402-foundation/x402/pull/3428),
+a convergence document that names `#3098` (this project's `contract`
+profile) and `#3134` as the two existing specs it builds on, writes
+their agreement as MUST requirements, and names five divergences
+without picking a winner. Its section 7.5, profile disambiguation, is
+credited in the PR body as "raised by @HeylmStoned and developed by
+@Eras256 on 2026-08-26," the `extra.uptoProfile` discriminator point
+from the `#3134` thread. Not a mention: a named section of the emerging
+standard attributed to work done here. Open, waiting on the TSC to say
+where it should land, no action needed from this side. Full writeup in
+`docs/UPTO-CONVERGENCE.md`.
+
 ## What's real right now
 
 - Monorepo tooling: pnpm workspaces, TypeScript 7 (strict,

@@ -338,3 +338,39 @@ redemption), reviewed adversarially with no bug found. Full detail in
 the [comment added to `#3341`](https://github.com/x402-foundation/x402/issues/3341#issuecomment-5498972657)
 itself, not repeated here since it strengthens that issue, not the
 `upto` consolidation this file tracks.
+
+## An independent convergence document cites `#3098` as a base, and credits a co-authored section
+
+[x402-foundation/x402#3428](https://github.com/x402-foundation/x402/pull/3428),
+opened 2026-09-08 by [davedumto](https://github.com/davedumto), is a
+separate convergence document, filed as its own PR rather than folded
+into either existing thread while its author waits for the TSC to say
+where it should land (asked on `#3134` on 2026-09-08, no reply as of
+this writing). Verified live, not second-hand.
+
+Two things make it real adoption evidence rather than a passing
+mention:
+
+- It names `#3098` (Periplo's `contract` profile, "stateful") and
+  `#3134` (Iam0TI's `stateless`) as the two existing specs it is
+  additive to, writing agreement as MUST requirements and naming five
+  divergences in its section 7 without picking a winner. This is the
+  same "converge, don't fork" posture AutoLayer and Rialto already
+  committed to, now acted on by a third party.
+- Its **section 7.5, profile disambiguation**, is credited in the PR
+  body as "raised by @HeylmStoned and developed by @Eras256 on
+  2026-08-26", the `extra.uptoProfile` discriminator point from the
+  `#3134` thread (tracked above under "The structure actually
+  drafted"). Not "we were mentioned": a named section of the emerging
+  standard attributed to work done here.
+
+The document also vendors rail402's contract verbatim at a pinned
+commit and credits rail402 as the contract design author, contributing
+independent verification (a reproducible build whose hash matches the
+deployed wasm, four live testnet partial settlements) rather than
+claiming authorship, and states the same concurrent-settlement
+`txBadSeq` limit Periplo's own channel-account pool work already
+documents.
+
+Status: open, waiting on the TSC to say where it should land, no reply
+since 2026-09-08. No action needed from Periplo's side.
