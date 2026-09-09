@@ -299,10 +299,12 @@ upstream `main` before writing it, not assumed still current.
 a directly-signing custom account. It is not verified for a
 delegated/session-key smart-account signer, the pattern this project's
 own Phase 6b work (`OpenZeppelin/stellar-contracts#839`, filed
-2026-08-13, still open) already found traps `__check_auth` with
-`UnreachableCodeReached` on every construction tried, seven hypotheses
-ruled out with real evidence, no test coverage of this exact path
-found anywhere in that crate or its own official example. Since both
+2026-08-13; root-caused and closed 2026-09-02 as an SDK auth-discovery
+gap, though the delegated two-context settle path stays open) already
+found traps `__check_auth` with `UnreachableCodeReached` on every
+construction tried, seven hypotheses ruled out with real evidence, no
+test coverage of this exact path found anywhere in that crate or its
+own official example. Since both
 `upto` profiles on Stellar depend on the same `require_auth_for_args`
 mechanism for the same underlying reason, this isn't specific to
 either profile, it's a property of the shared primitive that neither

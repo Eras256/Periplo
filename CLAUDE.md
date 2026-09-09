@@ -1155,12 +1155,15 @@ done:
    2026-08-19), fixed by reading the same env var. `upto`'s own
    300,000-stroop default already covered the current fee, no change
    needed there. The `smartAccount` profile (`agent-smart-account`)
-   was not attempted: it has never produced a real signed testnet
-   transaction at all (`__check_auth` traps, `#839`), a blocker
-   unrelated to Protocol 28 specifically, and re-attempting it isn't
-   "running an existing cycle," it's reopening a closed diagnostic
-   round without the new concrete trigger the standing instruction
-   requires.
+   was not attempted here: its full `settle()` cycle has never produced
+   a real signed testnet transaction (the two-context
+   `UnvalidatedContext #3002` blocker; `#839` was root-caused and closed
+   2026-09-02 as an SDK discovery gap, but that path is still open,
+   though a single-context `Signer::Delegated` authorization did settle,
+   `428021a6…`), a blocker unrelated to Protocol 28 specifically, and
+   re-attempting the full cycle isn't "running an existing cycle," it's
+   reopening a closed diagnostic round without the new concrete trigger
+   the standing instruction requires.
 
 **2026-09-03: channel-account pool, spec §2/§7's sequence-number
 bottleneck under bursty traffic, pulled forward from Phase 10 at

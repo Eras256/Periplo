@@ -33,10 +33,15 @@ smart accounts (C-accounts) work "transparently" with the mechanism
 directly. It does not hold, as far as anyone has publicly shown, for a
 delegated or session-key smart-account signer, the exact pattern an
 autonomous agent needs. This project tried to build that in Phase 6b
-and hit a real, still-open wall: `__check_auth` traps on every
-construction tried, filed at
+and hit a real wall: `__check_auth` traps on every construction tried,
+filed at
 [OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
-[The rewritten spec PR](https://github.com/x402-foundation/x402/pull/3098)
+That issue was root-caused and closed 2026-09-02 (an SDK auth-discovery
+gap, not a contract bug), and a real `Signer::Delegated` smart-account
+authorization has since settled on testnet for a single-context call
+([`428021a6…`](https://stellar.expert/explorer/testnet/tx/428021a6ef648937bf0edeec96d42f13e44447eac9b036c127c90cf4bebdd71b)).
+The full two-context `upto` settle path through the delegated account
+is still open. [The rewritten spec PR](https://github.com/x402-foundation/x402/pull/3098)
 states the caveat plainly rather than let the gap ship silently.
 `gh api repos/Eras256/x402/commits/6a528a5a` returns the same
 `verified: true` any commit in this repo does; check it, don't take it

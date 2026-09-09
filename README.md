@@ -126,10 +126,18 @@ is not verified for a delegated or session-key smart-account signer, the
 pattern an autonomous agent actually needs: a scoped key, gated by the
 account's own spending policy. This project already tried to build
 exactly that, in Phase 6b, and hit a real wall no one else in either
-thread has hit or documented: `__check_auth` traps unreachable on every
+thread had hit or documented: `__check_auth` traps unreachable on every
 construction tried, seven ruled-out hypotheses, filed as
-[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839),
-still open. Rewrote `#3098` to state the caveat plainly rather than let a
+[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
+Root-caused and closed 2026-09-02 (an SDK auth-discovery gap, not a
+contract bug, via [#863](https://github.com/OpenZeppelin/stellar-contracts/issues/863)):
+a real `Signer::Delegated` smart-account authorization has since settled
+on testnet for a single-context call
+([`428021a6…`](https://stellar.expert/explorer/testnet/tx/428021a6ef648937bf0edeec96d42f13e44447eac9b036c127c90cf4bebdd71b)),
+while the full two-context `upto` settle path through the delegated
+account is still open, now failing with a typed `UnvalidatedContext`
+rather than the original opaque trap. Rewrote `#3098` to state the
+caveat plainly rather than let a
 reviewer implement against an unqualified claim, and to actually
 implement the maintainer-agreed consolidation structure (`stateless` as
 the base profile, `contract` as the secondary profile carrying required
@@ -1182,14 +1190,20 @@ thing.
     ceiling) and
     [`contracts/agent-smart-account`](contracts/agent-smart-account) (a
     real `ContextRule::CallContract`, not simulated) are built, tested,
-    and deployed to `stellar:testnet`. There is still no real, signed
-    transaction where the smart account is `authorization.from`; after
-    exhausting independent isolation (version alignment, target-contract
-    complexity, both ruled out), filed a detailed diagnostic issue
+    and deployed to `stellar:testnet`. The diagnostic issue filed
     against `OpenZeppelin/stellar-contracts`,
-    [#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
-    Still open, still blocked. See `docs/DEFERRED.md`'s Phase 6b section
-    for what was tried and the path to closing it.
+    [#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839),
+    was root-caused and closed 2026-09-02: the trap was an SDK
+    auth-discovery gap, not a contract bug (via
+    [#863](https://github.com/OpenZeppelin/stellar-contracts/issues/863)).
+    A real signed testnet transaction where a `Signer::Delegated` smart
+    account is `authorization.from` now exists for a single-context call
+    ([`428021a6…`](https://stellar.expert/explorer/testnet/tx/428021a6ef648937bf0edeec96d42f13e44447eac9b036c127c90cf4bebdd71b),
+    Horizon-verified). The full two-context `UptoSettlement.settle()` +
+    nested `transfer` through the smart account is still open, now
+    failing with a typed `Error(Contract, #3002)` (`UnvalidatedContext`)
+    rather than the opaque trap. See `docs/DEFERRED.md`'s Phase 6b
+    section for the exact state and the remaining candidates.
 
 ## What Periplo is (planned)
 

@@ -180,11 +180,16 @@ settlement contract as built. It does not cover the developer hub
 (`apps/hub`, Phase 9, not started, no attack surface exists yet) or the
 smart-account / agent-verifier work in `contracts/agent-smart-account`
 and `contracts/agent-verifier`, which is Phase 6b evidence, not a
-shipped path: it has unit-test coverage but no real, signed testnet
-transaction, a genuinely open blocker tracked in
-[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
-Extending this table to that surface only makes sense once it has real
-on-chain behavior to threat-model against.
+shipped path. `#839` (the `__check_auth` trap) was root-caused and
+closed 2026-09-02 as an SDK auth-discovery gap, not a contract bug
+([OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839)),
+and a `Signer::Delegated` smart-account authorization has since settled
+on testnet for a single-context call
+([`428021a6…`](https://stellar.expert/explorer/testnet/tx/428021a6ef648937bf0edeec96d42f13e44447eac9b036c127c90cf4bebdd71b)),
+but the full two-context `upto` settle path through the delegated
+account is still open, so there is still no end-to-end smart-account
+settlement to threat-model. Extending this table to that surface only
+makes sense once it has real on-chain behavior to threat-model against.
 
 ## Related
 

@@ -75,12 +75,15 @@ findings are in `docs/DEFERRED.md`'s Phase 6 section.
 (`contracts/agent-verifier`, `contracts/agent-smart-account`)**, unlike
 `upto-settlement`, which explicitly went through `security-review` before
 being called done. Consistent with the same discipline, not a new gap:
-neither contract is done, the live smart-account settlement transaction
-is a genuinely open blocker (`docs/DEFERRED.md`'s Phase 6b section,
-[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839)),
-so a security review would be reviewing code still missing its central
-end-to-end proof. Worth running once that blocker closes, whenever that
-turns out to be, not before.
+neither contract is done. `#839` (the `__check_auth` trap) was
+root-caused and closed 2026-09-02 as an SDK auth-discovery gap, not a
+contract bug, and a single-context `Signer::Delegated` authorization
+has settled on testnet since
+([OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839),
+`docs/DEFERRED.md`'s Phase 6b section), but the full two-context `upto`
+settle path through the smart account is still open, so a security
+review would still be reviewing code missing its central end-to-end
+proof. Worth running once that path works, not before.
 
 ## Explicitly not to be used during the build
 

@@ -576,12 +576,16 @@ That is verified only for a C-account whose own `__check_auth` signs
 directly. It is **not** verified for a delegated or session-key
 smart-account signer, the pattern an autonomous agent actually needs
 (a scoped key, gated by the account's own spending policy). Building
-exactly that in Phase 6b hit a real, unresolved wall:
+exactly that in Phase 6b hit a real wall:
 `__check_auth` traps unreachable on every construction tried, filed as
-[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839),
-open. Anything in this spec that reads as "C-accounts work with
-`upto`" means the directly-signing case only, until that issue closes.
-Do not extend the claim to delegated signers without new evidence.
+[OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
+That issue was root-caused and closed 2026-09-02 (an SDK auth-discovery
+gap, not a contract bug), and a single-context `Signer::Delegated`
+authorization has settled on testnet since; the full two-context `upto`
+settle path through a delegated smart account is still open. Anything in
+this spec that reads as "C-accounts work with `upto`" means the
+directly-signing case only. Do not extend the claim to delegated
+signers without new evidence.
 
 ### Phase 7: MCP discovery server
 `packages/mcp` on `@modelcontextprotocol/sdk` 1.30.0. Let an agent search the
