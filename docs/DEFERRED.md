@@ -2723,15 +2723,26 @@ reading the check as intentional: it covers the case where allowance is
 sufficient but `expiration_ledger` is stale, for the path that does not
 rely on `token.approve()`. A counter-example was left on the issue (a
 real allowance of 100, not expired, that still reverts with error
-`#5006`); it is awaiting a maintainer response and the issue is not
-resolved either way.
+`#5006`).
 
-**Do not record this as an accepted upstream fix in any doc.** It is a
-filed finding with a proposed fix that a maintainer disagreed with;
-whether the counter-evidence reopens it is out of this project's hands.
-Nothing in Periplo's own code path depends on the outcome:
-`agent-smart-account` is Phase 6b research with no live testnet
-transaction of its own regardless (see the Phase 6b section above).
+**Resolved 2026-09-08: the finding was wrong, and the thread is
+genuinely closed.** brozorec replied to the counter-example the next day
+with a complete, technically sound explanation: `expiration_ledger` here
+does not validate the allowance state at all. It is the deadline of the
+`collect_fee` call itself as one step of the atomic fee-forwarding
+operation, the same role a DEX swap's `deadline` parameter plays.
+Allowance sufficiency and call-deadline validity are two independent
+checks; a non-expired allowance failing with `InvalidExpirationLedger`
+because the call's own deadline is in the past is the expected
+behavior, not a bug. `#844` correctly rejected. No counter-evidence is
+pending; do not reopen this.
+
+**Do not record this as an accepted upstream fix in any doc.** It was a
+filed finding with a proposed fix, both correctly rejected by the
+maintainer with a sound explanation. Nothing in Periplo's own code path
+depends on the outcome: `agent-smart-account` is Phase 6b research with
+no live testnet transaction of its own regardless (see the Phase 6b
+section above).
 
 Same live check, same day, no doc change needed for either:
 `OpenZeppelin/stellar-contracts#865` (Protocol 28 non-exhaustive
