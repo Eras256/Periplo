@@ -94,6 +94,17 @@ writing the code this repo contains. `docs/ECOSYSTEM.md` was assembled from
 data pasted directly into the session rather than by invoking any of these,
 for the same reason, it's reference material, not a submission draft.
 
+## Project-local skills (`.claude/skills/`)
+
+Distinct from the `stellar-build` pack above: skills checked into this
+repo, for processes specific to Periplo that recur across sessions.
+
+| Skill | Purpose |
+| --- | --- |
+| `protocol-upgrade-readiness` | Thin pointer to the shared ecosystem checklist at `~/.claude/skills/`, plus Periplo-specific notes (`@x402/stellar` is the tightest pin to check; the `exact` / `upto` contract-profile cycle to re-run on testnet). Consolidated 2026-09-02 after Periplo and Nirium independently wrote the same thing. |
+| `claude-antigravity-setup` | Session/harness configuration guidance. |
+| `upstream-github-check` | The recurring "what changed upstream?" sweep: derive the tracked issue/PR list from the repo's own cited links, diff live state against the last recorded check (`periplo-post-submission-status.md` memory + the prior `docs/DEFERRED.md` state-check commit), investigate what moved, write it into the right doc, commit. Carries the recurring lessons (a "closed" issue needs its merge mechanism read, `author: Eras256` is not proof of Periplo, em-dash discipline on every doc edit) and a live watch-item list. Added 2026-09-09. |
+
 ## Raven MCP
 
 Added via `standards`' documented connect command, but reports `! Needs
