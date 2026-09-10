@@ -747,6 +747,45 @@ no API key, no per-call cost, no new CI secret. Landed on `fastembed`'s
   `@huggingface/transformers` included. Documented in
   `packages/search/src/embed.ts`'s own module doc, not hidden.
 
+### `fastembed` upstream is archived, and its type declarations do not match its runtime
+
+Found 2026-09-10 running the widened dependency review over Periplo's own
+production graph. Two separate facts about `fastembed@2.1.0` (the current
+`latest`, and what `packages/search` ships):
+
+1. **`Anush008/fastembed-js` is an archived GitHub repository**
+   (`archived: true`, last push 2025-12-15, verified directly via the
+   GitHub API), so it is read-only: no issues can be filed and no fixes
+   will land. There is no JavaScript successor (`fastembed-rs` and
+   `fastembed-go` are separate projects by the same author; the Python
+   `fastembed` is Qdrant's). npm's `fastembed` still resolves to this
+   archived source.
+2. **`FlagEmbedding.embed()` is typed `AsyncGenerator<number[][]>` and
+   `queryEmbed()` `Promise<number[]>`, but both return `Float32Array` at
+   runtime.** Root cause is the `as unknown[] as number[]` double cast at
+   `src/fastembed.ts:481` on an `onnxruntime` float32 tensor's `.data`:
+   `getEmbeddings`'s `data.slice(...)` and `normalize`'s `v.map(...)`
+   both preserve `Float32Array` rather than producing a plain array. The
+   practical bite is `JSON.stringify` serializing a result as
+   `{"0":v,...}` instead of `[v,...]` (the same symptom in the repo's
+   own closed issues #10 and #22, neither root-caused there). This was
+   already hit and worked around in Periplo before this review:
+   `packages/search/src/embed.ts` wraps every fastembed output in
+   `Array.from(...)`, and that mitigation is load-bearing, not styling
+   (already documented in `CLAUDE.md`'s `packages/search` paragraph).
+
+**Status: mitigation in place, no upstream action possible.** An issue
+was drafted with the exact lines and a proposed `Array.from` fix; filing
+was blocked by the archive. Longer-term this is a candidate to vendor
+(MIT, ~500 lines of real logic in `src/fastembed.ts`) or replace, but
+replacement is not trivial: the licence constraint documented above
+(the `@huggingface/transformers` -> `sharp` -> LGPL `libvips` path that
+`pnpm licence-check` hard-denies) is exactly why `fastembed` was chosen
+over the more obvious alternative, and any replacement has to clear the
+same Apache-2.0-only bar. Not urgent: the model name is pinned, the
+archive still serves, and the type trap is contained to one wrapped
+module.
+
 ### `resources.embedding` dimension corrected: 512 (Phase 2 placeholder) → 384
 
 Phase 2 pinned `vector(512)` before any embedding model was chosen.
