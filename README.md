@@ -467,7 +467,9 @@ thing.
   maximum in `PaymentRequirements`," for any of its three input formats
   (raw atomic units, percent, dollar), filed as
   [x402-foundation/x402#3334](https://github.com/x402-foundation/x402/issues/3334).
-  **Status: fixed, not just filed.**
+  The maintainer (@phdargen) closed `#3334` on 2026-09-08 as a duplicate
+  of the PR below, treating it as the canonical fix for this.
+  **Status: fix written and open, not just filed.**
   [x402-foundation/x402#3338](https://github.com/x402-foundation/x402/pull/3338)
   centralizes one check at the end of the function rather than duplicating
   it per branch, verified with a real repro against the installed package
