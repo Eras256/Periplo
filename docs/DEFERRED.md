@@ -2497,8 +2497,8 @@ fields. `README.md` carries the full writeup; this is the dated pointer.
 
 ## Proactive dependency audit, 2026-09-01: four filed, three real fixes, one genuine retraction
 
-Following the pattern that already produced `#3121`, `#3169`, `#3172`,
-`#3187`/`#3228`, `#3270`/`#3306`, and the `js-stellar-sdk` auth-entry
+Following the pattern that already produced `#3121`, `#3169`/`#3213`,
+`#3172`, `#3187`/`#3228`, `#3270`/`#3306`, and the `js-stellar-sdk` auth-entry
 findings, this round searched deliberately rather than waiting to trip
 over the next bug: three background passes over the latest published
 `@x402/core@2.24.0`, `@x402/stellar@2.24.0`, and

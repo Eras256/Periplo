@@ -197,9 +197,15 @@ official `@x402/extensions/bazaar` package (`extractDiscoveryInfo`,
 "don't reimplement the wire protocol" principle §1 applies to verify/settle,
 extended here; flagged as an outside-manifest addition per working rule 6),
 except `routeTemplate` itself, which is checked with `packages/bazaar`'s own
-`checkRouteTemplate` instead, upstream's equivalent is strictly weaker
-(single percent-decode pass vs. Periplo's bounded-repeated decode) and
-doesn't satisfy the Phase 4 gate's hard-reject requirement. Full comparison
+`checkRouteTemplate` instead, the installed upstream equivalent is
+strictly weaker (single percent-decode pass vs. Periplo's
+bounded-repeated decode) and doesn't satisfy the Phase 4 gate's
+hard-reject requirement. Upstream's own fix for this
+([#3213](https://github.com/x402-foundation/x402/pull/3213), merged
+2026-09-09, closing the Periplo-filed
+[#3169](https://github.com/x402-foundation/x402/issues/3169)) converges
+on the same decode-to-a-fixed-point approach, but no `@x402/extensions`
+release ships it yet (latest is `2.25.0`, tagged before the merge). Full comparison
 and a genuine upstream bug found via the live integration test (`mcp://`
 URLs resolve to a broken `null/...` catalog URL because `mcp:` isn't a
 WHATWG special scheme) are in [`docs/INTEROP.md`](docs/INTEROP.md). `app.ts`
@@ -687,14 +693,17 @@ contract, and the verification script
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
 afterward, turned up nine more real, independently verified upstream
-bugs, all filed, six still open as of this writing (`#103` merged
+bugs, all filed, five still open as of this writing (`#103` merged
 2026-08-28 by @kaankacar; `#3187` closed 2026-08-31 when its fix,
 `#3228`, merged; `#3270` closed 2026-08-31, resolved upstream, see
-below):
+below; `#3169` closed 2026-09-09 when its fix, `#3213`, merged):
 [x402-foundation/x402#3169](https://github.com/x402-foundation/x402/issues/3169)
 (`isValidRouteTemplate`'s traversal/scheme-injection checks decode once,
-so double percent-encoding bypasses both; fix open as
-[#3213](https://github.com/x402-foundation/x402/pull/3213), ygd58),
+so double percent-encoding bypasses both; fixed by
+[#3213](https://github.com/x402-foundation/x402/pull/3213) (ygd58),
+merged 2026-09-09, adopting the same decode-to-a-fixed-point approach
+`packages/bazaar`'s `checkRouteTemplate` already uses; no
+`@x402/extensions` release ships it yet, latest is `2.25.0`),
 [stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655)
 (`needsNonInvokerSigningBy`/`signAuthEntries` only see the top-level node
 of a CAP-71 `SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES` entry, missing
