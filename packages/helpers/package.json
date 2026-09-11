@@ -11,6 +11,8 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@x402/extensions": "2.22.0"
+    "@x402/core": "2.22.0",
+    "@x402/extensions": "2.22.0",
+    "@x402/stellar": "2.22.0"
   }
 }

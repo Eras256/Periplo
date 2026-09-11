@@ -32,6 +32,9 @@ importers:
       '@periplo/bazaar':
         specifier: workspace:*
         version: link:../../packages/bazaar
+      '@periplo/helpers':
+        specifier: workspace:*
+        version: link:../../packages/helpers
       '@periplo/search':
         specifier: workspace:*
         version: link:../../packages/search
@@ -92,9 +95,15 @@ importers:
 
   packages/helpers:
     dependencies:
+      '@x402/core':
+        specifier: 2.22.0
+        version: 2.22.0
       '@x402/extensions':
         specifier: 2.22.0
         version: 2.22.0(typescript@7.0.2)
+      '@x402/stellar':
+        specifier: 2.22.0
+        version: 2.22.0(debug@4.4.3)
 
   packages/licence-check: {}
 

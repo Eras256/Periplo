@@ -19,11 +19,13 @@ Phase 7 (MCP discovery server) not started. The SCF Build Award was
 submitted 2026-08-11, passed prescreen 2026-08-20 (email-confirmed), and
 was not funded after panel review for SCF #45, which came back with
 concrete technical findings. Work on those findings continues regardless
-of a resubmission decision: see the seller-side discovery metadata helper
-(`packages/helpers`, below), the sponsor-key rotation runbook and runway
-monitoring (`docs/OPERATIONS.md`, below), and the one remaining
-post-review item (a buyer/agent SDK helper) tracked in
-`docs/DEFERRED.md`'s roadmap section.** See
+of a resubmission decision: all three post-review roadmap items have
+real progress, see the seller-side discovery metadata helper and the
+buyer-side discover/pay/retry client (both `packages/helpers`, below,
+the two the panel named explicitly), and the sponsor-key rotation
+runbook and runway monitoring (`docs/OPERATIONS.md`, below). Remaining
+gaps on each are tracked, not silently closed: `docs/DEFERRED.md`'s
+roadmap section.** See
 [`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md) (the `upto` wire-spec
 convergence story: `#3098`/`#3134`/`stellar/x402-stellar#72`, consolidated
@@ -106,11 +108,10 @@ section below). `contracts/upto-settlement` also exists and is built
 (Phase 6, deployed to `stellar:testnet`, see below), but deliberately
 outside the pnpm workspace, so it has no `pnpm-workspace.yaml` entry and
 isn't part of this list. `packages/helpers` (spec §3 row 5) also exists
-now, but only half of it: the seller-side discovery metadata helper
-(below), not the buyer-side discover/pay/retry client, which is scoped
-but not started, see `docs/DEFERRED.md`'s roadmap section. Everything
-else in the target layout (`apps/hub`, `packages/mcp`, `spec/`,
-`conformance/` runner, `examples/`) is **planned, not built**, see
+now, both halves: the seller-side discovery metadata helper and the
+buyer-side discover/pay/retry client (below). Everything else in the
+target layout (`apps/hub`, `packages/mcp`, `spec/`, `conformance/`
+runner, `examples/`) is **planned, not built**, see
 `docs/SPEC.md` §3 for what belongs where. Don't create empty placeholder
 directories for phases that haven't started (spec §12: no invented
 scope).
@@ -149,10 +150,54 @@ wired into `demo-resource.ts` itself** (that resource's own inline
 `inputSchema`/query-parsing still predates this helper) or documented in
 README: dogfooding it against a real, already-live resource is the
 natural next step, tracked in `docs/DEFERRED.md`'s roadmap section, not
-done silently in the same pass that built it. The buyer-side half of
-this package (a discover/pay/retry client for use outside an MCP
-runtime, ahead of Phase 7's own MCP-wrapped version of the same loop) is
-scoped but not started, same file.
+done silently in the same pass that built it.
+
+The buyer-side half, `src/buyer-client.ts`, was built the same day: a
+library client wrapping discover (search the Bazaar) -> pay -> retry,
+for use outside an MCP runtime, ahead of and independent from Phase 7's
+own MCP-wrapped version of the same loop (`packages/mcp`, not started).
+`payAndFetch`/`discoverPayAndFetch` generalize the wire mechanics
+`apps/facilitator/src/browser/demo-play-client.ts` already proved live
+twice, but use `@x402/core/http`'s own
+`encodePaymentSignatureHeader`/`decodePaymentRequiredHeader`/
+`decodePaymentResponseHeader` directly (that browser bundle hand-rolls
+its own base64 encode/decode only because it deliberately avoids
+importing `@x402/core/types`); `@x402/stellar/exact/client`'s
+`ExactStellarScheme` still signs the payment, via the injectable
+`PaymentPayer` interface (`createExactStellarPayer` in
+`src/stellar-payer.ts` builds the real one, so the orchestration logic
+in `buyer-client.ts` itself has no Stellar SDK import and stays testable
+against a fake payer with no key). Scoped honestly to v1: `exact` on
+Stellar only, matching every real resource this repo has ever paid;
+"retry" means retrying the whole discover/pay cycle on a transient
+failure (a network error, or a 5xx on the paid retry), never past a
+definitive rejection. 13 new unit tests, `pnpm run ci` green (331 tests).
+
+Run for real against the live `https://periplo-testnet.fly.dev`
+deployment (`apps/facilitator/scripts/buyer-helper-demo.ts`), not just
+unit-tested against fakes: `payAndFetch` settled a real payment for
+`GET /demo/temperature-convert?value=100&from=celsius&to=fahrenheit`,
+transaction
+[`4b45d170...`](https://stellar.expert/explorer/testnet/tx/4b45d17095aaa8c740c3985a040ab5ac0ee455674e8bb3e53bb22707adab41bc),
+Horizon-verified, source account one of the channel-pool members
+(round-robin engaged, same as every other row in `conformance/RESULTS.md`).
+A related, real, honestly-reported gap surfaced running it:
+`discoverPayAndFetch`'s own search step correctly found the live
+cataloged `/demo/temperature-convert` resource, but the catalog entry
+still carried a bare URL with no query string (cataloged before this
+same round's fix below), so paying it as discovered still failed the
+same way `/demo/play`'s own resourceUrl once did. Confirmed fund-safe
+when this happened, not just assumed: `@x402/hono@2.22.0`'s own compiled
+`paymentMiddleware` only calls `processSettlement` after the resource
+handler itself returns a sub-400 status, read directly from the
+installed source, and Horizon confirms no transaction and no balance
+change for the test buyer from that specific attempt. Root-caused and
+fixed at the source: `demo-resource.ts`'s own `resource` field (what
+actually gets cataloged, not just `/demo/play`'s separate hardcoded
+fetch URL, which was already fixed on 2026-09-03) now carries the same
+default query string. Committed, not yet redeployed; the live catalog
+entry stays stale until a redeploy and a fresh settlement re-catalog it,
+tracked in `docs/DEFERRED.md`.
 
 `docs/OPERATIONS.md` (added 2026-09-10, same panel-review round) is the
 mainnet sponsor-key rotation runbook and runway-monitoring pair. The

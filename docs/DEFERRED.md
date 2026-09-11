@@ -2876,18 +2876,44 @@ MCP server that doesn't exist yet in this repo.
    `demo-resource.ts` (the one real, live resource server this repo
    runs) to prove it against something already deployed rather than
    only in isolation, and a README mention once that's done. This was
-   the fastest of the three to close, and is the one built this round.
+   the fastest of the three to close, and was built first; items 2 and
+   3 followed the same day, see below.
 
-2. **Buyer/agent SDK helper: scoped, not started.** A library client
-   wrapping the discover (search the Bazaar) → pay (x402 client
-   signing) → retry loop, for use outside an MCP runtime, ahead of and
-   independent from Phase 7's own MCP-wrapped version of the same loop.
-   Belongs in `packages/helpers` alongside the seller-side half (spec §3
-   row 5 covers both). Slower to close than item 1: needs a real x402
-   client-side signing path (`@x402/stellar`'s client variant, not the
-   facilitator variant this repo already uses) and a funded testnet
-   keypair to prove the loop end to end against the live catalog, not
-   just unit tests against fakes.
+2. **Buyer/agent SDK helper: done (2026-09-10, same day as item 1).**
+   `packages/helpers/src/buyer-client.ts`'s `payAndFetch`/
+   `discoverPayAndFetch` wrap the discover (search the Bazaar) -> pay
+   (`@x402/stellar/exact/client`'s real client-side signing, via an
+   injectable `PaymentPayer`) -> retry loop, for use outside an MCP
+   runtime, ahead of and independent from Phase 7's own MCP-wrapped
+   version of the same loop (`packages/mcp`, not started). Uses
+   `@x402/core/http`'s own header encode/decode functions rather than
+   reimplementing them. 13 unit tests, `pnpm run ci` green (331 tests).
+   Full writeup in `CLAUDE.md`'s Architecture section.
+
+   Run for real against the live deployment, not just unit-tested
+   against fakes (`apps/facilitator/scripts/buyer-helper-demo.ts`):
+   `payAndFetch` settled transaction
+   [`4b45d170...`](https://stellar.expert/explorer/testnet/tx/4b45d17095aaa8c740c3985a040ab5ac0ee455674e8bb3e53bb22707adab41bc),
+   Horizon-verified, real arithmetic in the response
+   (`{ value: 100, from: "celsius", to: "fahrenheit", result: 212 }`).
+   Found a real, related, honestly-reported gap running it:
+   `discoverPayAndFetch` found the live cataloged resource correctly,
+   but the cataloged URL was still the bare, pre-fix one (no query
+   string), so paying it as discovered still failed, the same class of
+   bug `/demo/play`'s own `resourceUrl` had on 2026-09-03. Confirmed
+   fund-safe when it happened, not assumed: `@x402/hono@2.22.0`'s own
+   `paymentMiddleware` only settles after the resource handler returns a
+   sub-400 status (read directly from the installed compiled source),
+   and Horizon shows no transaction and no balance change for the test
+   buyer from that specific attempt. Root-caused and fixed at the
+   source, this round: `demo-resource.ts`'s own `resource` field (what
+   actually gets cataloged, distinct from `/demo/play`'s separate,
+   already-fixed hardcoded fetch URL) now carries the same default query
+   string. **Committed, not yet redeployed**: the live catalog entry
+   stays stale (bare URL) until a real `fly deploy` and a fresh
+   settlement re-catalogs it with the fix, the same "fixed here, not yet
+   on the live deployment" pattern this file already documents
+   repeatedly elsewhere. New regression test in `demo-resource.test.ts`.
 
 3. **Mainnet sponsor-key rotation runbook: the testnet-provable half is
    done (2026-09-10), mainnet execution stays blocked on a key that

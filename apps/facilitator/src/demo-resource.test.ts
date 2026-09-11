@@ -92,10 +92,23 @@ describe("GET /demo/temperature-convert: unpaid request", () => {
     // TLS-terminating proxy, so an SDK-derived resource.url would come
     // out as http://... in production. RouteConfig.resource (set from
     // config.baseUrl) bypasses that entirely.
+    // Also regression coverage for a second, related bug found live,
+    // 2026-09-10, running packages/helpers' new discoverPayAndFetch
+    // against the actual deployed catalog: this resource.url field is
+    // what the Bazaar extension actually catalogs (DiscoveryResource.resource),
+    // and it used to carry no query string at all, so any generic x402
+    // client discovering it (not just /demo/play's own hardcoded fetch,
+    // already fixed via serve.ts's loadDemoPlayConfig) would pay and then
+    // 400 on this handler's own value/from/to validation. Confirmed
+    // fund-safe when this was hit (no settlement is ever attempted for a
+    // sub-400 handler response, @x402/hono@2.22.0's own paymentMiddleware
+    // source read directly), but not usable as cataloged either way.
     const app = createFacilitatorApp(fakeCore(), { demoResource: DEMO_CONFIG });
     const res = await app.request("/demo/temperature-convert?value=100&from=celsius&to=fahrenheit");
     const paymentRequired = readPaymentRequired(res);
-    expect(paymentRequired.resource.url).toBe(`${DEMO_CONFIG.baseUrl}/demo/temperature-convert`);
+    expect(paymentRequired.resource.url).toBe(
+      `${DEMO_CONFIG.baseUrl}/demo/temperature-convert?value=100&from=celsius&to=fahrenheit`
+    );
   });
 });
 

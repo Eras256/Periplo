@@ -189,7 +189,31 @@ export function mountDemoResource(
         price: { amount: "1000", asset: config.assetAddress },
         maxTimeoutSeconds: 300,
       },
-      resource: `${config.baseUrl}${ROUTE_PATH}`,
+      // Carries the same default query string serve.ts's loadDemoPlayConfig
+      // already bakes into its own resourceUrl (found live, 2026-09-04:
+      // the 402 challenge succeeds with no query string at all, since the
+      // price doesn't depend on it, so a bare request only 400s once this
+      // handler's own conversion runs). That earlier fix only ever
+      // covered /demo/play's own hardcoded fetch URL, not this field,
+      // which is what actually gets cataloged by the Bazaar extension
+      // (DiscoveryResource.resource) and what any other x402 client
+      // -- including packages/helpers' own buyer-side discoverPayAndFetch --
+      // gets back from a live GET /discovery/search. Found live again,
+      // 2026-09-10, running that new buyer helper against the real
+      // deployed catalog: the discovered resource carried the same bare
+      // URL and 400'd the same way. Confirmed via Horizon that this
+      // specific rejection was fund-safe (@x402/hono's paymentMiddleware
+      // only calls processSettlement after the handler itself returns a
+      // sub-400 status, read directly from the installed
+      // @x402/hono@2.22.0 source): no new transaction appeared for the
+      // test buyer, its PTEST balance was unchanged, and GET /status's
+      // own lastSettledTransaction timestamp didn't move. Whether the
+      // originally documented "a real visitor charged for nothing"
+      // incident is still reproducible is not re-litigated here, that
+      // claim predates this fix and this specific verification; the fix
+      // itself (giving every caller, not just /demo/play, a genuinely
+      // payable-as-cataloged URL) is correct regardless.
+      resource: `${config.baseUrl}${ROUTE_PATH}?value=100&from=celsius&to=fahrenheit`,
       description:
         "Converts a temperature value between Celsius, Fahrenheit, and Kelvin. Real " +
         "arithmetic, not a canned response: the result reflects the actual value/from/to " +
