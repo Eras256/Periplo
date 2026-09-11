@@ -1,9 +1,9 @@
 # Operations: fee-sponsor key rotation and runway monitoring
 
-An SCF #45 panel review item, alongside `packages/helpers` (`README.md`,
-`docs/DEFERRED.md`'s "Post-panel-review roadmap" section): document, and
-where it applies, automate rotating the fee-sponsor key every 90 days or
-on suspected exposure, with a no-downtime cutover, plus an alert when the
+Scoped alongside `packages/helpers` (`README.md`, `docs/DEFERRED.md`'s
+"Helper library and mainnet-ops roadmap" section): document, and where
+it applies, automate rotating the fee-sponsor key every 90 days or on
+suspected exposure, with a no-downtime cutover, plus an alert when the
 sponsor's XLM balance drops below a projected 48-hour fee runway.
 
 **Real constraint found while scoping this, stated honestly rather than

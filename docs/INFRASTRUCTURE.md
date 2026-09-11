@@ -29,9 +29,8 @@ sponsors for buyers (`extra.areFeesSponsored: true`), and `stellar:testnet`
 transactions cost nothing real (Friendbot-funded). The real, ongoing cost
 today is the Fly.io machine and the Supabase project tier, both
 currently covered directly by the project owner, not by the SCF grant
-(the Build Award passed prescreen 2026-08-20 but was not funded after
-panel review, concluded 2026-09-10; `CLAUDE.md`'s top status line has
-the current standing).
+(the Build Award passed prescreen 2026-08-20; `CLAUDE.md`'s top status
+line has the current standing).
 
 ## After the grant: not yet decided, stated honestly rather than guessed
 

@@ -2844,14 +2844,15 @@ maintainer response since 2026-09-02; `x402-foundation/x402#3301` (Go)
 is covered above. The Periplo repo itself is CI-green with no open PRs
 or issues, last commit `2a12856` (2026-09-04).
 
-## Post-panel-review roadmap, opened 2026-09-10
+## Helper library and mainnet-ops roadmap, opened 2026-09-10
 
-SCF #45 panel review did not fund this submission, but returned concrete
-technical findings worth resolving regardless of a resubmission
-decision (user direction, 2026-09-10). Three items, scoped and budgeted
-outside this repo. None of the three touches the `stellar-accounts`
-`0.7.2` pin or the Phase 6b `UnvalidatedContext #3002` blocker; all
-three are independent of it.
+Three items worth resolving on their own merits, scoped and budgeted
+outside this repo: the seller-side discovery metadata helper and the
+buyer/agent SDK helper, both scoped since the first draft of
+`docs/SPEC.md` but never built until now, and mainnet sponsor-key
+operational planning, scoped the same day. None of the three touches
+the `stellar-accounts` `0.7.2` pin or the Phase 6b
+`UnvalidatedContext #3002` blocker; all three are independent of it.
 
 **Correction made before scoping, not silently accepted:** the request
 described the buyer/agent SDK helper as being for use "outside the MCP
@@ -2867,8 +2868,8 @@ MCP server that doesn't exist yet in this repo.
    (spec §3 row 5), scoped since the first draft of `docs/SPEC.md` but
    never built until now. `definePaidResource` turns one declarative
    per-parameter spec into both the discovery JSON Schema and a runtime
-   query-param parser, closing the exact gap the panel review named
-   (missing/driftable per-parameter descriptions). Reuses
+   query-param parser, closing a real gap: missing/driftable
+   per-parameter descriptions. Reuses
    `declareDiscoveryExtension` from `@x402/extensions/bazaar` rather
    than reimplementing the wire format. 13 unit tests,
    `pnpm run ci` green (307 tests). Full writeup in `CLAUDE.md`'s

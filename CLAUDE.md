@@ -16,16 +16,13 @@ that must exit 0 before the next phase starts. **Current status: Phase 6
 (`upto` on Stellar) complete, Phase 6b (additional evidence, not a tranche
 deliverable) has real contract-level results and a genuinely open blocker,
 Phase 7 (MCP discovery server) not started. The SCF Build Award was
-submitted 2026-08-11, passed prescreen 2026-08-20 (email-confirmed), and
-was not funded after panel review for SCF #45, which came back with
-concrete technical findings. Work on those findings continues regardless
-of a resubmission decision: all three post-review roadmap items have
-real progress, see the seller-side discovery metadata helper and the
-buyer-side discover/pay/retry client (both `packages/helpers`, below,
-the two the panel named explicitly), and the sponsor-key rotation
-runbook and runway monitoring (`docs/OPERATIONS.md`, below). Remaining
-gaps on each are tracked, not silently closed: `docs/DEFERRED.md`'s
-roadmap section.** See
+submitted 2026-08-11, passed prescreen 2026-08-20 (email-confirmed).
+Three real gaps identified 2026-09-10 all have real progress: the
+seller-side discovery metadata helper and the buyer-side discover/pay/
+retry client (both `packages/helpers`, below), and the sponsor-key
+rotation runbook and runway monitoring (`docs/OPERATIONS.md`, below).
+Remaining gaps on each are tracked, not silently closed:
+`docs/DEFERRED.md`'s roadmap section.** See
 [`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md) (the `upto` wire-spec
 convergence story: `#3098`/`#3134`/`stellar/x402-stellar#72`, consolidated
@@ -129,8 +126,7 @@ never bundled into a deployed service.
 
 `packages/helpers` (spec §3 row 5, "seller / buyer helper libraries") was
 scoped from the very first draft of `docs/SPEC.md` but never built until
-2026-09-10, when an SCF #45 panel review finding named the seller-side
-gap explicitly. `src/paid-resource.ts`'s `definePaidResource` closes it:
+2026-09-10. `src/paid-resource.ts`'s `definePaidResource` closes it:
 one declarative `params` map (per-parameter `type`/`description`/`enum`/
 `required`/`example`) is the single source of truth for both the
 discovery JSON Schema and a runtime query-param parser, so a resource
