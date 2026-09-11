@@ -137,11 +137,18 @@ movement. Respond in español mexicano (the user's standing preference).
   fix PR. CI green, `BLOCKED`/`REVIEW_REQUIRED`. Nudge threshold
   ~2026-09-15 if still no maintainer review.
 - `OpenZeppelin/stellar-contracts#868` ("Smart account: auth payload
-  digest"), draft as of 2026-09-09. When it leaves draft, re-check
-  whether its new `Signer::Delegated` tests/docs explain or bound the
-  open two-context `UnvalidatedContext #3002` failure in
-  `agent-smart-account`'s `settle()` + nested `transfer` path (Phase 6b,
-  genuinely open blocker, no live testnet tx of its own).
+  digest"), merged 2026-09-10 (`4529d708`, closes `#876`). Redefines the
+  `Signer::Delegated` nested entry (an `AuthDigestPreimage` struct, not
+  the raw digest) and confirms the 2026-09-02 raw-digest construction was
+  wrong, but ships only in the unreleased `0.8.0` and adds no
+  multi-`ContextRule` delegate test, so the two-context
+  `UnvalidatedContext #3002` blocker stays open. Next trigger: the
+  `0.8.0` crates.io release. Check
+  `curl -s https://index.crates.io/st/el/stellar-accounts | tail -1`;
+  when `0.8.0` appears, that is the go-ahead to bump the pin and re-run
+  the two-context `settle()` (user decision 2026-09-10: wait for the
+  release, do not pin a git rev). Full writeup in `docs/DEFERRED.md`
+  Phase 6b watch-item.
 - `OpenZeppelin/stellar-contracts#865`, Protocol 28 non-exhaustive
   `ContractExecutable` match. No maintainer response since 2026-09-02.
   Corroborating comment already left; no separate issue (Nirium's repro
