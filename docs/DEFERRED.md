@@ -2889,24 +2889,41 @@ MCP server that doesn't exist yet in this repo.
    keypair to prove the loop end to end against the live catalog, not
    just unit tests against fakes.
 
-3. **Mainnet sponsor-key rotation runbook: scoped, not started.**
-   Document (and, where it applies, automate) rotating the mainnet fee
-   sponsor key every 90 days or on suspected exposure, with a
-   no-downtime cutover, plus an alert when the sponsor's XLM balance
-   drops below a projected 48-hour fee runway. **Real constraint found
+3. **Mainnet sponsor-key rotation runbook: the testnet-provable half is
+   done (2026-09-10), mainnet execution stays blocked on a key that
+   doesn't exist.** `docs/OPERATIONS.md` documents the full 90-day/
+   suspected-exposure rotation cadence and a seven-step no-downtime
+   cutover procedure, built entirely from mechanisms this repo already
+   has and has already proven live (the channel-account pool's
+   round-robin signer set, `assertNonCustodialSigner`'s boot-time gate,
+   `fly secrets set` + `fly deploy`, `GET /supported`'s signer listing),
+   not new machinery invented for the runbook. **Real constraint found
    scoping this, not assumed:** no mainnet fee-sponsor key exists yet.
    `periplo-mainnet` (the Fly app) and any mainnet Stellar identity are
    both genuinely absent (confirmed above, and in
    [[periplo-mainnet-key-hygiene]]); mainnet key generation is expected
-   at SCF Tranche #3 / Phase 10. A rotation runbook for a key that
-   doesn't exist can't be executed today, but two real, useful pieces
-   of it can be built now, against the testnet fee-sponsor account that
-   does exist: the runbook document itself (rotation steps, cutover
-   sequence, verification checklist), written so it's mainnet-ready the
-   day a real key exists, and the balance/runway alert script, which is
-   equally applicable to the live testnet fee-sponsor today and doesn't
-   need to wait for mainnet at all. Splitting it this way was not
-   requested explicitly but is the honest way to make progress on this
-   item without fabricating mainnet infrastructure ahead of a real key
-   (same principle as the existing `periplo-mainnet does not exist and
-   won't until a real mainnet fee-sponsor key exists` note above).
+   at SCF Tranche #3 / Phase 10, so the rotation procedure itself can't
+   be executed for real until then, and stays a documented-not-executed
+   runbook until it is. The other half, runway monitoring, doesn't need
+   to wait: a fee-sponsor account only ever holds native XLM
+   (`boot-safety.ts` enforces this at boot), so "how many hours of
+   fee-paying can this balance still cover" is the same question on
+   testnet as on mainnet. `apps/facilitator/src/sponsor-runway.ts`
+   (pure, unit-tested) + `sponsor-runway-fetch.ts` (real Horizon calls)
+   compute balance, observed burn rate over a lookback window, and
+   projected runway; `scripts/sponsor-runway-alert.ts` is the read-only
+   (public-key-only, never the secret) operational entry point, exits
+   non-zero below the threshold. Run for real against the live testnet
+   fee-sponsor, not just unit-tested against fakes: `9999.2623571 XLM`,
+   zero fee spend in the trailing 24h, infinite projected runway, exit
+   0. 11 new unit tests cover the alert path itself (a manufactured
+   low-balance/high-burn scenario), which the currently-idle live
+   testnet account can't exercise without spending real fees just to
+   prove it. `pnpm run ci` green (318 tests, up from 307). Deliberately
+   does not send a notification itself: no email/Slack/webhook channel
+   is configured anywhere in this repo, and wiring one would be
+   invented scope this tool doesn't own (spec §12); the script's exit
+   code is meant to be read by whatever already runs scheduled checks
+   for the deployment, none of which exists yet either, stated as an
+   honest, open gap in `docs/OPERATIONS.md` itself rather than implied
+   solved.

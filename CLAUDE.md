@@ -20,8 +20,10 @@ submitted 2026-08-11, passed prescreen 2026-08-20 (email-confirmed), and
 was not funded after panel review for SCF #45, which came back with
 concrete technical findings. Work on those findings continues regardless
 of a resubmission decision: see the seller-side discovery metadata helper
-(`packages/helpers`, below) and the two remaining post-review items
-tracked in `docs/DEFERRED.md`'s roadmap section.** See
+(`packages/helpers`, below), the sponsor-key rotation runbook and runway
+monitoring (`docs/OPERATIONS.md`, below), and the one remaining
+post-review item (a buyer/agent SDK helper) tracked in
+`docs/DEFERRED.md`'s roadmap section.** See
 [`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md) (the `upto` wire-spec
 convergence story: `#3098`/`#3134`/`stellar/x402-stellar#72`, consolidated
@@ -151,6 +153,25 @@ done silently in the same pass that built it. The buyer-side half of
 this package (a discover/pay/retry client for use outside an MCP
 runtime, ahead of Phase 7's own MCP-wrapped version of the same loop) is
 scoped but not started, same file.
+
+`docs/OPERATIONS.md` (added 2026-09-10, same panel-review round) is the
+mainnet sponsor-key rotation runbook and runway-monitoring pair. The
+rotation procedure (90-day/suspected-exposure cadence, seven-step
+no-downtime cutover) is documented and mainnet-ready but not executable
+yet: no mainnet fee-sponsor key exists, mainnet provisioning is Tranche
+#3 / Phase 10. Runway monitoring doesn't wait on that:
+`apps/facilitator/src/sponsor-runway.ts` (pure) +
+`sponsor-runway-fetch.ts` (real Horizon calls) compute balance, observed
+burn rate, and projected runway from a lookback window;
+`scripts/sponsor-runway-alert.ts` is the read-only (public key only,
+never the secret) CLI entry point, exits non-zero below a configurable
+threshold (default 48h). Run for real against the live testnet
+fee-sponsor: `9999.2623571 XLM`, zero fee spend in 24h, infinite
+runway, exit 0. 11 unit tests cover the alert path itself with
+manufactured low-balance/high-burn inputs, which the currently-idle live
+account can't exercise without spending real fees. Deliberately sends no
+notification of its own: no email/Slack/webhook channel exists in this
+repo to wire into, stated as an open gap rather than invented scope.
 
 `packages/bazaar` is the catalog trust boundary (Phase 1):
 `checkRouteTemplate` (decode-fully-THEN-validate against traversal/absolute/
