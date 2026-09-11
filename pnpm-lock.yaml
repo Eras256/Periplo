@@ -90,6 +90,12 @@ importers:
 
   packages/evidence-check: {}
 
+  packages/helpers:
+    dependencies:
+      '@x402/extensions':
+        specifier: 2.22.0
+        version: 2.22.0(typescript@7.0.2)
+
   packages/licence-check: {}
 
   packages/search:

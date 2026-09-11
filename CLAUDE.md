@@ -15,9 +15,13 @@ starting any phase. It is phased (0–10); each phase ends in a gate command
 that must exit 0 before the next phase starts. **Current status: Phase 6
 (`upto` on Stellar) complete, Phase 6b (additional evidence, not a tranche
 deliverable) has real contract-level results and a genuinely open blocker,
-Phase 7 (MCP discovery server) next. The SCF Build Award was submitted
-2026-08-11, passed prescreen 2026-08-20 (email-confirmed), now in panel
-review for SCF #45.** See
+Phase 7 (MCP discovery server) not started. The SCF Build Award was
+submitted 2026-08-11, passed prescreen 2026-08-20 (email-confirmed), and
+was not funded after panel review for SCF #45, which came back with
+concrete technical findings. Work on those findings continues regardless
+of a resubmission decision: see the seller-side discovery metadata helper
+(`packages/helpers`, below) and the two remaining post-review items
+tracked in `docs/DEFERRED.md`'s roadmap section.** See
 [`docs/DEFERRED.md`](docs/DEFERRED.md),
 [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md) (the `upto` wire-spec
 convergence story: `#3098`/`#3134`/`stellar/x402-stellar#72`, consolidated
@@ -28,6 +32,7 @@ out of README.md so it isn't told twice),
 `x402-foundation/x402` e2e suite run for real against the live
 deployment, not a Periplo-authored equivalent),
 [`packages/bazaar`](packages/bazaar), [`packages/search`](packages/search),
+[`packages/helpers`](packages/helpers),
 [`eval/`](eval), [`supabase/`](supabase),
 [`apps/facilitator`](apps/facilitator), and
 [`contracts/upto-settlement`](contracts/upto-settlement) for what exists
@@ -98,12 +103,15 @@ phase numbering, same as `packages/licence-check`, see the Architecture
 section below). `contracts/upto-settlement` also exists and is built
 (Phase 6, deployed to `stellar:testnet`, see below), but deliberately
 outside the pnpm workspace, so it has no `pnpm-workspace.yaml` entry and
-isn't part of this list. Everything else
-in the target layout (`apps/hub`, `packages/mcp`, `packages/helpers`,
-`spec/`, `conformance/` runner, `examples/`) is **planned,
-not built**, see `docs/SPEC.md` §3 for what belongs where. Don't create
-empty placeholder directories for phases that haven't started (spec §12:
-no invented scope).
+isn't part of this list. `packages/helpers` (spec §3 row 5) also exists
+now, but only half of it: the seller-side discovery metadata helper
+(below), not the buyer-side discover/pay/retry client, which is scoped
+but not started, see `docs/DEFERRED.md`'s roadmap section. Everything
+else in the target layout (`apps/hub`, `packages/mcp`, `spec/`,
+`conformance/` runner, `examples/`) is **planned, not built**, see
+`docs/SPEC.md` §3 for what belongs where. Don't create empty placeholder
+directories for phases that haven't started (spec §12: no invented
+scope).
 
 `packages/licence-check` is the pattern for any future CI-gate package:
 pure classification logic in one file (`classify.ts`, fully unit tested),
@@ -115,6 +123,34 @@ gate, and reports devDependency-only copyleft findings as warnings. The
 concrete case that motivated the split is `vitest` → `vite` →
 `lightningcss` (MPL-2.0), unavoidable while pinning `vitest@4.1.11` but
 never bundled into a deployed service.
+
+`packages/helpers` (spec §3 row 5, "seller / buyer helper libraries") was
+scoped from the very first draft of `docs/SPEC.md` but never built until
+2026-09-10, when an SCF #45 panel review finding named the seller-side
+gap explicitly. `src/paid-resource.ts`'s `definePaidResource` closes it:
+one declarative `params` map (per-parameter `type`/`description`/`enum`/
+`required`/`example`) is the single source of truth for both the
+discovery JSON Schema and a runtime query-param parser, so a resource
+server can't ship a route whose declared schema drifts from what it
+actually parses, and can't omit a per-parameter description (the
+constructor throws if one is missing; those descriptions are the primary
+input to Phase 5's search ranking, spec §3). It does not reimplement the
+bazaar wire format: `declareDiscoveryExtension` from
+`@x402/extensions/bazaar` still builds the actual extension payload,
+same "don't reimplement" principle applied everywhere else in this repo.
+Scoped honestly to v1: query-parameter (GET/HEAD/DELETE) HTTP resources
+only, matching the one real resource server this repo runs
+(`demo-resource.ts`); body-method and MCP-tool resources still go
+through `declareDiscoveryExtension` directly. 13 unit tests
+(`paid-resource.test.ts`), `pnpm run ci` green (307 tests). **Not yet
+wired into `demo-resource.ts` itself** (that resource's own inline
+`inputSchema`/query-parsing still predates this helper) or documented in
+README: dogfooding it against a real, already-live resource is the
+natural next step, tracked in `docs/DEFERRED.md`'s roadmap section, not
+done silently in the same pass that built it. The buyer-side half of
+this package (a discover/pay/retry client for use outside an MCP
+runtime, ahead of Phase 7's own MCP-wrapped version of the same loop) is
+scoped but not started, same file.
 
 `packages/bazaar` is the catalog trust boundary (Phase 1):
 `checkRouteTemplate` (decode-fully-THEN-validate against traversal/absolute/

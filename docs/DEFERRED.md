@@ -2843,3 +2843,70 @@ Same live check, same day, no doc change needed for either:
 maintainer response since 2026-09-02; `x402-foundation/x402#3301` (Go)
 is covered above. The Periplo repo itself is CI-green with no open PRs
 or issues, last commit `2a12856` (2026-09-04).
+
+## Post-panel-review roadmap, opened 2026-09-10
+
+SCF #45 panel review did not fund this submission, but returned concrete
+technical findings worth resolving regardless of a resubmission
+decision (user direction, 2026-09-10). Three items, scoped and budgeted
+outside this repo. None of the three touches the `stellar-accounts`
+`0.7.2` pin or the Phase 6b `UnvalidatedContext #3002` blocker; all
+three are independent of it.
+
+**Correction made before scoping, not silently accepted:** the request
+described the buyer/agent SDK helper as being for use "outside the MCP
+runtime (the MCP server already exists)". Checked against the real
+repo, not assumed: `packages/mcp` does not exist and Phase 7 (MCP
+discovery server) has not started, confirmed via `ls packages/` and
+`docs/SPEC.md` §3's own phase table. The buyer helper below is scoped as
+the library form of Phase 7's own discover/pay/retry loop, built ahead
+of and independent from Phase 7's MCP wrapper, not as a companion to an
+MCP server that doesn't exist yet in this repo.
+
+1. **Seller-side discovery metadata helper: done.** `packages/helpers`
+   (spec §3 row 5), scoped since the first draft of `docs/SPEC.md` but
+   never built until now. `definePaidResource` turns one declarative
+   per-parameter spec into both the discovery JSON Schema and a runtime
+   query-param parser, closing the exact gap the panel review named
+   (missing/driftable per-parameter descriptions). Reuses
+   `declareDiscoveryExtension` from `@x402/extensions/bazaar` rather
+   than reimplementing the wire format. 13 unit tests,
+   `pnpm run ci` green (307 tests). Full writeup in `CLAUDE.md`'s
+   Architecture section. **Not yet done:** wiring it into
+   `demo-resource.ts` (the one real, live resource server this repo
+   runs) to prove it against something already deployed rather than
+   only in isolation, and a README mention once that's done. This was
+   the fastest of the three to close, and is the one built this round.
+
+2. **Buyer/agent SDK helper: scoped, not started.** A library client
+   wrapping the discover (search the Bazaar) → pay (x402 client
+   signing) → retry loop, for use outside an MCP runtime, ahead of and
+   independent from Phase 7's own MCP-wrapped version of the same loop.
+   Belongs in `packages/helpers` alongside the seller-side half (spec §3
+   row 5 covers both). Slower to close than item 1: needs a real x402
+   client-side signing path (`@x402/stellar`'s client variant, not the
+   facilitator variant this repo already uses) and a funded testnet
+   keypair to prove the loop end to end against the live catalog, not
+   just unit tests against fakes.
+
+3. **Mainnet sponsor-key rotation runbook: scoped, not started.**
+   Document (and, where it applies, automate) rotating the mainnet fee
+   sponsor key every 90 days or on suspected exposure, with a
+   no-downtime cutover, plus an alert when the sponsor's XLM balance
+   drops below a projected 48-hour fee runway. **Real constraint found
+   scoping this, not assumed:** no mainnet fee-sponsor key exists yet.
+   `periplo-mainnet` (the Fly app) and any mainnet Stellar identity are
+   both genuinely absent (confirmed above, and in
+   [[periplo-mainnet-key-hygiene]]); mainnet key generation is expected
+   at SCF Tranche #3 / Phase 10. A rotation runbook for a key that
+   doesn't exist can't be executed today, but two real, useful pieces
+   of it can be built now, against the testnet fee-sponsor account that
+   does exist: the runbook document itself (rotation steps, cutover
+   sequence, verification checklist), written so it's mainnet-ready the
+   day a real key exists, and the balance/runway alert script, which is
+   equally applicable to the live testnet fee-sponsor today and doesn't
+   need to wait for mainnet at all. Splitting it this way was not
+   requested explicitly but is the honest way to make progress on this
+   item without fabricating mainnet infrastructure ahead of a real key
+   (same principle as the existing `periplo-mainnet does not exist and
+   won't until a real mainnet fee-sponsor key exists` note above).

@@ -1,0 +1,16 @@
+{
+  "name": "@periplo/helpers",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Seller/buyer helper libraries (spec §3 row 5): discovery metadata declaration for resource servers, a discover/pay/retry client for buyers.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@x402/extensions": "2.22.0"
+  }
+}
