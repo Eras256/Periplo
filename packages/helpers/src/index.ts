@@ -7,6 +7,7 @@ export {
   PaymentFailedError,
   type PaymentPayer,
   payAndFetch,
+  resolveResourceRequestUrl,
   searchBazaar,
   selectExactStellarRequirement,
   selectPayableResource,

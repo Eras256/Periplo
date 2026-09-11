@@ -175,29 +175,59 @@ definitive rejection. 13 new unit tests, `pnpm run ci` green (331 tests).
 
 Run for real against the live `https://periplo-testnet.fly.dev`
 deployment (`apps/facilitator/scripts/buyer-helper-demo.ts`), not just
-unit-tested against fakes: `payAndFetch` settled a real payment for
-`GET /demo/temperature-convert?value=100&from=celsius&to=fahrenheit`,
-transaction
-[`4b45d170...`](https://stellar.expert/explorer/testnet/tx/4b45d17095aaa8c740c3985a040ab5ac0ee455674e8bb3e53bb22707adab41bc),
-Horizon-verified, source account one of the channel-pool members
-(round-robin engaged, same as every other row in `conformance/RESULTS.md`).
-A related, real, honestly-reported gap surfaced running it:
-`discoverPayAndFetch`'s own search step correctly found the live
-cataloged `/demo/temperature-convert` resource, but the catalog entry
-still carried a bare URL with no query string (cataloged before this
-same round's fix below), so paying it as discovered still failed the
-same way `/demo/play`'s own resourceUrl once did. Confirmed fund-safe
-when this happened, not just assumed: `@x402/hono@2.22.0`'s own compiled
-`paymentMiddleware` only calls `processSettlement` after the resource
-handler itself returns a sub-400 status, read directly from the
-installed source, and Horizon confirms no transaction and no balance
-change for the test buyer from that specific attempt. Root-caused and
-fixed at the source: `demo-resource.ts`'s own `resource` field (what
-actually gets cataloged, not just `/demo/play`'s separate hardcoded
-fetch URL, which was already fixed on 2026-09-03) now carries the same
-default query string. Committed, not yet redeployed; the live catalog
-entry stays stale until a redeploy and a fresh settlement re-catalog it,
-tracked in `docs/DEFERRED.md`.
+unit-tested against fakes, across three rounds the same day, each
+finding and fixing a real, distinct gap rather than stopping at the
+first success:
+
+1. **`payAndFetch` alone, direct URL, first success**: settled
+   [`4b45d170...`](https://stellar.expert/explorer/testnet/tx/4b45d17095aaa8c740c3985a040ab5ac0ee455674e8bb3e53bb22707adab41bc).
+   `discoverPayAndFetch` itself failed the same run: the live-cataloged
+   resource carried a bare URL with no query string, so paying it as
+   discovered 400'd on the handler's own validation. Confirmed fund-safe
+   before reporting it: `@x402/hono@2.22.0`'s own compiled
+   `paymentMiddleware` only calls `processSettlement` after the handler
+   returns a sub-400 status, and Horizon showed no transaction, no
+   balance change.
+2. **A wrong diagnosis, corrected before it could mislead a later
+   reader, not left standing.** First fix attempt: bake a default query
+   string into `demo-resource.ts`'s own `resource` field (matching
+   `/demo/play`'s already-fixed `resourceUrl`), reasoning that this
+   field is what gets cataloged. Deployed, then re-tested
+   (`4826458` -> `fly deploy`), transaction
+   [`c2fbad40...`](https://stellar.expert/explorer/testnet/tx/c2fbad40dd692cf9e0d9eda9781328ad4377fadbb914b9c1dcb6a900bed28cb2)
+   settled, `discoverPayAndFetch` still failed the same way. Root-caused
+   properly this time by reading `@x402/extensions/bazaar`'s own
+   compiled `extractDiscoveryInfo`: it builds the cataloged
+   `canonicalUrl` as `${url.origin}${url.pathname}` unconditionally,
+   stripping any query string by design, regardless of what a seller's
+   own resource field contains. The `demo-resource.ts` field change
+   is harmless (it does correctly show a fuller example URL in the raw
+   402 challenge itself) but was never going to fix the catalog case;
+   said so plainly rather than leaving the earlier claim uncorrected.
+3. **The real fix, in this library, not the resource server**:
+   `resolveResourceRequestUrl` reads the discovered resource's own
+   declared `extensions.bazaar.info.input.queryParams` (the exact
+   example a seller's own `definePaidResource` declares, closing the
+   loop between this package's two halves) and appends it before
+   `discoverPayAndFetch` pays, instead of naively paying the bare
+   canonical URL. Also found and fixed the same round: an earlier
+   `PaymentPayer` design called `ExactStellarScheme`'s own lower-level
+   `createPaymentPayload(x402Version, requirements)` directly and
+   hand-assembled `{ ...built, accepted: requirements }`, which never
+   set `payload.resource`, so `discovery.ts`'s own cataloging gate
+   (`paymentPayload.resource.url` required) silently skipped cataloging
+   for every payment this library ever made. Fixed by building on the
+   full `x402Client` (`@x402/core/client`) instead, the same class
+   `scripts/demo-resource-settle.ts` already used correctly, whose
+   `createPaymentPayload(paymentRequired)` builds the complete payload,
+   `resource` and the bazaar extension echo included, confirmed by
+   directly inspecting a real built payload before trusting it. A
+   genuinely clean, complete, no-fallback run followed: transaction
+   [`8573061305...`](https://stellar.expert/explorer/testnet/tx/8573061305f58eb6c0cfdab5af3a15a3f67f070eb24d2f411a0c0b1b34b41402),
+   `discoverPayAndFetch` searched, found, resolved the request URL, paid,
+   and returned the settled result in one call, no caught error, no
+   manual URL override. 18 unit tests total, `pnpm run ci` green (336
+   tests).
 
 `docs/OPERATIONS.md` (added 2026-09-10, same panel-review round) is the
 mainnet sponsor-key rotation runbook and runway-monitoring pair. The

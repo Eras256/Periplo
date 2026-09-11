@@ -2879,41 +2879,107 @@ MCP server that doesn't exist yet in this repo.
    the fastest of the three to close, and was built first; items 2 and
    3 followed the same day, see below.
 
-2. **Buyer/agent SDK helper: done (2026-09-10, same day as item 1).**
-   `packages/helpers/src/buyer-client.ts`'s `payAndFetch`/
-   `discoverPayAndFetch` wrap the discover (search the Bazaar) -> pay
-   (`@x402/stellar/exact/client`'s real client-side signing, via an
-   injectable `PaymentPayer`) -> retry loop, for use outside an MCP
-   runtime, ahead of and independent from Phase 7's own MCP-wrapped
-   version of the same loop (`packages/mcp`, not started). Uses
-   `@x402/core/http`'s own header encode/decode functions rather than
-   reimplementing them. 13 unit tests, `pnpm run ci` green (331 tests).
-   Full writeup in `CLAUDE.md`'s Architecture section.
+2. **Buyer/agent SDK helper: done (2026-09-10, same day as item 1),
+   including a wrong diagnosis found and corrected the same round rather
+   than left standing.** `packages/helpers/src/buyer-client.ts`'s
+   `payAndFetch`/`discoverPayAndFetch` wrap discover (search the Bazaar)
+   -> pay (`x402Client` from `@x402/core/client`, registered with
+   `@x402/stellar/exact/client`'s real signing, via an injectable
+   `PaymentPayer`) -> retry, for use outside an MCP runtime, ahead of and
+   independent from Phase 7's own MCP-wrapped version of the same loop
+   (`packages/mcp`, not started). Uses `@x402/core/http`'s own header
+   encode/decode functions rather than reimplementing them. 18 unit
+   tests, `pnpm run ci` green (336 tests). Full writeup in `CLAUDE.md`'s
+   Architecture section.
 
-   Run for real against the live deployment, not just unit-tested
-   against fakes (`apps/facilitator/scripts/buyer-helper-demo.ts`):
-   `payAndFetch` settled transaction
-   [`4b45d170...`](https://stellar.expert/explorer/testnet/tx/4b45d17095aaa8c740c3985a040ab5ac0ee455674e8bb3e53bb22707adab41bc),
-   Horizon-verified, real arithmetic in the response
-   (`{ value: 100, from: "celsius", to: "fahrenheit", result: 212 }`).
-   Found a real, related, honestly-reported gap running it:
-   `discoverPayAndFetch` found the live cataloged resource correctly,
-   but the cataloged URL was still the bare, pre-fix one (no query
-   string), so paying it as discovered still failed, the same class of
-   bug `/demo/play`'s own `resourceUrl` had on 2026-09-03. Confirmed
-   fund-safe when it happened, not assumed: `@x402/hono@2.22.0`'s own
-   `paymentMiddleware` only settles after the resource handler returns a
-   sub-400 status (read directly from the installed compiled source),
-   and Horizon shows no transaction and no balance change for the test
-   buyer from that specific attempt. Root-caused and fixed at the
-   source, this round: `demo-resource.ts`'s own `resource` field (what
-   actually gets cataloged, distinct from `/demo/play`'s separate,
-   already-fixed hardcoded fetch URL) now carries the same default query
-   string. **Committed, not yet redeployed**: the live catalog entry
-   stays stale (bare URL) until a real `fly deploy` and a fresh
-   settlement re-catalogs it with the fix, the same "fixed here, not yet
-   on the live deployment" pattern this file already documents
-   repeatedly elsewhere. New regression test in `demo-resource.test.ts`.
+   Run for real against the live deployment three times the same day
+   (`apps/facilitator/scripts/buyer-helper-demo.ts`), each run finding
+   and fixing a distinct real gap rather than stopping at the first
+   success:
+
+   - **Run 1**: `payAndFetch` alone settled
+     [`4b45d170...`](https://stellar.expert/explorer/testnet/tx/4b45d17095aaa8c740c3985a040ab5ac0ee455674e8bb3e53bb22707adab41bc).
+     `discoverPayAndFetch` failed: the live-cataloged resource carried a
+     bare URL with no query string, so paying it as discovered 400'd on
+     the handler's own validation. Confirmed fund-safe first, not
+     assumed: `@x402/hono@2.22.0`'s own compiled `paymentMiddleware`
+     only calls `processSettlement` after the handler returns a sub-400
+     status, and Horizon showed no transaction, no balance change for
+     the test buyer.
+   - **A wrong fix, corrected before it misled anyone further, not left
+     standing.** First attempt: bake a default query string into
+     `demo-resource.ts`'s own `resource` field (mirroring `/demo/play`'s
+     already-fixed `resourceUrl`), on the theory that this field is what
+     gets cataloged. Deployed (`fly deploy` after commit `4826458`),
+     re-tested, **run 2** settled
+     [`c2fbad40...`](https://stellar.expert/explorer/testnet/tx/c2fbad40dd692cf9e0d9eda9781328ad4377fadbb914b9c1dcb6a900bed28cb2)
+     for real, `discoverPayAndFetch` still failed the identical way.
+     Root-caused properly this time by reading
+     `@x402/extensions/bazaar`'s own compiled `extractDiscoveryInfo`
+     directly: it builds the cataloged `canonicalUrl` as
+     `${url.origin}${url.pathname}` unconditionally, stripping any
+     query string by design, regardless of what a seller's own resource
+     field contains. The `demo-resource.ts` change is harmless (the raw
+     402 challenge itself now shows a fuller example URL) but was never
+     going to fix the catalog case. Stated here plainly rather than
+     leaving the earlier (wrong) claim standing in this file or
+     `CLAUDE.md`.
+   - **The real fix, in this library, not the resource server.**
+     `resolveResourceRequestUrl` reads the discovered resource's own
+     declared `extensions.bazaar.info.input.queryParams` (the exact
+     example a seller's own `definePaidResource`, item 1, declares,
+     closing the loop between this package's two halves) and appends it
+     before paying, instead of naively paying the bare canonical URL.
+     Also found and fixed the same round, verified by directly
+     inspecting a real built payload before trusting it: an earlier
+     `PaymentPayer` design called `ExactStellarScheme`'s own
+     lower-level `createPaymentPayload(x402Version, requirements)`
+     directly and hand-assembled the outgoing payload, which never set
+     `payload.resource`, so `discovery.ts`'s own cataloging gate
+     (`paymentPayload.resource.url` required) silently skipped
+     cataloging for every payment this library made, with no error.
+     Fixed by building on the full `x402Client` instead (the same class
+     `scripts/demo-resource-settle.ts` already used correctly), whose
+     `createPaymentPayload(paymentRequired)` builds the complete
+     payload, `resource` and the bazaar extension echo included.
+     **Run 3, genuinely clean**: transaction
+     [`8573061305...`](https://stellar.expert/explorer/testnet/tx/8573061305f58eb6c0cfdab5af3a15a3f67f070eb24d2f411a0c0b1b34b41402),
+     `discoverPayAndFetch` searched, found, resolved the request URL,
+     paid, and returned the settled result in one call, no caught
+     error, no manual URL override, no fallback path exercised.
+
+   Regression coverage added for both real bugs (the missing
+   `payload.resource` and the canonical-vs-requestable URL gap), not
+   just the fix: `buyer-client.test.ts`'s "fetches the resource's own
+   declared query-param example, not the bare canonical URL" and the
+   `.resource`-propagation assertion in the main `payAndFetch` test.
+
+   **One honestly-open question, not resolved and not overclaimed:**
+   whether run 3's payment actually refreshed the live catalog row's
+   stored content couldn't be confirmed externally. Checked
+   `GET /discovery/resources` after each of the three runs; the row's
+   `lastUpdated` never moved from `2026-08-19`. Investigated why rather
+   than treating that as more evidence of failure:
+   `supabase/migrations/20260807202307_resources.sql` declares
+   `last_updated timestamptz not null default now()`, a plain column
+   default with no update trigger, and `upsertCatalogResource`
+   (`packages/bazaar/src/db/catalog.ts`) never includes `last_updated`
+   in the row it upserts. A `DEFAULT` only applies on `INSERT`; an
+   `ON CONFLICT DO UPDATE` that never names the column leaves its
+   existing stored value untouched. So `last_updated` **never bumps on
+   a repeat catalog write, successful or not**, a genuine, separate,
+   minor tracking gap found investigating this, distinct from the two
+   real bugs above and not itself fixed here (cosmetic, doesn't affect
+   catalog correctness, out of this round's scope). Its practical effect
+   here: neither `lastUpdated` nor the canonicalized `resource` URL
+   (identical either way, per the canonicalization finding above) can
+   serve as external proof that run 3 actually rewrote the row, since a
+   successful idempotent re-catalog of unchanged content is invisible
+   through the public API by design. What **is** solidly confirmed: the
+   full `discoverPayAndFetch` loop completed for real, no thrown error,
+   a genuine settled transaction, which is the actual roadmap
+   deliverable; the catalog-freshness side effect of that specific run
+   stays an open question rather than a claimed fact.
 
 3. **Mainnet sponsor-key rotation runbook: the testnet-provable half is
    done (2026-09-10), mainnet execution stays blocked on a key that

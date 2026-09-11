@@ -15,7 +15,7 @@
  *   node --env-file=apps/facilitator/.env apps/facilitator/scripts/buyer-helper-demo.ts
  */
 
-import { createExactStellarPayer, discoverPayAndFetch, payAndFetch } from "@periplo/helpers";
+import { createExactStellarPayer, discoverPayAndFetch } from "@periplo/helpers";
 
 const FACILITATOR_BASE_URL =
   process.env.DEMO_RESOURCE_BASE_URL ?? "https://periplo-testnet.fly.dev";
@@ -31,30 +31,9 @@ async function main(): Promise<void> {
   const payer = createExactStellarPayer(BUYER_SECRET as string, NETWORK);
 
   console.log(`Searching ${FACILITATOR_BASE_URL}/discovery/search for "temperature"...`);
-  const found = await discoverPayAndFetch(FACILITATOR_BASE_URL, "temperature", payer).catch(
-    (error: unknown) => {
-      // Real, found-live gap, not swallowed: the live catalog entry was
-      // cataloged before demo-resource.ts's resource field carried a
-      // default query string (fixed the same round this script was
-      // written), so the stale cataloged URL still 400s until a real
-      // Fly redeploy + a fresh settlement re-catalogs it with the fix.
-      // Logged plainly rather than treated as this library's own bug.
-      console.log(
-        `discoverPayAndFetch hit the known stale-catalog gap (fix committed, not yet ` +
-          `redeployed): ${(error as Error).message}`
-      );
-      return null;
-    }
-  );
-  if (found) {
-    console.log(`Discovered and paid: ${found.resource.resource}`);
-    console.log(`Response body:`, found.body);
-  }
+  const result = await discoverPayAndFetch(FACILITATOR_BASE_URL, "temperature", payer);
 
-  console.log("\nProving payAndFetch itself against a correctly-parameterized URL...");
-  const resourceUrl = `${FACILITATOR_BASE_URL}/demo/temperature-convert?value=100&from=celsius&to=fahrenheit`;
-  const result = await payAndFetch(resourceUrl, payer);
-
+  console.log(`Discovered: ${result.resource.resource}`);
   console.log(`Paid: ${result.paid}`);
   console.log(`Response body:`, result.body);
   if (result.settlement) {

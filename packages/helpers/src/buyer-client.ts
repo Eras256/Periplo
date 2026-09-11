@@ -46,14 +46,17 @@ import {
   decodePaymentResponseHeader,
   encodePaymentSignatureHeader,
 } from "@x402/core/http";
-import type { PaymentPayload, PaymentRequirements, SettleResponse } from "@x402/core/types";
+import type {
+  PaymentPayload,
+  PaymentRequired,
+  PaymentRequirements,
+  SettleResponse,
+} from "@x402/core/types";
 import type {
   DiscoveryResource,
   SearchDiscoveryResourcesParams,
   SearchDiscoveryResourcesResponse,
 } from "@x402/extensions/bazaar";
-
-const X402_VERSION = 2;
 
 export class NoAcceptablePaymentOptionError extends Error {
   override readonly name = "NoAcceptablePaymentOptionError";
@@ -82,18 +85,32 @@ export class UnexpectedResponseError extends Error {
 }
 
 /**
- * What `payAndFetch` needs to build and sign a payment payload. Deliberately
- * structural, not a nominal wrapper: a real `ExactStellarScheme` instance
- * (via `createExactStellarPayer`) satisfies this without adaptation, and a
+ * What `payAndFetch` needs to build and sign a complete payment payload
+ * from a server's full `PaymentRequired` 402 challenge. Deliberately
+ * structural, not a nominal wrapper: a real `x402Client` instance (via
+ * `createExactStellarPayer`) satisfies this without adaptation, and a
  * test can pass a fake with no Stellar key at all.
+ *
+ * Takes the whole `PaymentRequired` object, not just one selected
+ * `PaymentRequirements`, and returns a complete `PaymentPayload` rather
+ * than a partial one this module would then assemble itself: a first
+ * version of this interface called the scheme's own lower-level
+ * `createPaymentPayload(x402Version, requirements)` directly and
+ * hand-assembled `{ ...built, accepted: requirements }`, which builds a
+ * payload with no `resource` field. A resource server's own bazaar
+ * cataloging (`apps/facilitator/src/discovery.ts`'s `processBazaarExtension`)
+ * requires `paymentPayload.resource.url` and rejects (cleanly, not a
+ * crash, but the resource silently never gets cataloged) without it,
+ * found live running `payAndFetch` against a resource that catalogs.
+ * `x402Client.createPaymentPayload` (`@x402/core/client`, the same class
+ * `scripts/demo-resource-settle.ts` already uses) builds the complete
+ * payload, `resource` included, so this interface now mirrors its real
+ * signature instead of a narrower one this module invented.
  */
 export interface PaymentPayer {
   /** The CAIP-2 network this payer signs for, e.g. "stellar:testnet". */
   readonly network: string;
-  createPaymentPayload(
-    x402Version: number,
-    requirements: PaymentRequirements
-  ): Promise<Pick<PaymentPayload, "x402Version" | "payload">>;
+  createPaymentPayload(paymentRequired: PaymentRequired): Promise<PaymentPayload>;
 }
 
 export interface BuyerFetchResult {
@@ -206,8 +223,7 @@ async function attemptPayAndFetch(
     );
   }
 
-  const built = await payer.createPaymentPayload(X402_VERSION, requirements);
-  const paymentPayload: PaymentPayload = { ...built, accepted: requirements };
+  const paymentPayload = await payer.createPaymentPayload(paymentRequired);
   const paymentSignatureHeader = encodePaymentSignatureHeader(paymentPayload);
 
   const paidResponse = await fetchImpl(resourceUrl, {
@@ -285,6 +301,54 @@ export function selectPayableResource(
 }
 
 /**
+ * Builds the actual URL to request for a discovered resource, appending
+ * any `queryParams` its own declared bazaar extension carries.
+ *
+ * Real, non-obvious mechanic this exists to work around, found running
+ * `discoverPayAndFetch` against a real deployed resource, not assumed:
+ * `resource.resource` is a *canonical* URL. `@x402/extensions/bazaar`'s
+ * own `extractDiscoveryInfo` builds it as `${url.origin}${url.pathname}`
+ * unconditionally (a query string is never part of a resource's
+ * canonical discovery identity, by upstream's own design, confirmed
+ * reading the real compiled source, not assumed from behavior), so it
+ * never carries the query parameters a GET-style resource's actual
+ * handler may require. Those parameters are exactly what the resource's
+ * own declared `extensions.bazaar.info.input.queryParams` documents
+ * (the same example a seller built via `definePaidResource` would
+ * declare, `paid-resource.ts`): reading them back here is what actually
+ * closes the seller-helper/buyer-helper loop, not a URL munging hack.
+ * Falls back to the bare canonical URL when a resource declares no
+ * query-param example (an unparameterized resource, or an MCP tool,
+ * where a query string wouldn't mean anything anyway).
+ */
+export function resolveResourceRequestUrl(resource: DiscoveryResource): string {
+  const bazaar = resource.extensions?.bazaar;
+  if (!bazaar || typeof bazaar !== "object") {
+    return resource.resource;
+  }
+  const info = (bazaar as { info?: unknown }).info;
+  if (!info || typeof info !== "object") {
+    return resource.resource;
+  }
+  const input = (info as { input?: unknown }).input;
+  if (!input || typeof input !== "object") {
+    return resource.resource;
+  }
+  const { type, queryParams } = input as { type?: unknown; queryParams?: unknown };
+  if (type !== "http" || !queryParams || typeof queryParams !== "object") {
+    return resource.resource;
+  }
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(queryParams as Record<string, unknown>)) {
+    if (value !== undefined && value !== null) {
+      params.set(key, String(value));
+    }
+  }
+  const query = params.toString();
+  return query ? `${resource.resource}?${query}` : resource.resource;
+}
+
+/**
  * The full loop this module exists for: search the Bazaar, pick the
  * highest-ranked result this `payer` can actually pay for, pay it, retry
  * with the signed payment. Throws `NoDiscoverableResourceError` if no
@@ -305,6 +369,6 @@ export async function discoverPayAndFetch(
         `option for ${payer.network} (${results.resources.length} result(s) found)`
     );
   }
-  const result = await payAndFetch(resource.resource, payer, options);
+  const result = await payAndFetch(resolveResourceRequestUrl(resource), payer, options);
   return { ...result, resource };
 }
