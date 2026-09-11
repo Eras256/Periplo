@@ -690,6 +690,21 @@ contract, and the verification script
 (`apps/facilitator/scripts/agent-smart-account-settle-demo.ts`,
 `contracts/probe-contract/`) are local and uncommitted as of this entry.
 
+**2026-09-10:** the watch-item on this blocker resolved partway.
+[OpenZeppelin/stellar-contracts#868](https://github.com/OpenZeppelin/stellar-contracts/pull/868)
+merged (closing `#876`): `Signer::Delegated` now authorizes a
+`#[contracttype] AuthDigestPreimage { account, signature_payload,
+context_rule_ids }` struct through `require_auth_for_args`, not the raw
+32-byte digest, and a new negative test confirms the 2026-09-02
+raw-digest nested-entry construction here was a known-wrong pattern. It
+still does not unblock the two-context case: no crates.io release ships
+it (`stellar-accounts` is still `0.7.2`, the pinned version) and every
+new test uses a single `context_rule_id`, so `UnvalidatedContext #3002`
+on `settle()` + nested `transfer` is neither reproduced nor explained
+upstream. Decision (user): wait for the `0.8.0` release before
+reattempting rather than pin a git rev now. Full writeup in
+`docs/DEFERRED.md`'s Phase 6b watch-item.
+
 Reviewing the dependencies this project actually builds on, both directly
 from the #839 investigation and in separately-scoped bug-hunting rounds
 afterward, turned up nine more real, independently verified upstream

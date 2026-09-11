@@ -1470,17 +1470,53 @@ helpers, not the full SDK's wallet/relayer machinery, which this
 project's own deployed contracts (created outside the kit's own
 deployer flow) don't fit anyway.
 
-**Watch-item, opened 2026-09-07:** OpenZeppelin maintainer brozorec
-confirmed on `#839`'s thread that
+**Watch-item, opened 2026-09-07, updated 2026-09-10:**
 [OpenZeppelin/stellar-contracts#868](https://github.com/OpenZeppelin/stellar-contracts/pull/868)
-("Smart account: auth payload digest", still draft as of this note) will
-add `Signer::Delegated` test coverage and docs. When `#868` leaves
-draft, re-check whether its new tests or docs explain (or bound) the
-open two-context `UnvalidatedContext #3002` failure above. A
-multi-`ContextRule` `__check_auth` validation path with real delegate
-signing is exactly what has had no upstream test coverage. Until then
-the two-context `settle()` + nested `transfer` case stays a genuinely
-open blocker, not a resolved one.
+("Smart account: auth payload digest") merged
+`2026-09-10T12:49:27Z` (merge commit
+[`4529d708`](https://github.com/OpenZeppelin/stellar-contracts/commit/4529d708c47866bec790223b88036f9aa9e404b3),
+closing the new issue
+[`#876`](https://github.com/OpenZeppelin/stellar-contracts/issues/876)),
+which brozorec had flagged on `#839`'s thread as the place `Signer::Delegated`
+test coverage and docs would land. What it changes, read from the merged
+diff directly, not the release notes:
+
+- The opaque digest `sha256(signature_payload || context_rule_ids.to_xdr())`
+  is replaced by a `#[contracttype] AuthDigestPreimage { account,
+  signature_payload, context_rule_ids }`. `Signer::External` signers now
+  sign `sha256(preimage.to_xdr())`; `Signer::Delegated` signers authorize
+  the struct itself through `require_auth_for_args((preimage,))`, not a
+  bare 32-byte value.
+- A new `auth_digest(preimage)` view puts the type in the contract spec so
+  a client can check its encoding by simulation.
+- `packages/accounts/src/smart_account/test/auth_entries.rs` (new, 327
+  lines) drives both auth entries through the host end to end, using a
+  `Probe` contract (`ping(caller) { caller.require_auth() }`) that mirrors
+  the isolation probe this round already built. Its negative test
+  `delegated_signer_nested_entry_with_digest_argument_fails` asserts that
+  passing the raw digest as the nested entry's argument fails: that is
+  exactly the construction attempted here on 2026-09-02, now confirmed as
+  a known-wrong pattern rather than an open mystery.
+- The `packages/accounts/README.md` gains an "Authorizing from a Client"
+  section and a v0.7.x to 0.8.0 migration guide. It is a breaking change,
+  and points at `smart-account-kit`, warning to align its version with the
+  `stellar-accounts` release the account was built with.
+
+**Still an open blocker, for two concrete reasons:**
+1. No release ships it. `stellar-accounts` on crates.io is still `0.7.2`
+   (2026-06-09); `0.8.0` is unreleased. This project pins `0.7.2`.
+2. Every new test uses a single `context_rule_id`. There is still no
+   multi-`ContextRule` delegate test, so the specific two-context
+   `settle()` + nested `transfer` case that fails `UnvalidatedContext
+   #3002` is neither reproduced nor explained upstream.
+
+The decision (user, 2026-09-10) is to wait for the official `0.8.0`
+crates.io release rather than pin a git rev now: reattempting means
+reopening a diagnostic round closed on purpose, against an unpublished
+dependency, with the multi-context path still uncovered upstream. When
+`0.8.0` publishes, the retry path is defined: bump the pin, rebuild the
+delegate nested entry to carry the `AuthDigestPreimage` struct instead of
+the raw digest, and re-run the two-context `settle()` against testnet.
 
 ### The `soroban-sdk ^26.1` vs `27.x` mismatch was tested directly as a cause of the trap, and ruled out
 
