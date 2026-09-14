@@ -48,8 +48,16 @@ Add the four convergence anchors if not already present: `#3097`
   finds the prior sweep commit (e.g. `a3a9571`, 2026-09-07).
 - The memory file `periplo-post-submission-status.md` carries a dated
   entry per sweep; read its most recent one for the baseline.
-- Note the date. Everything with `updated_at` after it is a candidate
-  change.
+- **Use the exact timestamp, not the calendar date.** The right cutoff
+  is the latest `updated_at`/comment timestamp the prior sweep actually
+  saw and recorded (e.g. `2026-09-11T18:26:07Z`), not "2026-09-11" or
+  "2026-09-13". A same-day-but-later comment sits past that exact
+  instant even though it shares a calendar date with the sweep that
+  missed it: the 2026-09-13 sweep reported "nothing new" using
+  date-level reasoning, then two comments from 14:24-14:29 UTC that
+  same day (`#840`, `x402-foundation/x402#3138`) surfaced only on the
+  next sweep. Compare every `updated_at` against the recorded timestamp
+  with a strict `>`, never a date-only comparison.
 
 ## 3. Fetch live state, one batch
 
@@ -153,3 +161,11 @@ movement. Respond in español mexicano (the user's standing preference).
   `ContractExecutable` match. No maintainer response since 2026-09-02.
   Corroborating comment already left; no separate issue (Nirium's repro
   is stronger). Only act if OpenZeppelin moves.
+- `x402-foundation/x402#3138` (`mcp://` canonical-URL fix, LGTM'd twice
+  since 2026-08-13). A direct nudge to `@phdargen` went out 2026-09-13.
+  No reply as of 2026-09-14. Next nudge threshold ~2026-09-27 (2 weeks
+  out per the standing rule in step 3), don't nudge again before then.
+- `OpenZeppelin/stellar-contracts#893` (docs-only follow-up to the
+  closed `#840` finding, opened 2026-09-14, clarifies `collect_fee`'s
+  `expiration_ledger` doc comment). Awaiting first maintainer review;
+  no CI requirement beyond the repo's standard checks.
