@@ -5,7 +5,7 @@
  * no separate HTTP hop, no separately-operated seller.
  *
  * Exists to close the third item from real external QA's 2026-08-19 catalog
- * report (see CLAUDE.md's Architecture section): the catalog had zero
+ * report (see `docs/DEFERRED.md`): the catalog had zero
  * externally-reachable resources to search, so ranking quality was
  * genuinely unjudgeable from outside. This gives it exactly one, cataloged
  * through the same real-payment path every other catalog write goes

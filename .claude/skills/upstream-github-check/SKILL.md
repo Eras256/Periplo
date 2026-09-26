@@ -91,8 +91,8 @@ notes if still in scratch, or just re-write the loop). Then:
   to "resolved and wrong, do not reopen", not to keep it as an open
   grievance. When a maintainer's explanation holds, say so plainly.
 - **`author: Eras256` does not mean Periplo.** The identity is shared
-  with Nirium, Contextio, Kumply. `#3171`, `stellar-dev-skill#96`/`#97`
-  are Nirium's. The user's own tracking board is the authority: ask,
+  with other projects; `#3171` and `stellar-dev-skill#96`/`#97`
+  are not Periplo's. The user's own tracking board is the authority: ask,
   don't infer from the author field or a local checkout path.
 - **Local `git log` is not `origin`, and a prior read is not the
   source.** `git fetch` and compare against `origin/main` before
@@ -110,8 +110,8 @@ notes if still in scratch, or just re-write the loop). Then:
 - **Substantive changes** (a fix merged, a finding resolved, a new
   citation) each get their own targeted commit editing the specific doc
   that carried the stale claim: `docs/DEFERRED.md` for findings,
-  `README.md` + `docs/UPTO-CONVERGENCE.md` for convergence, `CLAUDE.md`'s
-  Architecture / upstream-bugs narrative where it names the item.
+  `README.md` + `docs/UPTO-CONVERGENCE.md` for convergence, and
+  `CLAUDE.md`'s Phase 6b section where it names the item.
 - **The sweep itself** gets a dated entry appended to the memory file
   `periplo-post-submission-status.md` (not a repo doc unless the
   2026-09-07 `a3a9571` pattern of a small `DEFERRED.md` note is wanted):
@@ -142,8 +142,9 @@ movement. Respond in español mexicano (the user's standing preference).
 ## Current watch-items (update these as they resolve)
 
 - `x402-foundation/x402#3338`, Periplo's settlement-override-ceiling
-  fix PR. CI green, `BLOCKED`/`REVIEW_REQUIRED`. Nudge threshold
-  ~2026-09-15 if still no maintainer review.
+  fix PR. CI green, `BLOCKED`/`REVIEW_REQUIRED`. A direct nudge went out
+  2026-09-15, no reply as of 2026-09-26. Next nudge no earlier than
+  ~2026-09-29.
 - `OpenZeppelin/stellar-contracts#868` ("Smart account: auth payload
   digest"), merged 2026-09-10 (`4529d708`, closes `#876`). Redefines the
   `Signer::Delegated` nested entry (an `AuthDigestPreimage` struct, not
@@ -158,12 +159,23 @@ movement. Respond in español mexicano (the user's standing preference).
   release, do not pin a git rev). Full writeup in `docs/DEFERRED.md`
   Phase 6b watch-item.
 - `OpenZeppelin/stellar-contracts#865`, Protocol 28 non-exhaustive
-  `ContractExecutable` match. No maintainer response since 2026-09-02.
-  Corroborating comment already left; no separate issue (Nirium's repro
-  is stronger). Only act if OpenZeppelin moves.
+  `ContractExecutable` match: closed as completed 2026-09-26 via `#866`
+  (fixed on `main`, which also moves the workspace to `soroban-sdk
+  28.0.0`). No release published, so it rides on the same
+  `stellar-accounts` `0.8.0` trigger as the `#868` item above. Nothing
+  else to do.
+- `stellar/js-stellar-sdk#1747`, the maintainer's own PR (`Closes
+  #1655`, approved 2026-09-24, `CLEAN`). Periplo's `#1672` was closed
+  unmerged in favor of it, and Periplo commented on `#1747` on
+  2026-09-26 with the one case it misses (a signed `C...` node with an
+  unsigned nested delegate, which Copilot raised inline first). Check for
+  a reply and for the merge; `#1655` closes with it. `#1683`, `#1681`
+  and `#1700` are closed, with fixes on `main` and not yet in a published
+  `@stellar/stellar-sdk` release.
 - `x402-foundation/x402#3138` (`mcp://` canonical-URL fix, LGTM'd twice
   since 2026-08-13). A direct nudge to `@phdargen` went out 2026-09-13.
-  No reply as of 2026-09-14. Next nudge threshold ~2026-09-27 (2 weeks
+  No maintainer reply as of 2026-09-26 (a commenter reaffirmed the LGTM
+  on 2026-09-15). Next nudge threshold ~2026-09-27 (2 weeks
   out per the standing rule in step 3), don't nudge again before then.
 - `OpenZeppelin/stellar-contracts#893` (docs-only follow-up to the
   closed `#840` finding, opened 2026-09-14, clarifies `collect_fee`'s

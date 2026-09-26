@@ -15,7 +15,7 @@ you can check it yourself before reading another word.
 
 ## 2. The one thing no other submission in this round can currently show (2 minutes)
 
-Two direct competitors in this same SCF #45 round chose to build on the
+Two adjacent implementations in this same SCF #45 round chose to build on the
 `upto` payment spec this project opened upstream, rather than fork their
 own: [Rialto merged into the same spec file](https://github.com/x402-foundation/x402/pull/3134),
 and [AutoLayer stated on the thread](https://github.com/x402-foundation/x402/pull/3098)
@@ -26,7 +26,7 @@ the sourced, dated version.
 
 ## 3. A gap the ecosystem itself didn't see (1 minute)
 
-Section 2 is two competitors building on this project's spec. This is
+Section 2 is two adjacent implementations building on this project's spec. This is
 one step further: both that spec and the competing one claim Stellar
 smart accounts (C-accounts) work "transparently" with the mechanism
 `upto` depends on. That claim holds only for a C-account that signs
@@ -86,8 +86,13 @@ and evidence, not a bare "done."
 signed merge commit; check it, don't take it on trust. CI shows
 `action_required`, GitHub's standard gate for an external PR awaiting a
 maintainer's approval to run workflows, not a failure on this branch.
-Nothing further is actionable from this side until that review resumes.
-Full detail in `README.md`'s #1672 history and in `CLAUDE.md`.
+Full detail in `README.md`'s #1672 history.
+
+**Update, 2026-09-26 (checked against the GitHub API that day):** #1672 was
+closed without merging, in favor of the maintainer's own
+[#1747](https://github.com/stellar/js-stellar-sdk/pull/1747), which
+`Closes #1655` (approved 2026-09-24, not yet merged as of this update). The
+signature check above describes the state of the branch on 2026-09-01.
 
 The same defect class recurred the same day in a different official SDK:
 `StellarCN/py-stellar-base`'s `authorize_entry()` silently invalidates an
@@ -145,10 +150,10 @@ Phase 6, the `upto` Soroban contract, is complete... The rest of Phase
 Phase 6b (additional evidence beyond the Phase 6 gate, not a tranche
 deliverable), the `upto` HTTP-route wiring, the official x402
 conformance-suite run, and the live demo resource all happened after
-Phase 6 and are documented in this same README, in `CLAUDE.md`, and in
+Phase 6 and are documented in this same README and in
 [`conformance/RESULTS.md`](../conformance/RESULTS.md). What genuinely
-hasn't started is Phase 7 (the MCP discovery server, named as next in
-`CLAUDE.md`'s own status line) and Phase 9, the developer hub; the
+hasn't started is Phase 7 (the MCP discovery server, per `CLAUDE.md`'s
+status line) and Phase 9, the developer hub; the
 README says so outright for the frontend. If you want the honest,
 itemized list of every deferred piece and every environment-specific
 gotcha encountered along the way, that's

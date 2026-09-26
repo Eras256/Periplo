@@ -2,7 +2,7 @@
 -- (packages/bazaar/src/catalog-url.ts's checkCatalogUrl, wired into
 -- upsertCatalogResource the same day) now rejects going forward, for
 -- whatever was already written before that gate existed. Found by real
--- external QA; see CLAUDE.md's Architecture section for the full writeup.
+-- external QA; see docs/DEFERRED.md for the full writeup.
 -- Mirrors checkCatalogUrl's rules; keep both in sync if that rule changes.
 --
 -- Two real, independently confirmed bad rows motivated this, both still

@@ -68,8 +68,8 @@ the exact `require_auth_for_args` scoping used in `settle()`, and the
 `clang`/LLVM for `cargo-fuzz`; this environment has neither, and `gcc`
 turned out to be sufficient once tried, so the assumption didn't block
 anything, it was just inaccurate for this machine. Full contract detail is
-in `CLAUDE.md`'s `contracts/upto-settlement` paragraph; the fuzz/proptest
-findings are in `docs/DEFERRED.md`'s Phase 6 section.
+in `contracts/upto-settlement/README.md`; the fuzz/proptest findings are in
+`docs/DEFERRED.md`'s Phase 6 section.
 
 **Not yet run against Phase 6b's two new contracts
 (`contracts/agent-verifier`, `contracts/agent-smart-account`)**, unlike
@@ -104,7 +104,7 @@ repo, for processes specific to Periplo that recur across sessions.
 
 | Skill | Purpose |
 | --- | --- |
-| `protocol-upgrade-readiness` | Thin pointer to the shared ecosystem checklist at `~/.claude/skills/`, plus Periplo-specific notes (`@x402/stellar` is the tightest pin to check; the `exact` / `upto` contract-profile cycle to re-run on testnet). Consolidated 2026-09-02 after Periplo and Nirium independently wrote the same thing. |
+| `protocol-upgrade-readiness` | Thin pointer to the shared ecosystem checklist at `~/.claude/skills/`, plus Periplo-specific notes (`@x402/stellar` is the tightest pin to check; the `exact` / `upto` contract-profile cycle to re-run on testnet). Consolidated 2026-09-02 after two independent copies of the same checklist existed. |
 | `claude-antigravity-setup` | Session/harness configuration guidance. |
 | `upstream-github-check` | The recurring "what changed upstream?" sweep: derive the tracked issue/PR list from the repo's own cited links, diff live state against the last recorded check (`periplo-post-submission-status.md` memory + the prior `docs/DEFERRED.md` state-check commit), investigate what moved, write it into the right doc, commit. Carries the recurring lessons (a "closed" issue needs its merge mechanism read, `author: Eras256` is not proof of Periplo, em-dash discipline on every doc edit) and a live watch-item list. Added 2026-09-09. |
 

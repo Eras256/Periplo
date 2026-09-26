@@ -97,8 +97,8 @@ third closed 2026-08-21:** both discovery routes now exist, reusing
 `/supported` can now report `upto`: `UptoStellarScheme`, a real scheme
 implementation registered against `x402Facilitator`, not a stub, with a
 real settled transaction through the facilitator's own `verify()`/
-`settle()` recorded in `conformance/RESULTS.md`, full writeup in
-CLAUDE.md's Architecture section.
+`settle()` recorded in `conformance/RESULTS.md`, design notes in the
+module's own doc comment (`upto-stellar-scheme.ts`).
 
 ## Independent confirmation and a new requirement
 

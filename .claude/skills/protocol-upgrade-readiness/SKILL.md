@@ -18,8 +18,8 @@ four-step process lives at
 not this one, for the actual steps.
 
 Consolidated 02-sep-2026: Periplo wrote this skill the same day as
-Nirium (another project on this account) independently wrote its own
-version, from the same real Protocol 28 run — both hit the same
+a separate project independently wrote its own
+version, from the same real Protocol 28 run: both hit the same
 `OpenZeppelin/stellar-contracts#865` gap the same week without knowing
 the other was looking. Two project-local copies with no way to know
 about each other is exactly the failure mode that skill file's own
@@ -35,6 +35,6 @@ most here — check its dependency range before any SDK bump. When
 running the real testnet cycle (step 3), the profiles to enumerate are
 the `exact` scheme and `upto`'s `contract` profile, both direct-against-
 contract and through the facilitator's own HTTP-route code. Evidence
-goes to `README.md`'s "What's real right now" section, `CLAUDE.md`'s
-Architecture narrative, and `conformance/RESULTS.md` — same as always,
-unchanged by this consolidation.
+goes to `README.md`'s "What's real right now" section, `docs/DEFERRED.md`,
+and `conformance/RESULTS.md`, same as always, unchanged by this
+consolidation.

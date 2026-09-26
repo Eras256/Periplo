@@ -6,7 +6,7 @@
  * `docs/UPTO-CONVERGENCE.md` in this repo for the full story). Wires the
  * already-deployed `UptoSettlement` contract (`contracts/upto-settlement`,
  * Phase 6) into this facilitator's own `/verify`/`/settle` HTTP routes,
- * closing the gap CLAUDE.md/`docs/DEFERRED.md` have tracked open since
+ * closing the gap `docs/DEFERRED.md` tracked open since
  * Phase 6: "the facilitator does not call `UptoSettlement` yet from its
  * own HTTP routes."
  *
@@ -98,7 +98,7 @@ const DEFAULT_TIMEOUT_SECONDS = 60;
 // conditional refund) costs more than exact's single transfer, so the
 // default ceiling starts above exact's real deployed value (200_000,
 // itself raised from the library default 50_000 for real testnet
-// Soroban fee conditions, see CLAUDE.md's Architecture section) rather
+// Soroban fee conditions, see `serve.ts`'s MAX_TRANSACTION_FEE_STROOPS) rather
 // than reusing it unexamined.
 const DEFAULT_MAX_TRANSACTION_FEE_STROOPS = 300_000;
 const SIGNATURE_EXPIRATION_LEDGER_TOLERANCE = 2;

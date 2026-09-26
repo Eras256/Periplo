@@ -144,7 +144,7 @@ export function mergeAccepts(
  * than only at whichever call site happens to construct the URL, so it
  * catches a bad URL regardless of which code path produced it. See
  * `catalog-url.ts` for why this exists (real bad entries found by
- * external QA, documented in CLAUDE.md's Architecture section).
+ * external QA).
  */
 export async function upsertCatalogResource(
   client: SupabaseClient<Database>,

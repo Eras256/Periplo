@@ -32,8 +32,8 @@ implying more automation than exists.
 ## No-downtime cutover procedure
 
 The mechanism this leans on already exists and is already proven live:
-the channel-account pool (`core.ts`'s `channelAccountSecrets`,
-CLAUDE.md's 2026-09-03 entry). `ExactStellarScheme`/`UptoStellarScheme`
+the channel-account pool (`core.ts`'s `channelAccountSecrets`, and the
+2026-09-03 burst rows in `conformance/RESULTS.md`). `ExactStellarScheme`/`UptoStellarScheme`
 round-robin across every configured signer for a network, each one an
 independent Stellar account with its own sequence number. Rotating the
 *primary* fee-sponsor signer is the same operation as rotating any pool
@@ -60,9 +60,9 @@ member, just applied to the one currently referenced by
    zero-restart hot-swap of the running process.
 4. **Verify the new key is live and reachable**, not just configured:
    `GET /supported` must list the new key's address in the network's
-   signer set (confirmed live for the channel-account pool itself,
-   CLAUDE.md's 2026-09-03 entry: "`GET /supported` listing all 4
-   channel-pool signer addresses"). Optionally force a real settlement
+   signer set (confirmed live for the channel-account pool itself: on
+   2026-09-26 `GET /supported` on the deployment listed 4 signer
+   addresses). Optionally force a real settlement
    through the pool (`scripts/channel-accounts-burst-demo.ts`'s pattern)
    to confirm round-robin picks up the new account under real traffic,
    not just that it's listed.

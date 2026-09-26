@@ -75,9 +75,9 @@ asset by env var.
 Redeploy with
 `fly deploy --config fly.facilitator.toml --dockerfile Dockerfile.facilitator -a periplo-testnet`
 from the repo root; secrets are set via `fly secrets set -a periplo-testnet`,
-never in `fly.facilitator.toml`. **The app lives under the
-`ticketsafes@gmail.com` Fly account, not whatever account a given `fly`
-CLI session happens to be logged into**: a session authenticated as a
+never in `fly.facilitator.toml`. **The app lives under the Fly account that
+owns it, not whatever account a given `fly` CLI session happens to be
+logged into**: a session authenticated as a
 different account gets `Error: unauthorized` on deploy and can't even see
 `periplo-testnet` in `fly apps list`, found live, not assumed, when a
 redeploy failed this way and was only fixed by switching accounts

@@ -784,9 +784,8 @@ loose ends from shipping `contracts/upto-settlement`.
   ruled out `Client.from(...).methodName()` vs. building
   `AssembledTransaction` directly, the one remaining structural
   difference from every outside reference point consulted. Signer type
-  was the working hypothesis, informed by architecture, not by reading
-  either of the two adjacent competitor repos' code (see below); it
-  turned out not to be the actual differentiator either.
+  was the working hypothesis, informed by architecture; it turned out
+  not to be the actual differentiator either.
 - **Checked whether `stellar-accounts` itself has any test coverage of
   this real, host-driven path before drafting an issue, found none, in
   either the crate or its own official example.** Every test touching
@@ -802,29 +801,15 @@ loose ends from shipping `contracts/upto-settlement`.
   isolation rounds, and the no-coverage finding. Explicit instruction
   followed exactly: this diagnostic round is closed on purpose, don't
   reopen it with another angle without a new concrete trigger.
-- **Two adjacent projects competing for the same SCF RFP
-  (`Vellar-Wallet/vellar-facilitator`, `Ithaca-Labs/openx402`) were read
-  for architectural understanding during this investigation, never
-  copied from, never commented on, never interacted with publicly**, a
-  hard rule applied without exception. Reading their public code
-  (both permissively licensed) is what actually motivated the
-  `Signer::External` retry hypothesis, since both avoid the nested
-  `Signer::Delegated`-style entry in their own working implementations,
-  but the public framing of everything that came from this (the #839
-  issue itself, the README, `docs/DEFERRED.md`) attributes the reasoning
-  only to reading `stellar-accounts`' own source, never to observing a
-  competitor's implementation, per explicit instruction on how to narrate
-  this without naming competitors anywhere in the repo.
 - **Separately, verified there is genuinely no on-chain link between this
-  project's Stellar identities/contracts and the user's other projects'
-  identities (specifically Nirium's `nirium-deployer`)** on request: full
-  operation history for both sides, cross-checked against every known
-  address/contract on both, zero shared signers, zero payments, zero
-  contract-invocation overlap, on the only network `nirium-deployer`
-  exists on (testnet; it was never created on mainnet). Recorded as a
-  standing constraint for whenever Periplo generates its own mainnet
-  keys at Tranche #3: fresh, project-own identities, never reused or
-  derived from another project's.
+  project's Stellar identities/contracts and another project's
+  identities** on request: full operation history for both sides,
+  cross-checked against every known address/contract on both, zero shared
+  signers, zero payments, zero contract-invocation overlap, on the only
+  network that other identity exists on (testnet). Recorded as a standing
+  constraint for whenever Periplo generates its own mainnet keys at
+  Tranche #3: fresh, project-own identities, never reused or derived from
+  another project's.
 
 ## 2026-08-15: a second bug-hunting round on upstream dependencies, three more filed, one round intentionally paused
 
@@ -832,8 +817,8 @@ loose ends from shipping `contracts/upto-settlement`.
   `stellar/stellar-dev-skill` (only if already there for another reason,
   not worth actively searching), `OpenZeppelin/stellar-contracts` beyond
   `smart_account` (already covered by `#839`), `stellar/js-stellar-sdk`
-  (the code this project now knows most deeply, thanks to `#839`), never
-  Vellar's or openx402's repos, no exception. `x402-foundation/x402` was
+  (the code this project now knows most deeply, thanks to `#839`).
+  `x402-foundation/x402` was
   added to the list only after an explicit scoping question got answered:
   yes, but bounded to `bazaar/mcp/`, `bazaar/v1/`, and `@x402/core`'s
   dispatch, not back to `bazaar/facilitator.ts` or the `exact/stellar`
@@ -1118,3 +1103,33 @@ upstream anyway as
 [x402-foundation/x402#3270](https://github.com/x402-foundation/x402/issues/3270),
 since the underlying client bug affects every caller, not just Periplo's
 workaround. `pnpm run ci` green, 257 tests.
+
+## 2026-09-26: public-tree cleanup, and upstream state changes
+
+- `CLAUDE.md` was cut from 1,640 lines to a short file of constraints,
+  commands and pointers, and the dated build history it carried is no
+  longer in the public tree (git history is unchanged). Public docs that
+  cited it as their writeup were repointed to evidence that exists in this
+  repo (`conformance/RESULTS.md`, tests, source comments,
+  `docs/DEFERRED.md`, the commit history), or the claim was removed.
+  `docs/RFP-COMPLIANCE.md` no longer cites `CLAUDE.md`'s history as
+  timeline evidence, and drops the count of upstream bugs that only that
+  file's list supported.
+- Account identifiers and other projects' names were removed from the
+  docs and the tracked skills. The facts they supported are unchanged. The
+  entries above in this file were generalized in place (names removed,
+  nothing else changed); this entry is the dated record of that.
+- Upstream, each item checked against the GitHub API, Horizon or
+  crates.io that day: `stellar/js-stellar-sdk#1672` was closed unmerged in
+  favor of the maintainer's own `#1747`; `#1683` was fixed on `main` by
+  `#1742`, `#1681` by `#1743` and `#1744`, and `#1700` by the
+  documentation PR `#1745`; none of these is in a published release
+  (latest `v17.1.0`). `OpenZeppelin/stellar-contracts#865` was fixed on
+  `main` via `#866` with no release (`stellar-accounts` is still `0.7.2`),
+  and `soroban-sdk 28.0.0` was published as stable on 2026-09-18.
+- Horizon mainnet and testnet both report protocol 28 on 2026-09-26, and
+  CAP-71's own header says protocol 27, so earlier statements here that
+  CAP-71 isn't live on any network are superseded.
+- Correction: the first reproduction of `#1655` used `G...` accounts, whose
+  delegates are not consulted in protocol 27 (per `#1747`'s docs); only the
+  `C...` variant applies.

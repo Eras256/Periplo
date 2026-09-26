@@ -3,8 +3,8 @@
  * `upsertCatalogResource` will accept as `resources.url`.
  *
  * Exists because a bad catalog URL reached production by two unrelated
- * paths, found by real external QA (see CLAUDE.md's Architecture section
- * for the full writeup): the `${url.origin}${url.pathname}` opaque-origin
+ * paths, found by real external QA (see `docs/DEFERRED.md`): the
+ * `${url.origin}${url.pathname}` opaque-origin
  * bug (`docs/INTEROP.md`, x402-foundation/x402#3121) that turned
  * `mcp://tool/x` into the literal string `null/x` for writes before the
  * reconstruction fix in `apps/facilitator/src/discovery.ts` landed, and a

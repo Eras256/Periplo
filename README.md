@@ -47,7 +47,7 @@ the facilitator's JSON API.
 
 Twenty-plus real teams are competing for the same SCF #45 award. Here is
 the one thing none of the others can currently show with real, linked
-evidence: two direct competitors in the same round chose to build on the
+evidence: two adjacent implementations in the same round chose to build on the
 `upto` payment spec this project opened upstream
 ([x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098)),
 rather than fork their own.
@@ -116,7 +116,7 @@ dedupe key needs, so it doesn't solve that specific problem the way we'd
 guessed it might, not a flaw in the proposal itself. Full writeup in
 `docs/UPTO-CONVERGENCE.md`.
 
-**2026-09-01: past "two competitors build on our spec" to "we found a gap
+**2026-09-01: past "two adjacent implementations build on our spec" to "we found a gap
 neither of them saw, because we're the only one who actually built the
 hard part."** Both `#3098` and `#3134` claim Stellar C-accounts are
 supported "transparently" by the one Soroban mechanism (
@@ -706,12 +706,17 @@ thing.
   August). Also left [a corroborating
   comment](https://github.com/OpenZeppelin/stellar-contracts/issues/865#issuecomment-5515054181)
   on `OpenZeppelin/stellar-contracts#865`, filed independently the same
-  day by a different project on the same GitHub account with a
+  day by a separate project with a
   stronger repro (a real `error[E0004]` compiling against
   `soroban-sdk 28.0.0-rc.1`): the same `ContractExecutable` match gap,
   hit at a different `soroban-sdk` pin (`26.1.1`), a second,
-  independent confirmation of the same root cause. Full detail in
-  `CLAUDE.md`.
+  independent confirmation of the same root cause. **Update, 2026-09-26
+  (checked against the GitHub API and crates.io that day):** `#865` was
+  closed as completed by the maintainer through
+  [#866](https://github.com/OpenZeppelin/stellar-contracts/pull/866)
+  (merged 2026-09-26), so it is fixed on `main`, with no release
+  published: `stellar-accounts` on crates.io is still `0.7.2`.
+  `soroban-sdk 28.0.0` itself was published as stable on 2026-09-18.
 
   It is built on the official
   [`@x402/extensions/bazaar`](https://github.com/x402-foundation/x402/tree/main/typescript/packages/extensions/src/bazaar)
@@ -787,10 +792,43 @@ thing.
   network yet, so this has no impact today, but the bug is real in
   code already shipped. Filed as
   [stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655).
-  **Status: fixed, not just filed.**
+
+  **Update, 2026-09-26 (each item checked against the GitHub API and
+  Horizon that day):** our PR
+  [#1672](https://github.com/stellar/js-stellar-sdk/pull/1672) was closed
+  without merging, in favor of the maintainer's own
+  [#1747](https://github.com/stellar/js-stellar-sdk/pull/1747), which
+  `Closes #1655` (approved 2026-09-24, still open at this update).
+  [#1683](https://github.com/stellar/js-stellar-sdk/issues/1683) was fixed
+  on `main` by
+  [#1742](https://github.com/stellar/js-stellar-sdk/pull/1742) (merged
+  2026-09-24, `Closes #1683`), and
+  [#1681](https://github.com/stellar/js-stellar-sdk/issues/1681) by
+  [#1743](https://github.com/stellar/js-stellar-sdk/pull/1743) and
+  [#1744](https://github.com/stellar/js-stellar-sdk/pull/1744) (merged
+  2026-09-24), then closed as completed;
+  [#1700](https://github.com/stellar/js-stellar-sdk/issues/1700) was
+  closed by a maintainer's documentation PR,
+  [#1745](https://github.com/stellar/js-stellar-sdk/pull/1745) (merged
+  2026-09-25). None of these fixes is in a published
+  `@stellar/stellar-sdk` release yet (latest `v17.1.0`, 2026-09-14). A
+  comment on #1747 (2026-09-26) names one case it does not cover, a signed
+  `C...` account with an unsigned nested delegate, and corrects this
+  entry's own first reproduction: it used `G...` top-level accounts, whose
+  delegates, per #1747's docs, are not consulted in protocol 27 (CAP-72,
+  which adds delegation for `G...` accounts, is still Draft), so only the
+  `C...` variant applies. One more correction: the entries below say
+  CAP-71 isn't live on any network yet, which was true when they were
+  written. CAP-71's own header says protocol 27, and both
+  `horizon.stellar.org` and `horizon-testnet.stellar.org` report protocol
+  28 today, so the "no impact today" severity notes no longer hold. The
+  history below is kept as it happened.
+
+  **Status then (2026-09-01, see the update above): fixed, not just
+  filed.**
   [stellar/js-stellar-sdk#1672](https://github.com/stellar/js-stellar-sdk/pull/1672),
-  open and mergeable, 6663 tests passing. `needsNonInvokerSigningBy()` and
-  `signAuthEntries()` now walk the full delegate tree instead of the
+  open and mergeable, 6663 tests passing, made `needsNonInvokerSigningBy()`
+  and `signAuthEntries()` walk the full delegate tree instead of the
   top-level node only. On 2026-08-23 the maintainer, roebee, asked directly
   on #1655 whether this behavior change (a documented public API now
   reports every unsigned node, not just the top-level one) should ship as
@@ -820,7 +858,7 @@ thing.
   `forAddress`, proposed error wording, and yes to matching the existing
   fallback rule, with this fix landing in the same PR as #1681's below
   since both converge on the same `{ signature, publicKey }` return shape.
-  **Status: filed; the proposed fix (verify against `forAddress` on the
+  **Status then (see the 2026-09-26 update above): filed; the proposed fix (verify against `forAddress` on the
   naked-signature path in `base/auth.ts`, exactly the one line proposed
   in the issue) landed in code as part of #1672 on 2026-09-01, prompted
   by a second maintainer's review, Ryang-21, see below — not yet
@@ -855,9 +893,9 @@ thing.
   whether that lands together with #1683 or as separate PRs). We replied
   the same day: throw rather than fail silently, return
   `{ signature, publicKey }`, and land both fixes in one PR since they
-  converge on the same return shape. **Status: filed, our proposed
-  direction posted in reply to the maintainer's questions, not yet
-  confirmed by roebee, not fixed, open.**
+  converge on the same return shape. **Status then (see the 2026-09-26
+  update above): filed, our proposed direction posted in reply to the
+  maintainer's questions, not yet confirmed by roebee, not fixed, open.**
 
   On 2026-08-24, GitHub Copilot's automated review on #1672 itself
   surfaced two more real, independently-verified problems, not just
@@ -893,8 +931,9 @@ thing.
   describe contract-address delegates (not just accounts), and whether
   `signAuthEntries()` should preserve an entry's existing expiration once
   any node is signed rather than overwrite it with a fresh one on a later
-  signer. **Status: rebased, mergeable, three real review findings from
-  Copilot pending a fix, not a version question anymore.**
+  signer. **Status then (see the 2026-09-26 update above): rebased,
+  mergeable, three real review findings from Copilot pending a fix, not a
+  version question anymore.**
 
   On 2026-09-01, a second real maintainer, Ryang-21, distinct from
   roebee's ongoing engagement above, left a formal review on #1672
@@ -971,8 +1010,9 @@ thing.
   when an already-partially-signed entry's stored expiration disagrees
   with the one just passed, instead of silently overwriting it), not
   just the finding. Severity calibrated the same honest way as #1655's
-  own entry above: CAP-71 isn't live on any network yet, so this has no
-  impact on a real transaction today, but the bug is real in code
+  own entry above: CAP-71 wasn't live on any network yet when this was
+  written (see the 2026-09-26 update under #1655 above), so this had no
+  impact on a real transaction then, but the bug is real in code
   already shipped, in the only path this library offers for it. No PR
   opened yet, per this repo's own `CONTRIBUTING.md`, which asks
   contributors to check in before starting work on a significant
@@ -1150,8 +1190,7 @@ thing.
   internals; and `@x402/stellar`'s inherited 50,000-stroop fee ceiling
   was too low for real testnet Soroban fees that day (about 72,000
   stroops, confirmed against Horizon's own fee stats), fixed with a
-  configurable ceiling on the deployed facilitator. Full writeup in
-  `CLAUDE.md`'s Architecture section.
+  configurable ceiling on the deployed facilitator.
 - [`packages/search`](packages/search) is hybrid retrieval: Postgres
   `tsvector`/GIN for lexical matching, pgvector/HNSW for semantic
   matching, fused with Reciprocal Rank Fusion. Embeddings come from
@@ -1295,8 +1334,7 @@ HTTP-route code, all three settled and Horizon-verified, recorded in
 the `exact` demo script had never read the same fee-ceiling override
 `serve.ts` does, so it failed on the real, current testnet fee
 (95,461 stroops, already above the 72,000 that first required the
-override in August). Full writeup, including a related-but-not-Periplo's-own
-finding in OpenZeppelin's `stellar-accounts` crate, in `CLAUDE.md`.
+override in August).
 
 CI (`.github/workflows/ci.yml`, badge above) runs the same gate on every
 push. We confirmed it green with an
@@ -1388,7 +1426,7 @@ release age; `soroban-sdk`, held at the version the already-deployed
 - [`docs/PRIVACY.md`](docs/PRIVACY.md): what Periplo collects (nothing
   personal, checked directly against the running code) and why.
 - [`docs/UPTO-CONVERGENCE.md`](docs/UPTO-CONVERGENCE.md): the `upto`
-  spec's chronological devlog, including two competitors converging on
+  spec's chronological devlog, including two adjacent implementations converging on
   it instead of forking their own.
 - [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md): the spec §6 threat/
   control/test table, formalized with a pointer to where each control

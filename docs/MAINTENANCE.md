@@ -17,8 +17,8 @@ upstream repositories this project builds on, `x402-foundation/x402`
 Soroban side depends on them. This is not a passive stance: this
 project's own history is real evidence of it. `docs/UPTO-CONVERGENCE.md`
 records active engagement with the `upto` scheme spec while it was still
-open, not after it landed; `docs/DEFERRED.md`, `README.md`, and
-`CLAUDE.md` record a growing set of real, independently verified bugs
+open, not after it landed; `docs/DEFERRED.md` and `README.md` record a
+growing set of real, independently verified bugs
 found in dependencies this project actually runs on top of, filed
 upstream, not just noticed and left alone. Several have since landed or
 been resolved: `stellar/stellar-dev-skill#103` (merged 2026-08-28),
@@ -26,8 +26,13 @@ been resolved: `stellar/stellar-dev-skill#103` (merged 2026-08-28),
 via a maintainer's own PR), `#3336` (merged 2026-09-03),
 `OpenZeppelin/stellar-contracts#839` (root-caused and closed
 2026-09-02), and `StellarCN/py-stellar-base#1215` (fixed upstream via
-`#1218`, 2026-09-08). The rest remain open; `CLAUDE.md` and
-`docs/DEFERRED.md` carry the current per-issue status, re-verified on a
+`#1218`, 2026-09-08), plus, as of 2026-09-26 (checked against the GitHub
+API that day): `stellar/js-stellar-sdk#1683` and `#1681` (fixed on `main`
+by maintainers' PRs merged 2026-09-24, no release published yet), `#1700`
+(resolved by a maintainer's documentation PR, 2026-09-25), and
+`OpenZeppelin/stellar-contracts#865` (fixed on `main` via `#866`,
+2026-09-26, no release published yet). The rest remain open;
+`docs/DEFERRED.md` carries the current per-issue status, re-verified on a
 recurring basis (`.claude/skills/upstream-github-check`).
 
 ## How quickly conformance updates ship

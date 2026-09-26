@@ -14,6 +14,8 @@
  * in `@stellar/stellar-sdk`, not a bug in this script or in
  * `@x402/stellar`, filed as
  * [stellar/js-stellar-sdk#1681](https://github.com/stellar/js-stellar-sdk/issues/1681).**
+ * That issue was closed on 2026-09-26: the fixes (#1743, #1744) are merged
+ * on the SDK's `main` but not in a published release yet.
  * Full writeup, reproduction, and duplicate-check in `docs/DEFERRED.md`'s
  * "A second `exact`-scheme signer mode was attempted for real" section.
  * `ensureSecondSignerRegistered()` below still runs

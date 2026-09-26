@@ -331,8 +331,10 @@ the same way on 2026-09-03, found real and missing against a competitor
 comparison rather than assumed still-fine because they're "later phase":
 the channel-account pool (spec §2/§7) and `GET /status` (spec §8/§9,
 "monitoring beyond a bare `/health`, public telemetry endpoint" above,
-now real, not a gap) — both real, tested, and evidenced (CLAUDE.md's own
-2026-09-03 entries). A third piece landed the same round: `GET /demo/play`,
+now real, not a gap), both real, tested, and evidenced (the 4-transaction
+channel-pool burst in `conformance/RESULTS.md` dated 2026-09-03, and
+`apps/facilitator/src/telemetry.test.ts` plus the `GET /status` cases in
+`app.test.ts`). A third piece landed the same round: `GET /demo/play`,
 a wallet-less one-click payment demo, real and verified twice end to end
 from Node (real settled transactions), with one honest, stated gap: a
 real browser click-through hasn't happened, this session's own sandbox
@@ -344,11 +346,9 @@ successfully in this session; the Fly account gap below is a different,
 now-resolved blocker, not this one).
 
 **Resolved the same day: the Fly account gap.** The user re-authenticated
-`fly` as `ticketsafes@gmail.com` (the account that actually owns
-`periplo-testnet`, this session's own CLI had been on `amadoregios@gmail.com`,
-yet a third distinct account from the two this file already documented
-recurring — `xvaiosx7@gmail.com` and `ticketsafes@gmail.com` itself
-earlier). All three pieces above deployed for real
+`fly` as the Fly account that owns `periplo-testnet` (this session's own CLI
+had been on a different Fly account, a third distinct one on top of the two
+this file already documented recurring). All three pieces above deployed for real
 (`STELLAR_TEST_BUYER_SECRET`/`STELLAR_CHANNEL_ACCOUNT_SECRETS_TESTNET`
 set via `fly secrets set`, `fly deploy`), verified against the live URL,
 not just the deploy command's own success output: `GET /supported`
@@ -413,8 +413,8 @@ round alone.
   handling as the Supabase/Stellar secrets before it): stored in local
   `.env` only, never committed. Not actually needed for this deploy: the
   `fly` CLI on this machine was already authenticated interactively
-  (`ticketsafes@gmail.com`), kept for a possible future GitHub Actions
-  deploy workflow instead.
+  (as the Fly account that owns the app), kept for a possible future GitHub
+  Actions deploy workflow instead.
 - **Docker build context is the whole monorepo** (`Dockerfile.facilitator`
   builds only `apps/facilitator`, but needs the workspace root for pnpm
   resolution). Added `.dockerignore` to keep `node_modules`/`dist` out of
@@ -772,7 +772,8 @@ production graph. Two separate facts about `fastembed@2.1.0` (the current
    already hit and worked around in Periplo before this review:
    `packages/search/src/embed.ts` wraps every fastembed output in
    `Array.from(...)`, and that mitigation is load-bearing, not styling
-   (already documented in `CLAUDE.md`'s `packages/search` paragraph).
+   (already documented in `embed.ts`'s own comment and in `CLAUDE.md`'s
+   list of traps).
 
 **Status: mitigation in place, no upstream action possible.** An issue
 was drafted with the exact lines and a proposed `Array.from` fix; filing
@@ -1059,8 +1060,8 @@ the wire-level auth mechanism both work for real, but was not that
 package. **Done as of 2026-08-21**: `apps/facilitator/src/upto-stellar-scheme.ts`
 now implements this, registered in `core.ts`, a real settlement through
 the facilitator's own `verify()`/`settle()` recorded in
-`conformance/RESULTS.md`, full writeup in CLAUDE.md's Architecture
-section (search that file for `UptoStellarScheme`). The live
+`conformance/RESULTS.md`, design notes in the module's own doc comment
+(`upto-stellar-scheme.ts`). The live
 `https://periplo-testnet.fly.dev` deployment doesn't have it configured
 yet, a real, separately-logged Fly account blocker, not silently
 skipped: see "Fly.io redeploy blocked" below for the recurring shape of
@@ -1181,8 +1182,8 @@ claim to, three real gaps surfaced, none of them previously recorded:
    with a configured settlement-contract address, mirroring the real,
    installed `ExactStellarScheme`'s own mechanics as closely as the two
    schemes' real differences allow. A real settlement through this exact
-   code path is recorded in `conformance/RESULTS.md`; full design
-   writeup in CLAUDE.md's Architecture section. The live
+   code path is recorded in `conformance/RESULTS.md`; design notes in
+   the module's own doc comment. The live
    `periplo-testnet.fly.dev` deployment doesn't have the settlement
    contract configured yet (a real, separately-logged Fly account
    blocker, see "Fly.io redeploy blocked" below), so `/supported` on
@@ -1376,9 +1377,9 @@ gap without supplying one.
 ### 2026-09-02: the trap explained by a third party, then a real partial success against this project's own contract
 
 The "working example from OpenZeppelin directly" this section asked for
-arrived, from an unexpected direction: Nirium (same GitHub identity, a
-separate project) independently hit the identical `Signer::Delegated`
-trap and root-caused it for real, filed as
+arrived, from an unexpected direction: a separate project independently
+hit the identical `Signer::Delegated` trap and root-caused it for real,
+filed as
 [OpenZeppelin/stellar-contracts#863](https://github.com/OpenZeppelin/stellar-contracts/issues/863),
 closing this project's own
 [OpenZeppelin/stellar-contracts#839](https://github.com/OpenZeppelin/stellar-contracts/issues/839).
@@ -1390,12 +1391,12 @@ so `require_auth_for_args()` calls that only happen inside it can't be
 discovered ahead of time. A caller trusting the standard discovery flow
 submits a transaction missing the delegate's entry entirely, which
 `authenticate()` then traps on — this exact symptom, now explained.
-Nirium's own repro (a trivial `probe` contract, one `ContextRule`, hand-
-constructed entries via `smart-account-kit`) settled for real:
+That separate reproduction (a trivial `probe` contract, one `ContextRule`,
+hand-constructed entries via `smart-account-kit`) settled for real:
 [`f5835897d8b42544f2c98efbef7110be9d50308717885012b5a6bc9c20644d9f`](https://stellar.expert/explorer/testnet/tx/f5835897d8b42544f2c98efbef7110be9d50308717885012b5a6bc9c20644d9f).
-Full attribution and the mechanism's exact shape are in `CLAUDE.md`'s
-Phase 6b section; this is Periplo's own record of what was tried against
-this project's own contracts, not a repeat of that writeup.
+Full attribution is in the linked issue; this is Periplo's own record of
+what was tried against this project's own contracts, not a repeat of that
+writeup.
 
 Tried the same day, at the user's direction, against this project's own
 deployed contracts: a fresh `agent-smart-account` instance
@@ -1425,7 +1426,7 @@ Real progress on its own: the trap itself is gone, replaced by a
 
 To isolate whether the construction technique itself was sound, a
 minimal single-context test was built: a fresh `probe` contract
-(identical to Nirium's own, `fn ping(caller: Address) {
+(identical to the separate reproduction's, `fn ping(caller: Address) {
 caller.require_auth(); }`, deployed at
 `CCYTDGYRDN2SYNTYLIP743TKJZ6W77RM2XC74U22NKQ7UNH27A343SEE`) and a
 single-`ContextRule` `agent-smart-account` instance
@@ -1438,7 +1439,7 @@ fee-sponsor, `fee_charged: 203541` stroops). **This is Periplo's own
 first real signed testnet transaction where a `Signer::Delegated` smart
 account genuinely authorized a call** — proof the discovery-gap fix
 transfers to this project's own environment, confirmed empirically
-rather than assumed from Nirium's result alone.
+rather than assumed from that separate reproduction's result alone.
 
 One quick diagnostic tried on the still-failing two-context case:
 reversing `context_rule_ids` to `[1, 0]`. No change, and inconclusive by
@@ -1828,15 +1829,16 @@ repo-wide em-dash cleanup (committed and pushed, `70b7c20`/`93df21e`/
 -a periplo-testnet` failed with `Error: unauthorized`, and `fly status -a
 periplo-testnet` failed harder, `Could not find App "periplo-testnet"`, not
 just a permission denial. `fly auth whoami` confirmed this session was
-authenticated as `xvaiosx7@gmail.com`; `fly apps list` under that account
-did not include `periplo-testnet` at all. The app was provisioned under a
-different Fly.io account than that CLI session, a genuine credential gap.
+authenticated as a Fly account other than the app's owner; `fly apps list`
+under that account did not include `periplo-testnet` at all. The app was
+provisioned under a different Fly.io account than that CLI session, a genuine
+credential gap.
 Logged rather than worked around, per this project's own rule for a
 genuinely blocked, outward-facing action.
 
 **Resolved the same day**: the project owner logged into the correct Fly
-account (`ticketsafes@gmail.com`, confirmed via `fly apps list` showing
-`periplo-testnet`) and the redeploy was run for real. `fly deploy` itself
+account (the Fly account that owns the app, confirmed via `fly apps list`
+showing `periplo-testnet`) and the redeploy was run for real. `fly deploy` itself
 printed a false-positive warning ("app is not listening on the expected
 address... 0.0.0.0:8402"), not trusted at face value: verified live
 instead with real `curl` requests against all three routes.
@@ -1852,7 +1854,7 @@ service, not assumed from the deploy command's own success output.
 
 The write-time URL gate, the `null/*`/`localhost` backfill migration, and
 `apps/facilitator/src/demo-resource.ts` (the one real, externally-reachable
-demo resource, spec'd in CLAUDE.md's Architecture section) are all built,
+demo resource) are all built,
 tested (`pnpm run ci` green, 217 tests), and typechecked. The backfill
 migration itself already ran for real against the live Supabase project
 (confirmed by re-querying the table). What's still blocked: getting
@@ -1862,19 +1864,19 @@ counts once it happens for real, not just once the code exists" standard
 this project holds everything else to.
 
 Blocked the same exact way as the entry above, same root cause recurring:
-`fly auth whoami` in this session resolves to `xvaiosx7@gmail.com`, `fly
-secrets list -a periplo-testnet` fails `unauthorized`, `periplo-testnet`
-lives under `ticketsafes@gmail.com` specifically. Logged rather than
+`fly auth whoami` in this session resolves to a different Fly account than the
+one that owns the app, `fly secrets list -a periplo-testnet` fails
+`unauthorized`, `periplo-testnet` lives under the app-owning account
+specifically. Logged rather than
 routed around, per this project's own rule for a genuinely blocked,
 outward-facing action; not attempting to hunt for a workaround credential.
 
 **Resolved the same day**: the user re-logged into the correct Fly account
-(`ticketsafes@gmail.com`, confirmed via `fly auth whoami` and `fly apps
-list` showing `periplo-testnet`) and asked to finish the deploy. All four
+(the Fly account that owns the app, confirmed via `fly auth whoami` and
+`fly apps list` showing `periplo-testnet`) and asked to finish the deploy. All four
 steps above were run for real, in order, and hit two further real bugs
 along the way (both root-caused and fixed before the settlement that
-finally worked, both written up in full in CLAUDE.md's Architecture
-section rather than duplicated here): the demo route's own `resource.url`
+finally worked): the demo route's own `resource.url`
 came out `http://...` instead of `https://...` behind Fly's
 TLS-terminating proxy (`@hono/node-server` has no `X-Forwarded-Proto`
 awareness, confirmed by reading its source), fixed with an explicit
@@ -2062,10 +2064,12 @@ The `signerAddress` field a SEP-43-conformant signer explicitly returns
 its own address) is read, then discarded: only the raw signature bytes
 are passed on. Inside `authorizeEntry()`, receiving a bare `Buffer` (not
 an object carrying `signature`/`publicKey`, the shape the function
-otherwise supports) makes it fall into what CLAUDE.md already calls the
-"bare-signature fallback path" for a *different*, previously-found bug
-in this same module
-([stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655)):
+otherwise supports) makes it fall into the "bare-signature fallback path"
+of a *different*, previously-found bug in this same module (found while
+working
+[stellar/js-stellar-sdk#1655](https://github.com/stellar/js-stellar-sdk/issues/1655),
+later filed on its own as
+[#1683](https://github.com/stellar/js-stellar-sdk/issues/1683)):
 it infers the verifying public key from the auth entry's own top-level
 address (`Address.fromScAddress(addrAuth.address()).toString()`, the
 buyer's master-key address) rather than from the signer that actually
@@ -2141,14 +2145,22 @@ as a second settled transaction, the honest outcome of actually running
 it rather than the one that would have made the strongest evidence-table
 entry. What's real instead: a second signer genuinely registered
 on-chain (kept, harmless, adds a key without touching the master one or
-the account's thresholds), and `#1681` filed and open, the seventh real,
-independently verified upstream bug this project has found and reported
-(CLAUDE.md's Architecture section keeps the full list). Revisit
-`multisig-signer-demo.ts` once `#1681` (or `#1655`, the adjacent
-CAP-71-delegate finding it generalizes) lands upstream; until then a
-non-master-key signer for this scheme stays unrepresentable through
-`@x402/stellar`'s real, unmodified client, not a gap this repo can close
-on its own.
+the account's thresholds), and `#1681` filed, the seventh real,
+independently verified upstream bug this project has found and reported.
+Revisit `multisig-signer-demo.ts` once a release ships the `#1681` fixes;
+until then a non-master-key signer for this scheme stays unrepresentable
+through `@x402/stellar`'s real, unmodified client, not a gap this repo can
+close on its own.
+
+**Update, 2026-09-26 (checked against the GitHub API that day):** `#1681`
+was closed as completed. Both defects were fixed on `main` by
+[#1743](https://github.com/stellar/js-stellar-sdk/pull/1743) (a
+`signAuthEntries` call that signs no entry now throws `NoSignatureNeeded`)
+and [#1744](https://github.com/stellar/js-stellar-sdk/pull/1744) (the
+wallet's `signerAddress` is forwarded to the default authorizer), both
+merged 2026-09-24. No `@stellar/stellar-sdk` release contains them yet
+(latest `v17.1.0`, 2026-09-14; LTS `16.3.0`, 2026-08-28), so the
+revisit above still waits on a release.
 
 ## A second real catalog resource: genuinely blocked, not attempted with a shortcut
 
@@ -2158,8 +2170,7 @@ seller (Fer, `agentpayments.fi`) published and settled for real,
 closing exactly the gap this section describes.
 
 Per direct feedback that the catalog's weakest point against rival
-submissions' real payment volume (Openx402: 290 observed payments;
-Rail402: 110+) is having exactly one real, externally-reachable
+submissions' real payment volume is having exactly one real, externally-reachable
 resource, not two: a second one, ideally from a third party, was asked
 for. Not built this round, for two separate, real reasons, neither
 worked around:
@@ -2334,15 +2345,15 @@ only).
 **Resolved, 2026-08-26: the CORS-header part of the report was never
 about Periplo.** Confirmed by the report's own author directly, and
 independently corroborated rather than taken on their word alone: their
-CORS/conformance table measures `nirium-agent-mainnet.fly.dev`, an
-unrelated deployment (Nirium's), not Periplo's. Checked that endpoint
-directly to confirm it's structurally capable of producing the report's
+CORS/conformance table measures a different `.fly.dev` deployment,
+not Periplo's. Checked that endpoint directly to confirm it's
+structurally capable of producing the report's
 observations: it genuinely runs `@x402/express` with a real CORS setup
 (`access-control-expose-headers` present, listing `X-MPP-Warning`, the
 exact unrelated header already named in `#3148`'s own root cause),
 unlike Periplo's facilitator, which was already confirmed to have zero
-CORS code anywhere. Both zero-CORS-in-Periplo and real-CORS-in-Nirium
-are independently verifiable facts, not a report reinterpreted to fit a
+CORS code anywhere. Both zero-CORS-in-Periplo and real-CORS-in-the-other-
+deployment are independently verifiable facts, not a report reinterpreted to fit a
 convenient story.
 
 **A separate, adjacent finding noticed while verifying the fix above,
@@ -2700,8 +2711,34 @@ a rebase, so Ryang-21's existing comment anchors didn't move), full
 suite re-verified post-merge (132 files, 6743 tests), replied to each
 thread with the real commit. CI shows `action_required`, GitHub's
 standard external-PR gate, not a failure. Full detail in `README.md`'s
-and `CLAUDE.md`'s own #1672 histories; not repeated here since neither
-file's account needed correcting, unlike the retraction above.
+#1672 history; not repeated here since that account didn't need
+correcting, unlike the retraction above.
+
+**Update, 2026-09-26 (checked against the GitHub API that day):** #1672
+was closed without merging, in favor of Ryang-21's own
+[#1747](https://github.com/stellar/js-stellar-sdk/pull/1747)
+(`Closes #1655`, approved 2026-09-24), which walks CAP-71 delegate trees in
+`needsNonInvokerSigningBy()` behind an opt-in `includeDelegates` option.
+Two other points from this section landed upstream as separate,
+maintainer-authored PRs: the `forAddress` fix for
+[#1683](https://github.com/stellar/js-stellar-sdk/issues/1683) in
+`base/auth.ts`
+([#1742](https://github.com/stellar/js-stellar-sdk/pull/1742), merged
+2026-09-24, `Closes #1683`), and documentation of what
+`needsNonInvokerSigningBy()` can and cannot see
+([#1745](https://github.com/stellar/js-stellar-sdk/pull/1745), merged
+2026-09-25, `Closes #1700`). A comment on #1747 (2026-09-26) names one case
+it does not cover, a signed `C…` account with an unsigned nested delegate
+(its docstring documents that a signed node's delegates are not checked),
+and corrects this project's earlier #1655 reproduction, which used `G…`
+top-level accounts: per #1747's docs, a `G…` node's delegates are not
+consulted in protocol 27 (CAP-72, which adds delegation for `G…` accounts,
+is still Draft). `#1655` remains open pending #1747. None of these fixes is
+in a published `@stellar/stellar-sdk` release yet. One more correction:
+entries in this file say CAP-71 is not live on any network, which was true
+when they were written. CAP-71's own header says protocol 27, and both
+`horizon.stellar.org` and `horizon-testnet.stellar.org` report protocol 28
+as of 2026-09-26, so those "no impact today" severity notes no longer hold.
 
 **Second, resuming the broader search this review had paused, the same
 defect class turned up independently, the same day, in a different
@@ -2839,10 +2876,21 @@ section above).
 
 Same live check, same day, no doc change needed for either:
 `OpenZeppelin/stellar-contracts#865` (Protocol 28 non-exhaustive
-`ContractExecutable` match, `CLAUDE.md` carries the writeup) had no
+`ContractExecutable` match, `README.md` carries the writeup) had no
 maintainer response since 2026-09-02; `x402-foundation/x402#3301` (Go)
 is covered above. The Periplo repo itself is CI-green with no open PRs
 or issues, last commit `2a12856` (2026-09-04).
+
+**Update, 2026-09-26 (checked against the GitHub API and crates.io that
+day):** `OpenZeppelin/stellar-contracts#865` was closed as completed by
+its maintainer via
+[#866](https://github.com/OpenZeppelin/stellar-contracts/pull/866) (merged
+2026-09-26), which adds the `ContractExecutable::ExternalRef` arm and moves
+the workspace to `soroban-sdk 28.0.0`. That is fixed on `main`, with no
+release published: `stellar-accounts` on crates.io is still `0.7.2`.
+`soroban-sdk 28.0.0` itself was published as a stable release on
+2026-09-18, so earlier statements in this repo that no stable 28.x
+existed were true only until then.
 
 ## Helper library and mainnet-ops roadmap, opened 2026-09-10
 
@@ -2872,8 +2920,7 @@ MCP server that doesn't exist yet in this repo.
    per-parameter descriptions. Reuses
    `declareDiscoveryExtension` from `@x402/extensions/bazaar` rather
    than reimplementing the wire format. 13 unit tests,
-   `pnpm run ci` green (307 tests). Full writeup in `CLAUDE.md`'s
-   Architecture section. **Not yet done:** wiring it into
+   `pnpm run ci` green (307 tests). **Not yet done:** wiring it into
    `demo-resource.ts` (the one real, live resource server this repo
    runs) to prove it against something already deployed rather than
    only in isolation, and a README mention once that's done. This was
@@ -2890,8 +2937,7 @@ MCP server that doesn't exist yet in this repo.
    independent from Phase 7's own MCP-wrapped version of the same loop
    (`packages/mcp`, not started). Uses `@x402/core/http`'s own header
    encode/decode functions rather than reimplementing them. 18 unit
-   tests, `pnpm run ci` green (336 tests). Full writeup in `CLAUDE.md`'s
-   Architecture section.
+   tests, `pnpm run ci` green (336 tests).
 
    Run for real against the live deployment three times the same day
    (`apps/facilitator/scripts/buyer-helper-demo.ts`), each run finding
@@ -2923,8 +2969,7 @@ MCP server that doesn't exist yet in this repo.
      field contains. The `demo-resource.ts` change is harmless (the raw
      402 challenge itself now shows a fuller example URL) but was never
      going to fix the catalog case. Stated here plainly rather than
-     leaving the earlier (wrong) claim standing in this file or
-     `CLAUDE.md`.
+     leaving the earlier (wrong) claim standing in this file.
    - **The real fix, in this library, not the resource server.**
      `resolveResourceRequestUrl` reads the discovered resource's own
      declared `extensions.bazaar.info.input.queryParams` (the exact

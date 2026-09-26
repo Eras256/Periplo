@@ -46,8 +46,7 @@ pnpm test --testnet --families=stellar --facilitators=periplo \
 
 Client and server credentials: `CLIENT_STELLAR_PRIVATE_KEY` /
 `SERVER_STELLAR_ADDRESS` set to Periplo's own existing testnet fixtures
-(`STELLAR_TEST_BUYER_SECRET`/`STELLAR_TEST_SELLER_PUBLIC`, already
-documented in `CLAUDE.md`). The buyer already held the exact testnet USDC
+(`STELLAR_TEST_BUYER_SECRET`/`STELLAR_TEST_SELLER_PUBLIC`). The buyer already held the exact testnet USDC
 the suite defaults to
 (`CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA`, confirmed
 identical to `@x402/stellar`'s own `USDC_TESTNET_ADDRESS` constant, and

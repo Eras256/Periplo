@@ -53,9 +53,8 @@ cataloged because a payment happened, not because of who paid.
 ## Anchoring, not raw data
 
 Where this project ever needs to prove something happened without storing
-the thing itself, the pattern is a hash, not the payload. This is the
-same principle Contextio's Legal Context Protocol applies to legal terms
-(a SHA-256 anchored on-chain, never the document's contents on-chain);
+the thing itself, the pattern is a hash, not the payload (a SHA-256
+anchored on-chain, never the contents on-chain).
 Periplo's own version of it is smaller in scope today, since Bazaar
 listings are already public resource metadata a seller chose to disclose,
 not something that needs anchoring to avoid exposing it. If a future

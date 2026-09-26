@@ -97,7 +97,7 @@ Violating any of these invalidates the work.
 8. **Reference repositories are READ-ONLY unless they carry a permissive licence.**
    Most of the Stellar prior art worth studying: `scrimp`, `stellar-mpp-demo`,
    `yardstick-demo`, `Drand-Relay`, `stellar-playground`, `confidential-wallet`
-   and others listed in `CLAUDE.md`, publishes **no licence**, which means all
+   and others, publishes **no licence**, which means all
    rights reserved. Public visibility is not permission.
 
    **You may:** read them, learn the approach, and write your own implementation
@@ -555,8 +555,8 @@ is correct; if reality differs, change the spec, not the test:**
 transaction hash recorded; each of the three assumptions is a passing test or a
 documented spec change.
 
-**Real-world signal after the gate, not part of it:** two direct SCF #45
-competitors (Rialto, AutoLayer) chose to build on this spec upstream
+**Real-world signal after the gate, not part of it:** two adjacent SCF #45
+implementations (Rialto, AutoLayer) chose to build on this spec upstream
 rather than fork their own. Separately, an independent implementer
 (davedumto), reviewing five Stellar `upto` implementations (rail402,
 Rialto, openx402, LumenGate, and this one), flagged nonce-TTL replay

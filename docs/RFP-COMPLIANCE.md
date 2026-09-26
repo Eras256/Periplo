@@ -18,13 +18,13 @@ real exists yet, stated plainly rather than hidden.
 | --- | --- | --- |
 | "examples of past dev-focused work, and share open-sourced repos if possible" | Covered | This repo itself, Apache-2.0, public since Phase 0. |
 | Clear technical explanation with diagrams | Covered | [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) (Mermaid diagram + plain-English walkthrough), [`docs/SPEC.md`](SPEC.md) (the full phased build spec). |
-| "Clear, testable milestones" | Covered | [`docs/SPEC.md`](SPEC.md)'s phase gates, each ending in a real command with a real exit code; `CLAUDE.md`'s dated per-phase entries. |
+| "Clear, testable milestones" | Covered | [`docs/SPEC.md`](SPEC.md)'s phase gates, each ending in a real command with a real exit code; the dated transaction table in [`conformance/RESULTS.md`](../conformance/RESULTS.md) and the commit history (conventional commits, one per gate). |
 | Post-launch maintenance plan | Covered | [`docs/MAINTENANCE.md`](MAINTENANCE.md). |
 | Decentralization explanation | Covered | [`docs/DECENTRALIZATION.md`](DECENTRALIZATION.md): the index is off-chain by design, decentralization comes from replicability (permissive licence, first-class self-hosting, an interoperable catalog format), not an on-chain registry. |
 | Infrastructure transparency | Covered | [`docs/INFRASTRUCTURE.md`](INFRASTRUCTURE.md), [Deployment](../README.md#deployment-what-actually-runs) in README.md: Fly.io, Supabase, exact machine/plan specifics, not vague. |
 | User privacy / tracking plan | Covered | [`docs/PRIVACY.md`](PRIVACY.md): no PII, no cookies, no IP retention, aggregate-only telemetry (see `GET /status` below). |
 | Community update commitment | Partial | `docs/SPEC.md` §10 commits to a Matrix room and a Mastodon/Bluesky account "before launch"; neither is set up yet (Phase 10, not started), stated in `docs/DEFERRED.md`, not hidden. |
-| "Most recent stable release of the Stellar tech stack" | Covered | CLAUDE.md's 2026-09-02 Protocol 28 readiness entry: `@stellar/stellar-sdk` bumped to the newest LTS-compatible release, checked against `@x402/stellar`'s own pin, a real testnet cycle run under Protocol 28 before the mainnet vote. |
+| "Most recent stable release of the Stellar tech stack" | Covered | The 2026-09-02 rows in [`conformance/RESULTS.md`](../conformance/RESULTS.md) (real `exact` and `upto` settlements on testnet under Protocol 28, before the mainnet vote) and `apps/facilitator/package.json`'s `@stellar/stellar-sdk` pin (`16.3.0`, the newest release inside `@x402/stellar`'s own `^16` range). |
 | Open licensing, "commitment to building in the open" | Covered | Apache-2.0 repo-wide, enforced by `packages/licence-check` in CI (fails the build on any AGPL/copyleft transitive dependency). |
 
 ## X402-specific evaluation criteria
@@ -33,11 +33,11 @@ real exists yet, stated plainly rather than hidden.
 | --- | --- | --- |
 | Technical capability, understanding "specific behaviors" (discovery filters, `routeTemplate` validation, `areFeesSponsored`, auth entry expiration) | Covered | `routeTemplate`: `packages/bazaar`'s `checkRouteTemplate` (decode-then-validate, stricter than upstream, [`docs/INTEROP.md`](INTEROP.md) §1). `areFeesSponsored`: enforced end to end, `apps/facilitator/src/core.ts`. Auth entry expiration: `upto-stellar-scheme.ts`'s `SIGNATURE_EXPIRATION_LEDGER_TOLERANCE` handling and the `require_auth_for_args` 180-day ceiling finding ([x402-foundation/x402#3341](https://github.com/x402-foundation/x402/issues/3341)). |
 | Discovery design: concrete cataloging and search approach | Covered | `packages/bazaar` (catalog, trust boundary) + `packages/search` (hybrid lexical/semantic retrieval, RRF fusion), real measured relevance: nDCG@10 0.9346 / MRR 0.9226 against a deliberately hard 55-resource fixture set (`eval/`), not a toy benchmark. |
-| "Conformance discipline and upkeep" with spec evolution plans | Covered | `conformance/baseline/` (captured transcripts against the real reference facilitator), the official `x402-foundation/x402` e2e suite run for real (`docs/conformance/`), `packages/evidence-check` (a CI gate that re-verifies every cited hash/link on every push, so the evidence table can't silently rot), and a running count of upstream spec/SDK bugs found and filed (see the "upstream bugs" list in `CLAUDE.md`, ten-plus at last count, most independently verified before filing). |
+| "Conformance discipline and upkeep" with spec evolution plans | Covered | `conformance/baseline/` (captured transcripts against the real reference facilitator), the official `x402-foundation/x402` e2e suite run for real (`docs/conformance/`), `packages/evidence-check` (a CI gate that re-verifies every cited hash/link on every push, so the evidence table can't silently rot), and a running record of upstream spec/SDK bugs found and filed (each linked in [`docs/DEFERRED.md`](DEFERRED.md) and `README.md`, most independently verified before filing). |
 | Relevant payment infrastructure experience | Covered | The `upto` payment scheme itself: spec text merged upstream ([x402-foundation/x402#3098](https://github.com/x402-foundation/x402/pull/3098)), a real Soroban contract (`contracts/upto-settlement`, deployed, fuzzed, property-tested), wired into this facilitator's own HTTP routes with a real partial settlement on testnet. |
 | Security track record and threat modeling | Covered | [`docs/THREAT-MODEL.md`](THREAT-MODEL.md) (spec §6's table, each row pointing at real code and a real test); one honest gap stated there (no CI-enforced secret-leakage check yet), not hidden. Third-party review (Audit Bank) not yet applied for, tracked in `docs/DEFERRED.md`. |
-| Ecosystem alignment and coordination willingness | Covered | Two direct competitors in this same round built on the `upto` spec this project opened rather than fork their own ([`README.md`](../README.md#the-ecosystem-is-converging-on-this-spec-not-the-other-way-around), [`docs/UPTO-CONVERGENCE.md`](UPTO-CONVERGENCE.md)); a real external seller (`agentpayments.fi`) integrated with no coordination beyond public docs. |
-| Delivery timeline feasibility | Covered | `CLAUDE.md`'s dated, phase-by-phase history is itself the timeline evidence: every phase gate, every real transaction, dated and checkable, not asserted after the fact. |
+| Ecosystem alignment and coordination willingness | Covered | Two adjacent implementations in this same round built on the `upto` spec this project opened rather than fork their own ([`README.md`](../README.md#the-ecosystem-is-converging-on-this-spec-not-the-other-way-around), [`docs/UPTO-CONVERGENCE.md`](UPTO-CONVERGENCE.md)); a real external seller (`agentpayments.fi`) integrated with no coordination beyond public docs. |
+| Delivery timeline feasibility | Covered | The dated rows in [`conformance/RESULTS.md`](../conformance/RESULTS.md) and the commit history are the timeline evidence: real transactions and phase gates, dated and checkable, not asserted after the fact. |
 
 ## Infrastructure & operational requirements
 
@@ -58,16 +58,15 @@ real exists yet, stated plainly rather than hidden.
   started.** `/status` above ships as a JSON endpoint on the facilitator
   itself, not the full rendered dashboard page spec §10 describes; that
   page would consume this same endpoint once the hub exists.
-- **Phase 7 (MCP discovery server) hasn't started**, named as next in
-  `CLAUDE.md`'s own status line.
+- **Phase 7 (MCP discovery server) hasn't started**, per
+  `CLAUDE.md`'s status line.
 - **Community channels (Matrix, Mastodon/Bluesky) aren't set up.**
 - **Third-party security review (Audit Bank) hasn't been applied for.**
 - **A measured, historical uptime percentage doesn't exist yet** — the
   endpoint that would report it (`GET /status`) only just shipped.
 
 None of the above is hidden: every item is also tracked, with the same
-or more detail, in [`docs/DEFERRED.md`](DEFERRED.md) and
-`CLAUDE.md`'s own phase-status line.
+or more detail, in [`docs/DEFERRED.md`](DEFERRED.md).
 
 ---
 
