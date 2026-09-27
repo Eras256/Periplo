@@ -107,7 +107,10 @@ package needs a `{ "path": "packages/<name>" }` entry in the root
 
 Built: the packages above, `apps/facilitator`, and `contracts/upto-settlement`
 (a standalone Cargo project, deliberately outside the pnpm workspace, deployed
-to `stellar:testnet` at `CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`).
+to `stellar:testnet` at `CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`),
+and `apps/upto-demo` (a static UptoSettlement page, built ahead of Phase 9 on
+purpose and kept out of `apps/hub`; it reads only the separate
+`CA7OYVXW...V6TW` deployment, never `CAK3R734...`; see `docs/DEFERRED.md`).
 Planned, not built: `apps/hub`, `packages/mcp`, `spec/`, a `conformance/`
 runner, `examples/`. Do not create empty placeholder directories for phases
 that have not started (spec §12: no invented scope).
