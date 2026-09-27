@@ -7,6 +7,7 @@
     { "path": "packages/search" },
     { "path": "packages/evidence-check" },
     { "path": "apps/facilitator" },
+    { "path": "apps/upto-demo" },
     { "path": "eval" }
   ]
 }
