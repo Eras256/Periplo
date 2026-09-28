@@ -34,6 +34,17 @@ small metered API, entirely on `stellar:testnet`.
   - [View on stellar.expert (testnet)](https://stellar.expert/explorer/testnet/tx/cf33b51350f6e4c871b3f0a36e2151ad895dadbe2e237ef413259cf4a0533823)
   - Signed ceiling: `1,000,000` stroops (up to 20 rows)
   - Actually settled: `500,000` stroops (10 rows genuinely matched and returned)
+- **A second real settlement, in testnet USDC**, on the same contract
+  instance (the asset travels inside each signed authorization; the
+  contract was not redeployed):
+  - Transaction hash: `d554adfb8f41efca8a5c14d7c82ded1330d3819bddd610ead51ab78257c5cafb`
+  - [View on stellar.expert (testnet)](https://stellar.expert/explorer/testnet/tx/d554adfb8f41efca8a5c14d7c82ded1330d3819bddd610ead51ab78257c5cafb)
+  - Asset: testnet USDC, issuer `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`,
+    SAC `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` (7 decimals,
+    read from the SAC's own `decimals()`)
+  - Signed ceiling: `1,000,000` base units (0.10 USDC); actually settled:
+    `500,000` (0.05 USDC). The contract's balance of both PTEST and USDC
+    is `0` after settling, so it never holds user funds.
 
 The gap between the signed ceiling and the settled amount is the whole
 point: the buyer commits to a maximum up front, without knowing the exact
@@ -51,6 +62,9 @@ From the repo root, with Node ≥22 and a `.env` populated per
 nvm use 22
 node --env-file=.env apps/facilitator/scripts/goyahack-metered-settle-demo.ts
 ```
+
+To settle in testnet USDC instead, override the asset for that run:
+`STELLAR_TEST_ASSET_ADDRESS=CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA`.
 
 This is `stellar:testnet` only. No mainnet key or mainnet contract is
 involved anywhere in this demo.
