@@ -49,17 +49,29 @@ Run a single test file: `pnpm exec vitest run path/to/file.test.ts`.
 
 ## Running the real integration suites locally
 
-Supabase project and a Stellar testnet fee-sponsor account are both live
-(provisioned mid-build, not self-hosted by this session). Credentials
-live in a local, gitignored `.env` and in this repo's GitHub Actions
-secrets (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
-`STELLAR_FEE_SPONSOR_SECRET`, `STELLAR_FEE_SPONSOR_PUBLIC`), never in a
-committed file. Run
+CI runs the Supabase suites and `pnpm eval` against a throwaway local
+stack, and so should you. With Docker and the Supabase CLI installed, run
+`supabase start` from the repo root (it applies `supabase/migrations/`),
+then put the values `supabase status` prints for the API URL, anon key and
+service-role key into `SUPABASE_URL`, `SUPABASE_ANON_KEY` and
+`SUPABASE_SERVICE_ROLE_KEY` in your local, gitignored `.env`. Run
 `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 22` then
-`pnpm test` locally to exercise the real integration suites in
-`packages/bazaar/src/db/resources.integration.test.ts` and
-`apps/facilitator/src/core.test.ts`; both skip themselves (not a failure)
-when their env vars aren't set.
+`pnpm test` and `pnpm eval`.
+
+The suites and `pnpm eval` insert and delete rows, so they refuse a
+`SUPABASE_URL` that is not a loopback address
+(`packages/bazaar/src/db/local-only.ts`). With the production project's URL
+in `.env`, `pnpm test` fails with `RemoteSupabaseRefusedError` instead of
+writing to the live catalog. To run against a remote project on purpose,
+set `PERIPLO_ALLOW_REMOTE_SUPABASE_TESTS=1`; the manual `prod-parity`
+workflow (Actions tab, "Run workflow") does exactly that for the RLS suite
+and is the only automated job that writes to the real project.
+
+`apps/facilitator/src/core.test.ts` needs the testnet fee-sponsor
+credentials (`STELLAR_FEE_SPONSOR_SECRET`, `STELLAR_FEE_SPONSOR_PUBLIC`, a
+read-only account check), kept in `.env` and in the repo's GitHub Actions
+secrets, never in a committed file. Without them it fails at collection
+rather than skipping, see `docs/DEFERRED.md`.
 
 Real Stellar testnet test fixtures also exist for exercising a live
 payment, not just `PTEST` (the self-issued token from Phase 3, since

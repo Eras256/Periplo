@@ -2487,6 +2487,67 @@ share one database" design this section already flagged is still real
 and still open; the concurrency fix prevents the two-runs-racing
 symptom, not the single-run pollution window above.
 
+**2026-09-27: resolved, CI no longer touches the production project.**
+`ci.yml` starts an ephemeral local Supabase (`supabase start`, CLI
+2.115.0, `supabase/setup-cli` pinned by SHA) built from
+`supabase/migrations/`, and both `pnpm eval` and the integration suites
+run against it; the `build` job no longer references the production
+Supabase secrets. The pollution window was visible from the public site:
+`/status` showed `catalogSize` 58 (the 3 real rows plus the 55 fixtures)
+while a push's CI ran `pnpm eval`, and 3 again once cleanup finished.
+Three guards keep it from returning:
+
+- `assertSupabaseUrlSafeForTests` makes both `loadSupabaseTestEnv` helpers
+  and `pnpm eval` refuse a non-local `SUPABASE_URL` unless
+  `PERIPLO_ALLOW_REMOTE_SUPABASE_TESTS=1`, so a local run with the
+  production URL in `.env` cannot write to the live catalog either.
+- The integration suites delete leftovers under their reserved URL prefix
+  in `beforeAll`. Their comment used to say they swept a crashed run's
+  leftovers while the code only deleted exact URLs.
+- The RLS suite can still be run against the real project, on demand, from
+  the manual `prod-parity` workflow (`workflow_dispatch` only). It was added
+  in this change and has not been run yet.
+
+A Phase 2 test row (`https://periplo-phase2-test.example/...`, written
+2026-09-11T01:40Z, between two CI runs) stayed in the public catalog until
+2026-09-27; the likely cause is an interrupted local `pnpm test`, not
+confirmed. Measured on the ephemeral stack: nDCG@10 0.9334 and MRR 0.9209
+on the first run, against 0.9330 to 0.9354 and 0.9203 to 0.9237 on the last
+seven runs on `main` against production. The committed baseline stays
+0.9346.
+
+## Production's `anon` role has table privileges the migrations do not declare
+
+Found 2026-09-27, the first time the RLS suite ran against a database
+built only from `supabase/migrations/`. `20260807202307_resources.sql`
+grants `anon` and `authenticated` `select` on `resources` and nothing
+else. On that database, an `anon` UPDATE or DELETE fails with `42501
+permission denied` (two tests failed in
+[CI run 36376547022](https://github.com/Eras256/Periplo/actions/runs/36376547022)).
+On the production project the same requests, sent as no-ops on a row that
+cannot exist, return HTTP 200 with an empty result, which means `anon`
+holds table-level UPDATE and DELETE there and only RLS (no write policy)
+stops the write. Writes are still blocked in production; what is missing
+is the second barrier the migration intends. Not checked: the exact grants
+on the production table, or whether INSERT differs. The two tests now
+accept either outcome and confirm through the service role that the row is
+unchanged. Open, and a production change for the owner to decide: a
+migration that revokes `insert, update, delete` on `resources` from
+`anon` and `authenticated`. The manual `prod-parity` workflow shows the
+current state on demand.
+
+## `describe.skipIf` does not skip when the env helper returns `null`
+
+The integration suites read `env` inside the `describe.skipIf(!env)`
+callback (`const { url } = env as NonNullable<typeof env>`). With
+`vitest@4.1.11` the callback still runs while collecting, so without
+credentials the file fails with `Cannot destructure property ... of 'env'
+as it is null` instead of skipping. Reproduced on a pristine checkout of
+`origin/main`. CI is unaffected for the Supabase suites now that it always
+provides a local stack; `apps/facilitator/src/core.test.ts` still fails
+this way without the `STELLAR_FEE_SPONSOR_*` secrets (fork PRs, local runs
+with no `.env`). Not fixed here.
+
 ## `@x402/core` has a newer client-side `spendControls` guard than what's pinned, found testing someone else's PR, not our own dependency review
 
 Found live, 2026-08-26, running a real end-to-end check of
@@ -3155,9 +3216,11 @@ its own translated copy of the demo logic.
   package with licence-check's own `classifyLicense`: 26 allowed, 0
   denied, 1 review (`caniuse-lite`). CI runs the real gate on push.
 - `/status` reported `catalogSize: 58` at 18:45 CDMX and `3` about half an
-  hour later, with no restart in between. Not caused by the site; noted
-  for whoever owns the catalog (possibly an `eval` fixture cleanup, since
-  `eval/` shares the production Supabase project).
+  hour later, with no restart in between. Not caused by the site. 58 is
+  exactly the 3 real rows plus the 55 `eval` fixtures, seen again on
+  2026-09-27 while a push's CI ran `pnpm eval` against the production
+  project; fixed by moving CI to an ephemeral database (see the `eval`
+  entry above).
 
 Private vulnerability reporting was enabled on the repository the same
 day (`gh api repos/Eras256/Periplo/private-vulnerability-reporting`:
