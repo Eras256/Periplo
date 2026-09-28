@@ -1,4 +1,4 @@
-import { ASSET_CODE, ASSET_CONTRACT_ID, UPTO_CONTRACT_ID } from "./api/contract.js";
+import { ASSET_CONTRACT_ID, UPTO_CONTRACT_ID, USDC_CONTRACT_ID } from "./api/contract.js";
 import { Address } from "./components/Address.js";
 import { ChainSettlements } from "./components/ChainSettlements.js";
 import { Simulator } from "./components/Simulator.js";
@@ -19,7 +19,7 @@ export function App() {
         </p>
         <p className="badges">
           <span className="tag tag--network">Stellar testnet</span>
-          <span className="tag">Activo de prueba: {ASSET_CODE}</span>
+          <span className="tag">Activos de prueba: PTEST y USDC</span>
         </p>
       </header>
 
@@ -37,15 +37,21 @@ export function App() {
             </dd>
           </div>
           <div>
-            <dt>Activo ({ASSET_CODE})</dt>
+            <dt>Activo (PTEST)</dt>
             <dd>
               <Address id={ASSET_CONTRACT_ID} full />
             </dd>
           </div>
+          <div>
+            <dt>Activo (USDC de testnet)</dt>
+            <dd>
+              <Address id={USDC_CONTRACT_ID} full />
+            </dd>
+          </div>
         </dl>
         <p>
-          Todo en esta página ocurre en Stellar testnet. {ASSET_CODE} es un activo de prueba sin
-          valor. Periplo no opera en mainnet todavía.
+          Todo en esta página ocurre en Stellar testnet. PTEST y el USDC de testnet son activos de
+          prueba sin valor. Periplo no opera en mainnet todavía.
         </p>
         <p>
           <a href="https://github.com/Eras256/Periplo" target="_blank" rel="noreferrer">
