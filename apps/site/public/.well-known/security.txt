@@ -1,4 +1,4 @@
-Contact: https://periplo.xyz/en/security
+Contact: https://github.com/Eras256/Periplo/security/advisories/new
 Expires: 2027-09-27T00:00:00.000Z
 Preferred-Languages: en, es
 Canonical: https://periplo.xyz/.well-known/security.txt

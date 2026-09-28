@@ -9,7 +9,7 @@ export const DOCS = {
 } as const;
 export const FACILITATOR_URL = "https://periplo-testnet.fly.dev";
 export const SITE_URL = "https://periplo.xyz";
-/** Only works once private vulnerability reporting is enabled on the repo (it is not yet). */
+/** GitHub private vulnerability reporting (enabled on Eras256/Periplo, checked 2026-09-27). */
 export const SECURITY_ADVISORY_URL = `${REPO_URL}/security/advisories/new`;
 
 const EXPLORER = "https://stellar.expert/explorer/testnet";

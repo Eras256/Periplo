@@ -208,7 +208,7 @@
     "title": "Seguridad",
     "lede": "Cómo reportar una vulnerabilidad en Periplo, y de qué protege ya el diseño.",
     "reportTitle": "Reportar una vulnerabilidad",
-    "reportPending": "Se está habilitando un canal privado de reporte. Mientras no exista, por favor no publiques detalles de explotación en issues públicos.",
+    "reportText": "Reporta vulnerabilidades en privado con el reporte privado de vulnerabilidades de GitHub. Solo los mantenedores ven el reporte hasta que se publique un aviso. Por favor no abras issues públicos con detalles de explotación.",
     "reportLink": "Reportar en privado por GitHub",
     "designTitle": "De qué protege el diseño",
     "design": [

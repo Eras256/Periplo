@@ -76,11 +76,6 @@ Not yet tested on Vercel itself; verified locally with `next build` and
 
 ## Before the first public deploy
 
-- [ ] Enable private vulnerability reporting on `Eras256/Periplo`
-      (repository settings, owner only; checked 2026-09-27: disabled),
-      then set `PRIVATE_REPORTING_ENABLED = true` in
-      `src/app/[locale]/security/page.tsx`. Until then `/security` says
-      the channel is pending, and `security.txt` points to that page.
 - [ ] Confirm the facts the privacy page cannot get from the code: how
       long Fly.io keeps the facilitator's logs, and whether the Vercel
       project has analytics or log drains enabled.

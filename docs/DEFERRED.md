@@ -3155,8 +3155,11 @@ its own translated copy of the demo logic.
   for whoever owns the catalog (possibly an `eval` fixture cleanup, since
   `eval/` shares the production Supabase project).
 
+Private vulnerability reporting was enabled on the repository the same
+day (`gh api repos/Eras256/Periplo/private-vulnerability-reporting`:
+`{"enabled":true}`); `/security` and `security.txt` point to it.
+
 **Still open before a public deploy** (also in `apps/site/README.md`):
-private vulnerability reporting is disabled on the repository, so
-`/security` says the channel is pending; the privacy page cannot state
+the privacy page cannot state
 Fly.io's log retention or the Vercel project's analytics settings from
 the code; the legal pages have had no legal review.

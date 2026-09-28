@@ -208,7 +208,7 @@
     "title": "Security",
     "lede": "How to report a vulnerability in Periplo, and what the design already protects against.",
     "reportTitle": "Reporting a vulnerability",
-    "reportPending": "A private reporting channel is being set up. Until it is live, please do not publish exploit details in public issues.",
+    "reportText": "Report vulnerabilities privately through GitHub's private vulnerability reporting. Only the maintainers see the report until an advisory is published. Please do not open public issues with exploit details.",
     "reportLink": "Report privately through GitHub",
     "designTitle": "What the design protects against",
     "design": [
