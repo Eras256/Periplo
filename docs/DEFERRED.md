@@ -3065,3 +3065,57 @@ MCP server that doesn't exist yet in this repo.
    for the deployment, none of which exists yet either, stated as an
    honest, open gap in `docs/OPERATIONS.md` itself rather than implied
    solved.
+
+## `apps/upto-demo`: an UptoSettlement page built ahead of the Phase 9 hub, 2026-09-27
+
+**Divergence:** spec §10 puts every public page in `apps/hub` (Phase 9,
+not started). A single page showing `upto` settlement was needed now for
+the GOYA HACK 2026 entry, so it lives in its own `apps/upto-demo`
+(Vite + React, static) instead, and does not claim Phase 9 has begun.
+Nothing in it depends on `apps/hub`; when Phase 9 starts it can be folded
+in or linked.
+
+**Target contract:** a separate, isolated `upto-settlement` deployment,
+`CA7OYVXWPSQHXNBWJQZ7TCKQILAVBHWDAPNRJTKY66LHR5K5LFXRV6TW` (created at
+ledger 4905262), not the `CAK3R734...` deployment cited in
+`conformance/RESULTS.md`, so demo traffic never mixes with that evidence.
+Its first real settlement, read by the page itself:
+[`cf33b513...`](https://stellar.expert/explorer/testnet/tx/cf33b51350f6e4c871b3f0a36e2151ad895dadbe2e237ef413259cf4a0533823),
+0.1 PTEST authorized, 0.05 charged, 0.05 refunded.
+
+**Environment differences found building it:**
+
+- `api.stellar.expert` sends `Access-Control-Allow-Origin: *` to requests
+  with no `Origin` (what `curl` sends) but answers `403` to any
+  third-party origin, so it cannot back a browser page hosted anywhere
+  but stellar.expert. Found only by loading the page in a real headless
+  Chromium; `curl` said it worked. Switched to Soroban RPC `getEvents`,
+  which allows any origin and includes `txHash`. Trade-off: the RPC keeps
+  about 7 days of events (120,960 ledgers), which the page states.
+- `getEvents` scans a bounded ledger range per call and returns a cursor;
+  starting from the RPC's oldest ledger returned zero events and a cursor
+  far behind the tip. The page starts from the contract's deploy ledger
+  (or the retention floor, whichever is later) and follows cursors.
+- The contract's asset is `PTEST` (7 decimals), not USDC; an early draft
+  of the page said USDC and was corrected before any commit.
+
+**Still open:**
+
+- The metered backend (real buyer signature, facilitator-side settle of
+  measured usage) is built separately and its API is not confirmed, so the
+  interactive section of the page is an in-browser simulation, labeled as
+  such, that never produces a transaction hash.
+- No hosting account is wired to this machine (the `fly` CLI here has no
+  login), so publishing the page is left to the repo owner's static host.
+- The deployed Wasm hash (`110a3758...`) has not been compared against a
+  local build of `contracts/upto-settlement`; the page relies only on the
+  `Settled` event layout, which matches `lib.rs`.
+- Machine note: `pnpm` on this machine's `PATH` is a standalone 9.15.0,
+  not the pinned 11.22.0, and `licence-check` shells out to whatever
+  `pnpm` is on `PATH`, failing with `ERR_PNPM_MISSING_PACKAGE_INDEX_FILE`.
+  Running it through `corepack pnpm` works (140 production packages, 0
+  denied). Separately, three integration suites
+  (`core.test.ts`, `discovery.integration.test.ts`,
+  `resources.integration.test.ts`) fail to load without a `.env`, on
+  `main` too: they destructure `env` inside a `describe.skipIf(!env)`
+  body, which Vitest 4 still executes.
