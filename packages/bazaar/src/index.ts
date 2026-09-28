@@ -15,6 +15,12 @@ export {
   type ResourceInsert,
   type ResourceRow,
 } from "./db/client.js";
+export {
+  ALLOW_REMOTE_SUPABASE_TESTS_ENV,
+  assertSupabaseUrlSafeForTests,
+  isLocalSupabaseUrl,
+  RemoteSupabaseRefusedError,
+} from "./db/local-only.js";
 export { checkRouteTemplate, type RouteTemplateCheckResult } from "./route-template.js";
 export {
   type DroppedField,

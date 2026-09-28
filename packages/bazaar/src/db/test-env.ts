@@ -6,7 +6,13 @@
  * `null` when credentials aren't available so callers can skip rather
  * than fail: a fork or an environment without repo secrets should still
  * pass `pnpm test`, just without this integration coverage.
+ *
+ * Throws (`RemoteSupabaseRefusedError`) instead of returning credentials when
+ * `SUPABASE_URL` is not a local stack, unless the opt-in in `local-only.ts`
+ * is set: these suites insert and delete rows.
  */
+
+import { assertSupabaseUrlSafeForTests } from "./local-only.js";
 
 let attemptedEnvFileLoad = false;
 
@@ -38,5 +44,6 @@ export function loadSupabaseTestEnv(): SupabaseTestEnv | null {
   if (!url || !anonKey || !serviceRoleKey) {
     return null;
   }
+  assertSupabaseUrlSafeForTests(url);
   return { url, anonKey, serviceRoleKey };
 }

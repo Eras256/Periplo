@@ -1,24 +1,29 @@
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createAnonClient, createServiceRoleClient, type Database } from "./client.js";
 import { loadSupabaseTestEnv } from "./test-env.js";
 
 /**
- * Integration tests against the REAL Supabase project (spec Phase 2 gate:
- * "RLS policy tests pass"). Skipped, not failed, when credentials
- * aren't available, so this suite degrades gracefully on a fork or an
- * environment without the repo's Supabase secrets, per docs/DEFERRED.md.
+ * Integration tests for the `resources` table's RLS policies (spec Phase 2
+ * gate: "RLS policy tests pass"). CI runs them against an ephemeral local
+ * Supabase stack built from `supabase/migrations/`; the manual
+ * `prod-parity` workflow runs them against the real project, which needs
+ * `PERIPLO_ALLOW_REMOTE_SUPABASE_TESTS=1` (`loadSupabaseTestEnv` refuses a
+ * non-local URL otherwise). Skipped, not failed, when credentials aren't
+ * available at all.
  *
  * Every test that inserts a row cleans it up via the service-role client
- * in `afterEach`, regardless of pass/fail, so a failed assertion doesn't
- * leave test rows in the shared project database.
+ * in `afterEach`, regardless of pass/fail. A process that dies between the
+ * insert and `afterEach` can still leave a row, which is why `beforeAll`
+ * also deletes everything under this suite's reserved URL prefix.
  */
 
 const env = loadSupabaseTestEnv();
 
-// A URL prefix reserved for this suite's rows, so cleanup can also sweep
-// anything a crashed previous run left behind without touching real data.
+// A URL prefix reserved for this suite's rows: the `beforeAll` sweep below
+// removes anything a crashed previous run left behind, without touching
+// real data.
 const TEST_URL_PREFIX = "https://periplo-phase2-test.example/";
 
 function testUrl(): string {
@@ -34,6 +39,10 @@ describe.skipIf(!env)("resources table: RLS policy (spec §5 Phase 2 gate)", () 
   const service: SupabaseClient<Database> = createServiceRoleClient(url, serviceRoleKey);
 
   const createdUrls: string[] = [];
+
+  beforeAll(async () => {
+    await service.from("resources").delete().like("url", `${TEST_URL_PREFIX}%`);
+  });
 
   afterEach(async () => {
     while (createdUrls.length > 0) {
