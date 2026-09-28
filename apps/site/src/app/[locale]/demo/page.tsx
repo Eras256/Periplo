@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Address, ChainSettlements } from "@/demo/ChainSettlements";
+import { Address } from "@/demo/ChainSettlements";
 import { ASSET_CODE, ASSET_CONTRACT_ID, UPTO_CONTRACT_ID, USDC_CONTRACT_ID } from "@/demo/contract";
-import { Simulator } from "@/demo/Simulator";
+import { DemoLive } from "@/demo/DemoLive";
 import { isLocale } from "@/i18n/config";
 import { format, getDictionary } from "@/i18n/dictionaries";
 import { alternates } from "@/lib/seo";
@@ -43,8 +43,7 @@ export default async function DemoPage({
         </p>
       </header>
       <div className="demo">
-        <ChainSettlements locale={locale} t={t} />
-        <Simulator locale={locale} t={t} />
+        <DemoLive locale={locale} t={t} />
         <dl className="facts small">
           <div>
             <dt>{t.facts.contract}</dt>

@@ -7,9 +7,9 @@ import { AuthorizedVsCharged } from "./AuthorizedVsCharged";
 import type { ChainSettlement } from "./chain-settlements";
 import { knownAssetCode } from "./contract";
 import {
+  type ChainSettlementsLive,
   type ChainSettlementsState,
   POLL_INTERVAL_MS,
-  useChainSettlements,
 } from "./useChainSettlements";
 
 export function shorten(id: string): string {
@@ -49,11 +49,13 @@ function errorText(
 export function ChainSettlements({
   locale,
   t,
+  live,
 }: {
   readonly locale: Locale;
   readonly t: Dictionary["demo"];
+  readonly live: ChainSettlementsLive;
 }) {
-  const { settlements, error, loading, updatedAt, reload } = useChainSettlements();
+  const { settlements, error, loading, updatedAt, reload } = live;
   const c = t.chain;
   const intl = locale === "es" ? "es-MX" : "en-US";
   const dateFormat = new Intl.DateTimeFormat(intl, { dateStyle: "medium", timeStyle: "short" });

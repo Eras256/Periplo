@@ -955,6 +955,28 @@ code,
   color: var(--error);
 }
 
+/* Real reference settlement under the simulated result: visibly separate. */
+.reference {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--accent);
+  border-left-width: 4px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+
+.reference h3 {
+  font-size: 1rem;
+}
+
+/* A full 64-character hash must wrap instead of forcing horizontal scroll. */
+.hash {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
 /* ---------- Demo (shared with /demo) ---------- */
 .demo {
   display: flex;

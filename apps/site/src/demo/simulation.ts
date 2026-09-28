@@ -6,7 +6,7 @@
  * testnet (`chain-settlements.ts`).
  */
 
-/** Simulated tariff: 100 base units (0.00001 PTEST) per generated token. */
+/** Simulated tariff: 100 base units (0.00001 USDC, 7 decimals) per generated token. */
 export const PRICE_PER_TOKEN = 100n;
 
 export interface UsageEvent {

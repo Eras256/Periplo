@@ -189,6 +189,13 @@
       "call": "Llamada #{id} · {tokens} tokens",
       "settle": "Terminar y liquidar solo lo usado",
       "settledNote": "Simulado: no se envió ninguna transacción. En testnet, este mismo resultado es una sola llamada a settle que transfiere lo cobrado al vendedor y devuelve el resto al comprador en la misma transacción.",
+      "reference": {
+        "title": "Una liquidación real equivalente en testnet",
+        "lede": "El mismo patrón, ejecutado de verdad sobre el contrato del demo: un techo firmado, un cobro parcial y el reembolso en una sola transacción. Cada valor se puede comprobar en la cadena.",
+        "fromEvents": "Montos leídos en vivo del evento settled de esta transacción.",
+        "fromEvidence": "Registro estático de evidencia: la lectura de eventos no está disponible, o esta transacción es anterior a los ~7 días de eventos que conserva el RPC.",
+        "transaction": "Transacción"
+      },
       "again": "Probar de nuevo"
     },
     "facts": {

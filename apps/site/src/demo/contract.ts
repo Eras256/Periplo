@@ -2,6 +2,8 @@ export const UPTO_CONTRACT_ID = "CA7OYVXWPSQHXNBWJQZ7TCKQILAVBHWDAPNRJTKY66LHR5K
 /** Ledger of the `CreateContract` transaction (2b8084b4bc...); no events can predate it. */
 export const UPTO_CONTRACT_DEPLOY_LEDGER = 4905262;
 export const ASSET_CODE = "PTEST";
+/** The in-browser simulation is denominated in testnet USDC (7 decimals, read from the SAC on-chain). */
+export const SIMULATION_ASSET_CODE = "USDC";
 export const ASSET_CONTRACT_ID = "CCK2UCUDA2CYGBHIPURM6TIXZEHULBVIGPVB2UTP3R2LCIKB3O5P723X";
 export const USDC_CONTRACT_ID = "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA";
 

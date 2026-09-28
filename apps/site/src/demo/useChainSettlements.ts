@@ -79,3 +79,5 @@ export function useChainSettlements() {
 
   return { ...state, reload: load };
 }
+
+export type ChainSettlementsLive = ReturnType<typeof useChainSettlements>;

@@ -1,7 +1,6 @@
 import type { Dictionary } from "@/i18n/dictionaries";
 import { format as fill } from "@/i18n/dictionaries";
 import { formatAmount } from "./amount";
-import { ASSET_CODE } from "./contract";
 
 function percentOf(part: bigint, whole: bigint): number {
   if (whole <= 0n) return 0;
@@ -13,14 +12,14 @@ export function AuthorizedVsCharged({
   authorized,
   charged,
   refundLabel,
-  unit = ASSET_CODE,
+  unit,
   format = formatAmount,
 }: {
   readonly t: Dictionary["demo"];
   readonly authorized: bigint;
   readonly charged: bigint;
   readonly refundLabel?: string;
-  readonly unit?: string;
+  readonly unit: string;
   readonly format?: (units: bigint) => string;
 }) {
   const chargedPercent = percentOf(charged, authorized);

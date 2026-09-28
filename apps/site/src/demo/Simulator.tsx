@@ -1,11 +1,15 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import { EVIDENCE } from "@/data/evidence";
 import type { Locale } from "@/i18n/config";
 import { type Dictionary, format } from "@/i18n/dictionaries";
+import { txUrl } from "@/lib/links";
 import { AuthorizedVsCharged } from "./AuthorizedVsCharged";
 import { formatAmount, parseAmount } from "./amount";
-import { ASSET_CODE } from "./contract";
+import type { ChainSettlement } from "./chain-settlements";
+import { SIMULATION_ASSET_CODE } from "./contract";
+import { findReference, REFERENCE_SETTLEMENT_HASH } from "./reference";
 import { PRICE_PER_TOKEN, sumUsage } from "./simulation";
 import { type SimulationPhase, useSimulation } from "./useSimulation";
 
@@ -36,7 +40,7 @@ function CeilingForm({
 
   return (
     <form className="stack" onSubmit={submit} noValidate>
-      <label htmlFor="ceiling">{format(t.ceilingLabel, { asset: ASSET_CODE })}</label>
+      <label htmlFor="ceiling">{format(t.ceilingLabel, { asset: SIMULATION_ASSET_CODE })}</label>
       <div className="row">
         <input
           id="ceiling"
@@ -82,11 +86,17 @@ function Metering({
     <div className="stack">
       <p>
         {format(s.ceilingSummary, {
-          ceiling: `${formatAmount(phase.ceiling)} ${ASSET_CODE}`,
-          price: `${formatAmount(PRICE_PER_TOKEN)} ${ASSET_CODE}`,
+          ceiling: `${formatAmount(phase.ceiling)} ${SIMULATION_ASSET_CODE}`,
+          price: `${formatAmount(PRICE_PER_TOKEN)} ${SIMULATION_ASSET_CODE}`,
         })}
       </p>
-      <AuthorizedVsCharged t={t} authorized={phase.ceiling} charged={used} refundLabel={t.unused} />
+      <AuthorizedVsCharged
+        t={t}
+        authorized={phase.ceiling}
+        charged={used}
+        refundLabel={t.unused}
+        unit={SIMULATION_ASSET_CODE}
+      />
       <p className="mono" aria-live="polite">
         {format(s.calls, { calls: phase.events.length, tokens: tokenFormat.format(tokens) })}
       </p>
@@ -108,7 +118,7 @@ function Metering({
                   {format(s.call, { id: event.id, tokens: tokenFormat.format(event.tokens) })}
                 </span>
                 <span className="mono">
-                  +{formatAmount(event.amount)} {ASSET_CODE}
+                  +{formatAmount(event.amount)} {SIMULATION_ASSET_CODE}
                 </span>
               </li>
             ))
@@ -121,12 +131,62 @@ function Metering({
   );
 }
 
-export function Simulator({
+function ReferenceSettlement({
   locale,
   t,
+  settlements,
 }: {
   readonly locale: Locale;
   readonly t: Dictionary["demo"];
+  readonly settlements: readonly ChainSettlement[] | null;
+}) {
+  const r = t.sim.reference;
+  const live = findReference(settlements);
+  const evidence = EVIDENCE.find((item) => item.hash === REFERENCE_SETTLEMENT_HASH);
+
+  return (
+    <aside className="reference" aria-labelledby="reference-title">
+      <h3 id="reference-title">{r.title}</h3>
+      <p className="muted small">{r.lede}</p>
+      {live ? (
+        <>
+          <AuthorizedVsCharged
+            t={t}
+            authorized={live.maxAmount}
+            charged={live.actualAmount}
+            unit={SIMULATION_ASSET_CODE}
+          />
+          <p className="muted small">{r.fromEvents}</p>
+        </>
+      ) : (
+        <>
+          <p>{evidence?.text[locale]}</p>
+          <p className="muted small">{r.fromEvidence}</p>
+        </>
+      )}
+      <p className="small">
+        {r.transaction}:{" "}
+        <a
+          className="mono hash"
+          href={txUrl(REFERENCE_SETTLEMENT_HASH)}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {REFERENCE_SETTLEMENT_HASH}
+        </a>
+      </p>
+    </aside>
+  );
+}
+
+export function Simulator({
+  locale,
+  t,
+  settlements,
+}: {
+  readonly locale: Locale;
+  readonly t: Dictionary["demo"];
+  readonly settlements: readonly ChainSettlement[] | null;
 }) {
   const { phase, authorize, settle, reset } = useSimulation();
   const current = stepIndex(phase);
@@ -158,8 +218,14 @@ export function Simulator({
       ) : null}
       {phase.step === "settled" ? (
         <div className="stack">
-          <AuthorizedVsCharged t={t} authorized={phase.ceiling} charged={sumUsage(phase.events)} />
+          <AuthorizedVsCharged
+            t={t}
+            authorized={phase.ceiling}
+            charged={sumUsage(phase.events)}
+            unit={SIMULATION_ASSET_CODE}
+          />
           <p className="muted small">{s.settledNote}</p>
+          <ReferenceSettlement locale={locale} t={t} settlements={settlements} />
           <button type="button" className="btn btn--secondary" onClick={reset}>
             {s.again}
           </button>

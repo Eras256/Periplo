@@ -189,6 +189,13 @@
       "call": "Call #{id} · {tokens} tokens",
       "settle": "Finish and settle only what was used",
       "settledNote": "Simulated: no transaction was sent. On testnet, this same result is a single call to settle that transfers the charged amount to the seller and refunds the rest to the buyer in the same transaction.",
+      "reference": {
+        "title": "A real equivalent settlement on testnet",
+        "lede": "The same pattern, run for real on the demo contract: a signed ceiling, a partial charge and the refund in a single transaction. Every value can be checked on-chain.",
+        "fromEvents": "Amounts read live from this transaction's settled event.",
+        "fromEvidence": "Static evidence record: the live event read is unavailable, or this transaction is older than the ~7 days of events the RPC keeps.",
+        "transaction": "Transaction"
+      },
       "again": "Try again"
     },
     "facts": {
