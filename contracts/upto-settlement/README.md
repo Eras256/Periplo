@@ -104,24 +104,27 @@ and produced a GitHub build attestation for it.
 ```bash
 gh release download sep55-attestation-test-v1_contracts_upto_settlement_upto-settlement_pkg0.1.0_cli27.0.0 \
   --repo Eras256/Periplo
-gh attestation verify upto-settlement_v0.1.0.wasm --repo Eras256/Periplo
+gh attestation verify upto-settlement_v0.1.0.wasm --repo Eras256/Periplo \
+  --signer-repo stellar-expert/soroban-build-workflow
 ```
 
-Confirmed for real, not assumed: the raw attestation record (`gh api
-/repos/Eras256/Periplo/attestations/sha256:26e51757...`) is a well-formed
-in-toto/SLSA provenance statement, whose subject digest matches the released
-wasm exactly, `predicateType` is `https://slsa.dev/provenance/v1`,
-`builder.id` is
+The attestation is signed by the reusable workflow's own repo
+(`stellar-expert/soroban-build-workflow`), not `Eras256/Periplo`, so
+`--signer-repo` is required for `gh attestation verify` to resolve the
+correct signing identity; without it the command fails with a bare
+`Error: verifying with issuer "sigstore.dev"`.
+
+Confirmed for real, not assumed: the command above passes `gh attestation
+verify`'s full cryptographic check against Sigstore (exit 0), and the raw
+attestation record (`gh api /repos/Eras256/Periplo/attestations/sha256:26e51757...`)
+is a well-formed in-toto/SLSA provenance statement, whose subject digest
+matches the released wasm exactly (`26e51757e90f98428f4b024539fe86701b57367f8469afa7663928bb790cc636`),
+`predicateType` is `https://slsa.dev/provenance/v1`, `builder.id` is
 `https://github.com/stellar-expert/soroban-build-workflow/.github/workflows/release.yml@88068ec50cba931a96436869727ed08edeb76ade`
-(the exact pinned SHA above), and it carries a Rekor transparency-log
-inclusion proof. `gh attestation verify`'s own cryptographic check against
-Sigstore's infrastructure did not complete in the sandboxed session that
-produced this doc (network to `sigstore.dev`/`rekor.sigstore.dev` itself
-answered fine; the command's own verification step failed with a bare
-`Error: verifying with issuer "sigstore.dev"` regardless of `--owner` vs
-`--repo`, and the cause wasn't pinned down further). Re-run the two
-commands above from a normal terminal to get the actual green checkmark;
-don't take this doc's word for that specific step.
+(the exact pinned SHA above), `sourceRepositoryRef` is
+`refs/tags/sep55-attestation-test-v1`, the run is
+[`36370214523`](https://github.com/Eras256/Periplo/actions/runs/36370214523),
+and it carries a Rekor transparency-log inclusion proof.
 
 ### SEP-58: reproducible container build, twice
 
