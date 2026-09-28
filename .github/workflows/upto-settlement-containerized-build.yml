@@ -31,7 +31,11 @@ jobs:
 
       - name: Build inside the pinned container (SEP-58 Appendix A)
         run: |
-          docker run --rm -v "$PWD:/source" -e RUSTUP_TOOLCHAIN "$BLDIMG" \
+          # --user root: the image's default user can't write into the
+          # bind-mounted /source (owned by the runner's own UID), confirmed
+          # live ("Permission denied (os error 13)" writing cargo's target
+          # dir under /source on the first real run of this workflow).
+          docker run --rm --user root -v "$PWD:/source" -e RUSTUP_TOOLCHAIN "$BLDIMG" \
             contract build \
               --manifest-path=contracts/upto-settlement/Cargo.toml \
               --optimize \
