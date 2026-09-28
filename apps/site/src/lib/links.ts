@@ -8,6 +8,7 @@ export const DOCS = {
   uptoConvergence: `${REPO_URL}/blob/main/docs/UPTO-CONVERGENCE.md`,
 } as const;
 export const FACILITATOR_URL = "https://periplo-testnet.fly.dev";
+export const NPM_URL = "https://www.npmjs.com/package/periplo";
 /** Open, not merged (checked against the GitHub API on every publish that cites it). */
 export const UPTO_SPEC_PR_URL = "https://github.com/x402-foundation/x402/pull/3098";
 export const SITE_URL = "https://periplo.xyz";

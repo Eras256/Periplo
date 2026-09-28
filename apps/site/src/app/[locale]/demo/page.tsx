@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Address } from "@/demo/ChainSettlements";
 import { ASSET_CODE, ASSET_CONTRACT_ID, UPTO_CONTRACT_ID, USDC_CONTRACT_ID } from "@/demo/contract";
@@ -65,6 +66,9 @@ export default async function DemoPage({
           </div>
         </dl>
         <p className="muted small">{t.facts.disclaimer}</p>
+        <p className="small">
+          <Link href={`/${locale}/docs`}>{t.facts.useFromCode}</Link>
+        </p>
       </div>
     </div>
   );
