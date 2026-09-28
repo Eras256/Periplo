@@ -600,7 +600,7 @@ loose ends from shipping `contracts/upto-settlement`.
   partial settlement and the other really is a maximum settlement,
   exactly as labeled. Caught nothing wrong, but the check was real, not
   a formality.
-- **Merged both designs into one spec rather than let the maintainers
+- **Consolidated both designs into one spec rather than let the maintainers
   arbitrate two competing PRs.** Updated `#3098` to document `stateless`
   as a second, credited profile (Iam0TI, `0d1026/Rialto`, `#3134` by
   name, not folded in as if it originated here) alongside the existing
@@ -610,7 +610,7 @@ loose ends from shipping `contracts/upto-settlement`.
   all) as a real but unbuilt third option rather than silently dropping
   it when the old placeholder `smartAccount` section got replaced.
   Posted a comment to `#3134` crediting the specific strengths found and
-  proposing the merged outcome, which is what the `#3134` author had
+  proposing the consolidated outcome, which is what the `#3134` author had
   already asked for.
 - **A GitHub bot check caught something a full local gate could not:
   every commit signed, but not verified.** `#3098`'s commit-signing

@@ -172,7 +172,7 @@ property was confirmed live on testnet (a settled nonce's
 exactly the requested margin), not just in a unit test. Not proposed as
 *the* required test vector over rail402's own boundary check, since
 they're different mechanisms answering the same risk: flagged instead
-that "stored TTL-bounded nonce" isn't one shape, and the merged spec
+that "stored TTL-bounded nonce" isn't one shape, and the consolidated spec
 should allow either "derive TTL from the signed deadline" or "check the
 deadline against a fixed ceiling" rather than assuming one implies the
 other.
@@ -180,7 +180,7 @@ other.
 ## Where it stands
 
 `#3098` is ready for review, waiting on maintainer direction on where the
-merged two-profile document should actually consolidate before a
+consolidated two-profile document should actually land before a
 follow-up PR opens. All four implementation gaps above are now closed:
 `GET /discovery/*` and the `extra`-aware dedupe key on 2026-08-17, each
 with its own commit and tests, and `/supported` reporting `upto` for
@@ -260,14 +260,14 @@ norm.
 
 The same day, on `#3134` itself,
 [bomanaps proposed a concrete structure](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5423560051)
-for the merged document: `stateless` as the base profile (no
+for the consolidated document: `stateless` as the base profile (no
 implementation-defined boundary to test), `contract`/stateful carrying
 the required test vectors, both mechanisms accepted rather than one
 picked as canonical, replying directly to the TTL exchange above.
 [We agreed](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5432236025)
 and folded in HeylmStoned's earlier wire-level point before the
 structure gets drafted: `scheme: "upto"` alone still doesn't
-disambiguate the two profiles once both exist in one spec, the merged
+disambiguate the two profiles once both exist in one spec, the consolidated
 document needs the stable `extra.uptoProfile` discriminator (already
 tracked in `docs/DEFERRED.md`) reflected in `/supported` too, or the
 clean base-vs-stateful split leaves the exact client-side ambiguity

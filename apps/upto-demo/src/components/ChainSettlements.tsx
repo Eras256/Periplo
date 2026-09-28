@@ -1,5 +1,5 @@
 import type { ChainSettlement } from "../api/chain-settlements.js";
-import { ASSET_CONTRACT_ID, transactionUrl } from "../api/contract.js";
+import { knownAssetCode, transactionUrl } from "../api/contract.js";
 import { POLL_INTERVAL_MS, useChainSettlements } from "../hooks/useChainSettlements.js";
 import { Address, shorten } from "./Address.js";
 import { AuthorizedVsCharged } from "./AuthorizedVsCharged.js";
@@ -7,9 +7,10 @@ import { AuthorizedVsCharged } from "./AuthorizedVsCharged.js";
 const dateFormat = new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" });
 const timeFormat = new Intl.DateTimeFormat("es-MX", { timeStyle: "medium" });
 
-/** The contract accepts any SEP-41 token; only PTEST's decimals are known here, so others show raw base units. */
+/** The contract accepts any SEP-41 token; only PTEST and USDC have known decimals here, so others show raw base units. */
 function amountProps(settlement: ChainSettlement) {
-  if (settlement.asset === ASSET_CONTRACT_ID) return {};
+  const code = knownAssetCode(settlement.asset);
+  if (code) return { unit: code };
   return {
     unit: `unidades base de ${shorten(settlement.asset)}`,
     format: (units: bigint) => units.toString(),
