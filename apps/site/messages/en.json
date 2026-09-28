@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Periplo: non-custodial x402 facilitator for Stellar",
+    "title": "Periplo: x402 facilitator for Stellar",
     "description": "Periplo verifies and settles x402 payments on Stellar that buyers sign themselves, sponsoring only the network fee. Open source, Apache-2.0, testnet only.",
     "ogAlt": "Periplo. Sign a ceiling. Pay only for what you use."
   },
@@ -24,7 +24,7 @@
   "hero": {
     "eyebrow": "x402 · Stellar testnet",
     "title": "x402 payments on Stellar that charge only for what's used.",
-    "lede": "Periplo is an open-source, non-custodial x402 facilitator. With upto, the buyer signs a spending ceiling once and only the real usage settles; the contract enforces the ceiling and never holds funds.",
+    "lede": "Periplo is an open-source x402 facilitator: in x402, the facilitator is the service that verifies and sends the payment the buyer signs. With upto, the buyer signs a spending ceiling once and only the real usage settles; the contract enforces the ceiling and its balance is zero after every settlement.",
     "uptoNote": "We're proposing upto for Stellar inside the x402 standard, so any facilitator can use it the same way (open PR,",
     "ctaLaunch": "Launch App",
     "ctaGithub": "View on GitHub",
@@ -56,8 +56,8 @@
     "settled": "settled",
     "refunded": "refunded",
     "facts": {
-      "custodyTitle": "Non-custodial by construction",
-      "custodyText": "The facilitator only pays network fees. It refuses to start with a key that can move user funds, and it is never the source or signer of a buyer's payment.",
+      "custodyTitle": "Who controls the funds",
+      "custodyText": "The buyer signs each payment with their own key. The facilitator only pays network fees, refuses to start with a key that can move user funds, and is never the source or signer of a buyer's payment.",
       "discoveryTitle": "Discovery included",
       "discoveryText": "Resources settled through Periplo can be cataloged so agents can find them by searching, not by knowing the URL in advance.",
       "uptoTitle": "Where upto runs today",
@@ -222,7 +222,7 @@
     "reportLink": "Report privately through GitHub",
     "designTitle": "What the design protects against",
     "design": [
-      "The facilitator refuses to start if its key could move user funds.",
+      "The facilitator refuses to start if its key could move users' assets.",
       "It is never the source, operation source or signer of a buyer's payment; it only pays the network fee.",
       "With upto, the buyer's signature covers a ceiling, and the contract rejects any settlement above it.",
       "Every rejected payment returns an explicit reason."

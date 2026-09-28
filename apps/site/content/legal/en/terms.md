@@ -1,6 +1,6 @@
 ## What Periplo is
 
-Periplo is open-source software: an x402 payment facilitator for Stellar, with a discovery catalog, Soroban contracts and this site. The project also runs public demonstration deployments, **on Stellar testnet only**.
+Periplo is open-source software: an x402 facilitator for Stellar (in x402, the facilitator is the service that verifies and sends the payment the buyer signs), with a discovery catalog, Soroban contracts and this site. The project also runs public demonstration deployments, **on Stellar testnet only**.
 
 ## Testnet only
 
@@ -8,9 +8,9 @@ Periplo is open-source software: an x402 payment facilitator for Stellar, with a
 - PTEST and any other asset shown in the demo are test assets **with no value**.
 - Stellar testnet is reset periodically; testnet data and balances can disappear.
 
-## Non-custodial
+## Who controls the funds
 
-Periplo never receives, holds or moves anyone's funds. The facilitator only sponsors the network fee of payments the buyer signs themselves, and refuses to start if its key could move user funds. Periplo has no fiat rail, charges no fees and requires no accounts.
+Periplo never receives, holds or moves anyone's funds. The buyer signs each payment with their own key. The facilitator only sponsors the network fee of those payments, and refuses to start if its key could move user funds. Periplo has no fiat rail, charges no fees and requires no accounts.
 
 ## The software
 

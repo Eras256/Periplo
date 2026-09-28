@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Periplo: facilitador x402 no custodial para Stellar",
+    "title": "Periplo: facilitador x402 para Stellar",
     "description": "Periplo verifica y liquida pagos x402 en Stellar que el comprador firma, y solo patrocina la comisión de red. Código abierto, Apache-2.0, solo testnet.",
     "ogAlt": "Periplo. Autorizas un techo. Pagas solo lo que usas."
   },
@@ -24,7 +24,7 @@
   "hero": {
     "eyebrow": "x402 · Stellar testnet",
     "title": "Pagos x402 en Stellar que cobran solo lo que se usa.",
-    "lede": "Periplo es un facilitador x402 no custodial y de código abierto. Con upto, quien compra firma un techo de gasto una sola vez y solo se liquida el uso real; el contrato hace cumplir el techo y nunca guarda fondos.",
+    "lede": "Periplo es un facilitador x402 de código abierto: en x402, el facilitador es el servicio que verifica y envía el pago que el comprador firma. Con upto, quien compra firma un techo de gasto una sola vez y solo se liquida el uso real; el contrato hace cumplir el techo y su saldo queda en cero después de cada liquidación.",
     "uptoNote": "Estamos proponiendo upto para Stellar dentro del estándar x402, para que cualquier facilitador lo use igual (PR abierto,",
     "ctaLaunch": "Launch App",
     "ctaGithub": "Ver en GitHub",
@@ -56,8 +56,8 @@
     "settled": "liquidado",
     "refunded": "devuelto",
     "facts": {
-      "custodyTitle": "No custodial por diseño",
-      "custodyText": "El facilitador solo paga comisiones de red. Se niega a arrancar con una llave que pueda mover fondos de usuarios, y nunca es origen ni firmante del pago de un comprador.",
+      "custodyTitle": "Quién controla los fondos",
+      "custodyText": "El comprador firma cada pago con su propia llave. El facilitador solo paga comisiones de red, se niega a arrancar con una llave que pueda mover fondos de usuarios, y nunca es origen ni firmante del pago de un comprador.",
       "discoveryTitle": "Descubrimiento incluido",
       "discoveryText": "Los recursos que se liquidan a través de Periplo pueden catalogarse para que los agentes los encuentren buscando, sin conocer la URL de antemano.",
       "uptoTitle": "Dónde corre upto hoy",
@@ -222,7 +222,7 @@
     "reportLink": "Reportar en privado por GitHub",
     "designTitle": "De qué protege el diseño",
     "design": [
-      "El facilitador se niega a arrancar si su llave pudiera mover fondos de usuarios.",
+      "El facilitador se niega a arrancar si su llave pudiera mover activos de usuarios.",
       "Nunca es origen, origen de operación ni firmante del pago de un comprador; solo paga la comisión de red.",
       "Con upto, la firma del comprador cubre un techo, y el contrato rechaza cualquier liquidación por encima.",
       "Cada pago rechazado devuelve un motivo explícito."

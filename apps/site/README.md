@@ -91,6 +91,10 @@ Tested on Vercel: deployed as `periplo-site.vercel.app` (project
 
 ## Before the first public deploy
 
+- [ ] Giovanny decides who is responsible and how to contact them, then
+      replaces the first section of `content/legal/{es,en}/privacy.md` (it says
+      no one is designated yet and points to the public issues page) and the
+      site footer's "Periplo contributors". Nothing there may be invented.
 - [ ] Confirm the facts the privacy page cannot get from the code: how
       long Fly.io keeps the facilitator's logs, and whether the Vercel
       project has analytics or log drains enabled.

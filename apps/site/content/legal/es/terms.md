@@ -1,6 +1,6 @@
 ## Qué es Periplo
 
-Periplo es software de código abierto: un facilitador de pagos x402 para Stellar, con un catálogo de descubrimiento, contratos de Soroban y este sitio. El proyecto opera además despliegues públicos de demostración, **solo en Stellar testnet**.
+Periplo es software de código abierto: un facilitador x402 para Stellar (en x402, el facilitador es el servicio que verifica y envía el pago que el comprador firma), con un catálogo de descubrimiento, contratos de Soroban y este sitio. El proyecto opera además despliegues públicos de demostración, **solo en Stellar testnet**.
 
 ## Solo testnet
 
@@ -8,9 +8,9 @@ Periplo es software de código abierto: un facilitador de pagos x402 para Stella
 - PTEST y cualquier otro activo que aparezca en el demo son activos de prueba **sin valor**.
 - Stellar testnet se reinicia periódicamente; los datos y saldos de testnet pueden desaparecer.
 
-## No custodia
+## Quién controla los fondos
 
-Periplo nunca recibe, guarda ni mueve fondos de nadie. El facilitador solo patrocina la comisión de red de pagos que firma el propio comprador, y se niega a arrancar si su llave pudiera mover fondos de usuarios. Periplo no tiene riel fiat, no cobra comisiones y no requiere cuentas.
+Periplo nunca recibe, guarda ni mueve fondos de nadie. El comprador firma cada pago con su propia llave. El facilitador solo patrocina la comisión de red de esos pagos, y se niega a arrancar si su llave pudiera mover fondos de usuarios. Periplo no tiene riel fiat, no cobra comisiones y no requiere cuentas.
 
 ## El software
 
