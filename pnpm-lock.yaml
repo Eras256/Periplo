@@ -75,6 +75,9 @@ importers:
 
   apps/site:
     dependencies:
+      '@stellar/stellar-sdk':
+        specifier: 16.3.0
+        version: 16.3.0(debug@4.4.3)
       marked:
         specifier: 18.0.14
         version: 18.0.14

@@ -174,12 +174,12 @@
     },
     "sim": {
       "title": "Pruébalo tú",
-      "tag": "Simulación en tu navegador",
-      "lede": "Recorre el mismo flujo con montos generados localmente. No envía transacciones ni toca testnet; las liquidaciones reales están en la sección de arriba.",
+      "tag": "Simulación o liquidación real en testnet",
+      "lede": "Recorre el mismo flujo con montos generados localmente. La simulación no envía transacciones; también puedes liquidar ese mismo uso de verdad en testnet, donde un comprador de demo del proyecto firma el techo. Las liquidaciones reales están en la sección de arriba.",
       "steps": ["Autorizar un techo", "Uso medido", "Liquidación"],
       "ceilingLabel": "Techo de gasto ({asset})",
       "authorize": "Autorizar techo",
-      "hint": "El comprador firma este máximo una sola vez. En el flujo real es una firma de autorización sobre el contrato; aquí no se firma nada.",
+      "hint": "El comprador firma este máximo una sola vez. En el flujo real es una firma de autorización sobre el contrato. La simulación no firma nada; una liquidación real la firma el comprador de demo del proyecto, no tú.",
       "invalid": "Escribe un monto mayor a {min} con hasta 7 decimales.",
       "ceilingSummary": "Techo autorizado: {ceiling}. Tarifa simulada: {price} por token generado.",
       "calls": "{calls} llamadas · {tokens} tokens",
@@ -187,7 +187,7 @@
       "listLabel": "Llamadas medidas, la más reciente primero",
       "waiting": "Esperando la primera llamada…",
       "call": "Llamada #{id} · {tokens} tokens",
-      "settle": "Terminar y liquidar solo lo usado",
+      "settle": "Simular liquidación (sin transacción)",
       "settledNote": "Simulado: no se envió ninguna transacción. En testnet, este mismo resultado es una sola llamada a settle que transfiere lo cobrado al vendedor y devuelve el resto al comprador en la misma transacción.",
       "reference": {
         "title": "Una liquidación real equivalente en testnet",
@@ -195,6 +195,32 @@
         "fromEvents": "Montos leídos en vivo del evento settled de esta transacción.",
         "fromEvidence": "Registro estático de evidencia: la lectura de eventos no está disponible, o esta transacción es anterior a los ~7 días de eventos que conserva el RPC.",
         "transaction": "Transacción"
+      },
+      "real": {
+        "title": "Liquida de verdad en testnet",
+        "disclosure": "Esta es una liquidación real en Stellar testnet. El comprador es una cuenta de prueba del proyecto que firma el techo por ti; tú no firmas nada en tu navegador. El USDC de testnet no tiene valor.",
+        "tokensLabel": "Tokens usados",
+        "tokensHint": "En este demo tú eliges el uso. El servidor lo cotiza a {price} por token y nunca confía en un monto que venga de tu navegador. Si el uso cuesta más que el techo, el cobro se queda en el techo.",
+        "button": "Liquidar en testnet (real)",
+        "pending": "Firmando el techo con el comprador del demo y esperando que la transacción se confirme en testnet. Puede tardar hasta un minuto…",
+        "settledTitle": "Liquidado en Stellar testnet",
+        "capped": "El uso habría costado {cost} {asset}, más que el techo firmado. El cobro se quedó en el techo: el contrato no permite cobrar más de lo firmado.",
+        "zero": "No se usó nada, así que el cobro es 0 y todo el techo regresó al comprador en la misma transacción.",
+        "amountFromEvent": "El monto cobrado se lee del evento settled de esta transacción, no lo calculó tu navegador.",
+        "transaction": "Transacción",
+        "buyer": "Comprador del demo (cuenta de prueba del proyecto)",
+        "seller": "Vendedor",
+        "fellBack": "La liquidación real no se completó, así que esto es la simulación en tu navegador (no se envió ninguna transacción). La evidencia de abajo es una liquidación real anterior.",
+        "errors": {
+          "rate_limited_visitor": "Alcanzaste el límite diario de liquidaciones reales desde tu conexión.",
+          "rate_limited_global": "El demo alcanzó su límite diario de liquidaciones reales.",
+          "demo_unavailable": "La liquidación real no está disponible en este momento.",
+          "demo_unfunded": "La cuenta compradora del demo se quedó sin fondos de prueba.",
+          "busy": "Hay otras liquidaciones en curso; inténtalo de nuevo en un momento.",
+          "unconfirmed": "La transacción se envió pero no se confirmó a tiempo, así que no se muestra ningún resultado.",
+          "failed": "La liquidación falló y, hasta donde esta página puede confirmar, no se cobró nada.",
+          "network": "La página no pudo comunicarse con el servicio de liquidación."
+        }
       },
       "again": "Probar de nuevo"
     },

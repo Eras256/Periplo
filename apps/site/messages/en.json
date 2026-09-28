@@ -174,12 +174,12 @@
     },
     "sim": {
       "title": "Try it yourself",
-      "tag": "Simulation in your browser",
-      "lede": "Walk through the same flow with amounts generated locally. It sends no transactions and does not touch testnet; the real settlements are in the section above.",
+      "tag": "Simulation or real testnet settlement",
+      "lede": "Walk through the same flow with amounts generated locally. The simulation sends no transactions; you can also settle the same usage for real on testnet, where a project-owned demo buyer signs the ceiling. The real settlements are in the section above.",
       "steps": ["Authorize a ceiling", "Metered usage", "Settlement"],
       "ceilingLabel": "Spending ceiling ({asset})",
       "authorize": "Authorize ceiling",
-      "hint": "The buyer signs this maximum once. In the real flow it is an authorization signature over the contract; nothing is signed here.",
+      "hint": "The buyer signs this maximum once. In the real flow it is an authorization signature over the contract. The simulation signs nothing; a real settlement is signed by the project's demo buyer, not by you.",
       "invalid": "Enter an amount greater than {min} with up to 7 decimals.",
       "ceilingSummary": "Authorized ceiling: {ceiling}. Simulated rate: {price} per generated token.",
       "calls": "{calls} calls · {tokens} tokens",
@@ -187,7 +187,7 @@
       "listLabel": "Metered calls, most recent first",
       "waiting": "Waiting for the first call…",
       "call": "Call #{id} · {tokens} tokens",
-      "settle": "Finish and settle only what was used",
+      "settle": "Simulate settlement (no transaction)",
       "settledNote": "Simulated: no transaction was sent. On testnet, this same result is a single call to settle that transfers the charged amount to the seller and refunds the rest to the buyer in the same transaction.",
       "reference": {
         "title": "A real equivalent settlement on testnet",
@@ -195,6 +195,32 @@
         "fromEvents": "Amounts read live from this transaction's settled event.",
         "fromEvidence": "Static evidence record: the live event read is unavailable, or this transaction is older than the ~7 days of events the RPC keeps.",
         "transaction": "Transaction"
+      },
+      "real": {
+        "title": "Settle for real on testnet",
+        "disclosure": "This is a real settlement on Stellar testnet. The buyer is a test account owned by the project that signs the ceiling on your behalf; you sign nothing in your browser. Testnet USDC has no value.",
+        "tokensLabel": "Tokens used",
+        "tokensHint": "You choose the usage in this demo. The server prices it at {price} per token and never trusts an amount from your browser. If the usage costs more than the ceiling, the charge stops at the ceiling.",
+        "button": "Settle on testnet (real)",
+        "pending": "Signing the ceiling with the demo buyer and waiting for the transaction to be confirmed on testnet. This can take up to a minute…",
+        "settledTitle": "Settled on Stellar testnet",
+        "capped": "The usage would have cost {cost} {asset}, above the signed ceiling. The charge stopped at the ceiling: the contract does not allow charging more than what was signed.",
+        "zero": "Nothing was used, so the charge is 0 and the whole ceiling went back to the buyer in the same transaction.",
+        "amountFromEvent": "The charged amount is read from this transaction's settled event, not calculated in your browser.",
+        "transaction": "Transaction",
+        "buyer": "Demo buyer (project test account)",
+        "seller": "Seller",
+        "fellBack": "The real settlement did not complete, so this is the in-browser simulation (no transaction was sent). The evidence below is a real, earlier settlement.",
+        "errors": {
+          "rate_limited_visitor": "You have reached the daily limit of real settlements from your connection.",
+          "rate_limited_global": "The demo has reached its daily limit of real settlements.",
+          "demo_unavailable": "The real settlement is not available right now.",
+          "demo_unfunded": "The demo buyer account has run out of test funds.",
+          "busy": "Other settlements are in progress; try again in a moment.",
+          "unconfirmed": "The transaction was submitted but was not confirmed in time, so no result is shown.",
+          "failed": "The settlement failed and nothing was charged as far as this page can confirm.",
+          "network": "The page could not reach the settlement service."
+        }
       },
       "again": "Try again"
     },

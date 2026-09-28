@@ -10,7 +10,9 @@ import { formatAmount, parseAmount } from "./amount";
 import type { ChainSettlement } from "./chain-settlements";
 import { SIMULATION_ASSET_CODE } from "./contract";
 import { findReference, REFERENCE_SETTLEMENT_HASH } from "./reference";
+import { MAX_TOKENS } from "./settle-model";
 import { PRICE_PER_TOKEN, sumUsage } from "./simulation";
+import { type RealSettlementPhase, useRealSettlement } from "./useRealSettlement";
 import { type SimulationPhase, useSimulation } from "./useSimulation";
 
 function stepIndex(phase: SimulationPhase): number {
@@ -70,17 +72,26 @@ function Metering({
   locale,
   t,
   phase,
+  real,
   onSettle,
+  onSettleReal,
 }: {
   readonly locale: Locale;
   readonly t: Dictionary["demo"];
   readonly phase: Extract<SimulationPhase, { step: "metering" }>;
+  readonly real: RealSettlementPhase;
   readonly onSettle: () => void;
+  readonly onSettleReal: (tokens: number) => void;
 }) {
   const s = t.sim;
   const tokenFormat = new Intl.NumberFormat(locale === "es" ? "es-MX" : "en-US");
   const used = sumUsage(phase.events);
   const tokens = phase.events.reduce((sum, event) => sum + event.tokens, 0);
+  const [tokensText, setTokensText] = useState<string | null>(null);
+  const shownTokens = tokensText ?? String(tokens);
+  const declared = /^\d{1,7}$/.test(shownTokens) ? Number(shownTokens) : null;
+  const tokensValid = declared !== null && declared <= MAX_TOKENS;
+  const pending = real.status === "pending";
 
   return (
     <div className="stack">
@@ -124,7 +135,45 @@ function Metering({
             ))
         )}
       </ol>
-      <button type="button" className="btn" onClick={onSettle} disabled={phase.events.length === 0}>
+      <fieldset className="stack real" disabled={pending}>
+        <legend>{s.real.title}</legend>
+        <p className="notice">{s.real.disclosure}</p>
+        <label htmlFor="tokens-used">{s.real.tokensLabel}</label>
+        <input
+          id="tokens-used"
+          inputMode="numeric"
+          autoComplete="off"
+          value={shownTokens}
+          onFocus={() => setTokensText((current) => current ?? shownTokens)}
+          onChange={(event) => setTokensText(event.target.value)}
+          aria-invalid={!tokensValid}
+          aria-describedby="tokens-hint"
+        />
+        <p id="tokens-hint" className="muted small">
+          {format(s.real.tokensHint, {
+            price: `${formatAmount(PRICE_PER_TOKEN)} ${SIMULATION_ASSET_CODE}`,
+          })}
+        </p>
+        <button
+          type="button"
+          className="btn"
+          disabled={!tokensValid}
+          onClick={() => declared !== null && onSettleReal(declared)}
+        >
+          {s.real.button}
+        </button>
+        {pending ? (
+          <p className="notice" role="status">
+            {s.real.pending}
+          </p>
+        ) : null}
+      </fieldset>
+      <button
+        type="button"
+        className="btn btn--secondary"
+        onClick={onSettle}
+        disabled={phase.events.length === 0 || pending}
+      >
         {s.settle}
       </button>
     </div>
@@ -179,6 +228,51 @@ function ReferenceSettlement({
   );
 }
 
+function RealResult({
+  t,
+  result,
+}: {
+  readonly t: Dictionary["demo"];
+  readonly result: Extract<RealSettlementPhase, { status: "settled" }>["result"];
+}) {
+  const r = t.sim.real;
+  const actual = BigInt(result.settled.actualAmount);
+  return (
+    <div className="stack" aria-live="polite" data-testid="real-result">
+      <h3>{r.settledTitle}</h3>
+      <AuthorizedVsCharged
+        t={t}
+        authorized={BigInt(result.settled.maxAmount)}
+        charged={actual}
+        unit={SIMULATION_ASSET_CODE}
+      />
+      <p className="muted small">{r.amountFromEvent}</p>
+      {result.capped ? (
+        <p className="notice" role="status">
+          {format(r.capped, {
+            cost: formatAmount(BigInt(result.cost)),
+            asset: SIMULATION_ASSET_CODE,
+          })}
+        </p>
+      ) : null}
+      {actual === 0n ? <p className="notice">{r.zero}</p> : null}
+      <p className="small">
+        {r.transaction}:{" "}
+        <a
+          className="mono hash"
+          data-testid="real-hash"
+          href={txUrl(result.hash)}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {result.hash}
+        </a>
+      </p>
+      <p className="muted small">{r.disclosure}</p>
+    </div>
+  );
+}
+
 export function Simulator({
   locale,
   t,
@@ -189,14 +283,24 @@ export function Simulator({
   readonly settlements: readonly ChainSettlement[] | null;
 }) {
   const { phase, authorize, settle, reset } = useSimulation();
+  const real = useRealSettlement();
   const current = stepIndex(phase);
+
+  const settleReal = async (ceiling: bigint, tokens: number) => {
+    await real.settle(ceiling, tokens);
+    settle();
+  };
+  const restart = () => {
+    real.reset();
+    reset();
+  };
   const s = t.sim;
 
   return (
     <section className="card" aria-labelledby="sim-title">
       <div className="card__head">
         <h2 id="sim-title">{s.title}</h2>
-        <span className="tag tag--dashed">{s.tag}</span>
+        <span className="tag tag--dashed tag--wrap">{s.tag}</span>
       </div>
       <p className="muted">{s.lede}</p>
 
@@ -214,19 +318,39 @@ export function Simulator({
 
       {phase.step === "idle" ? <CeilingForm t={s} onAuthorize={authorize} /> : null}
       {phase.step === "metering" ? (
-        <Metering locale={locale} t={t} phase={phase} onSettle={settle} />
+        <Metering
+          locale={locale}
+          t={t}
+          phase={phase}
+          real={real.phase}
+          onSettle={settle}
+          onSettleReal={(tokens) => void settleReal(phase.ceiling, tokens)}
+        />
       ) : null}
       {phase.step === "settled" ? (
         <div className="stack">
-          <AuthorizedVsCharged
-            t={t}
-            authorized={phase.ceiling}
-            charged={sumUsage(phase.events)}
-            unit={SIMULATION_ASSET_CODE}
-          />
-          <p className="muted small">{s.settledNote}</p>
-          <ReferenceSettlement locale={locale} t={t} settlements={settlements} />
-          <button type="button" className="btn btn--secondary" onClick={reset}>
+          {real.phase.status === "settled" ? (
+            <RealResult t={t} result={real.phase.result} />
+          ) : (
+            <>
+              {real.phase.status === "failed" ? (
+                <p className="notice" role="alert">
+                  {s.real.errors[real.phase.code as keyof typeof s.real.errors] ??
+                    s.real.errors.failed}{" "}
+                  {s.real.fellBack}
+                </p>
+              ) : null}
+              <AuthorizedVsCharged
+                t={t}
+                authorized={phase.ceiling}
+                charged={sumUsage(phase.events)}
+                unit={SIMULATION_ASSET_CODE}
+              />
+              <p className="muted small">{s.settledNote}</p>
+              <ReferenceSettlement locale={locale} t={t} settlements={settlements} />
+            </>
+          )}
+          <button type="button" className="btn btn--secondary" onClick={restart}>
             {s.again}
           </button>
         </div>

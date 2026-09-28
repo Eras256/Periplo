@@ -1296,3 +1296,21 @@ input[aria-invalid="true"] {
 .nav .btn {
   white-space: nowrap;
 }
+
+/* Real-settlement panel: fieldsets default to min-content width, which overflows at 320 px. */
+.real {
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.real legend {
+  padding: 0 8px;
+  font-weight: 600;
+}
+
+.real input {
+  flex: 0 0 auto;
+}
