@@ -83,10 +83,13 @@ jobs:
         # runner, so the RLS/integration suites and `pnpm eval` never touch
         # the production project. Only the database and the Data API are
         # needed; every other service is excluded to save image pulls.
+        # `gotrue` (auth) is kept on purpose: `supabase status` only prints
+        # ANON_KEY and SERVICE_ROLE_KEY while it is running (found in the
+        # first PR run, where excluding it left only the URLs).
         timeout-minutes: 10
         run: >-
           supabase start -x
-          gotrue,realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,studio,postgres-meta
+          realtime,storage-api,imgproxy,mailpit,edge-runtime,logflare,vector,supavisor,studio,postgres-meta
 
       - name: Point SUPABASE_* at the ephemeral stack
         run: |
@@ -94,8 +97,8 @@ jobs:
           echo "status keys (names only):"
           jq -r 'keys[]' "$RUNNER_TEMP/supabase-status.json"
           url=$(jq -r '.API_URL // .SUPABASE_URL // empty' "$RUNNER_TEMP/supabase-status.json")
-          anon=$(jq -r '.ANON_KEY // .SUPABASE_ANON_KEY // empty' "$RUNNER_TEMP/supabase-status.json")
-          service=$(jq -r '.SERVICE_ROLE_KEY // .SUPABASE_SERVICE_ROLE_KEY // empty' "$RUNNER_TEMP/supabase-status.json")
+          anon=$(jq -r '.ANON_KEY // .SUPABASE_ANON_KEY // .PUBLISHABLE_KEY // empty' "$RUNNER_TEMP/supabase-status.json")
+          service=$(jq -r '.SERVICE_ROLE_KEY // .SUPABASE_SERVICE_ROLE_KEY // .SECRET_KEY // empty' "$RUNNER_TEMP/supabase-status.json")
           : "${url:?no API URL in supabase status output}" "${anon:?no anon key}" "${service:?no service-role key}"
           {
             echo "SUPABASE_URL=$url"
