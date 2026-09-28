@@ -3119,3 +3119,44 @@ Its first real settlement, read by the page itself:
   `resources.integration.test.ts`) fail to load without a `.env`, on
   `main` too: they destructure `env` inside a `describe.skipIf(!env)`
   body, which Vitest 4 still executes.
+
+## `apps/site`: periplo.xyz as a Next.js app, outside Phase 9, 2026-09-27
+
+**Divergence:** spec §10 puts every public page in `apps/hub` (Phase 9, not
+started). The project site (landing, legal pages, security page, and the
+UptoSettlement demo at `/demo`) lives in its own `apps/site` instead, and
+does not claim Phase 9 has begun. `apps/upto-demo` is left untouched: it
+is the source of the GOYA HACK submission's deployment, so the site keeps
+its own translated copy of the demo logic.
+
+**Environment differences found building it:**
+
+- `periplo-testnet.fly.dev` answers `/supported` and `/status` with no
+  `Access-Control-Allow-Origin`, so no browser page on another origin can
+  read them. `curl` without an `Origin` header does not show this. The
+  site reads them from a server route (`apps/site/src/app/api/facilitator`)
+  with a 30 s CDN cache instead of changing the facilitator.
+- `next` lists `sharp` as an optional dependency, and sharp's
+  `@img/sharp-libvips-*` binaries are LGPL-3.0-or-later, which
+  licence-check denies. The site uses no `next/image` optimization
+  (`images.unoptimized`), so `sharp` is excluded with pnpm's
+  `ignoredOptionalDependencies` (`pnpm-workspace.yaml`) instead of being
+  installed and waived. `caniuse-lite` (CC-BY-4.0, build-time only) is
+  left as a non-blocking "review" item.
+- `pnpm licenses list` fails on this machine for any newly installed
+  package (`ERR_PNPM_MISSING_PACKAGE_INDEX_FILE`, now also for `marked`),
+  even through `corepack pnpm` and after `pnpm install --force`, so the
+  full `licence-check` could not run here. The site's production graph was
+  checked instead by walking `pnpm list --prod` and classifying each
+  package with licence-check's own `classifyLicense`: 26 allowed, 0
+  denied, 1 review (`caniuse-lite`). CI runs the real gate on push.
+- `/status` reported `catalogSize: 58` at 18:45 CDMX and `3` about half an
+  hour later, with no restart in between. Not caused by the site; noted
+  for whoever owns the catalog (possibly an `eval` fixture cleanup, since
+  `eval/` shares the production Supabase project).
+
+**Still open before a public deploy** (also in `apps/site/README.md`):
+private vulnerability reporting is disabled on the repository, so
+`/security` says the channel is pending; the privacy page cannot state
+Fly.io's log retention or the Vercel project's analytics settings from
+the code; the legal pages have had no legal review.

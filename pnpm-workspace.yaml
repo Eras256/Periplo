@@ -18,3 +18,10 @@ allowBuilds:
   onnxruntime-node: true
 minimumReleaseAgeExclude:
   - tsx@4.23.9
+# `next` (apps/site) lists `sharp` as an optional dependency, and sharp's
+# prebuilt `@img/sharp-libvips-*` binaries are LGPL-3.0-or-later, which
+# licence-check denies in the production graph. apps/site never uses
+# next/image optimization (`images.unoptimized: true` in its next.config.ts),
+# so sharp is excluded outright rather than installed and waived.
+ignoredOptionalDependencies:
+  - sharp

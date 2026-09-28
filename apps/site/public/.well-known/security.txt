@@ -1,0 +1,5 @@
+Contact: https://periplo.xyz/en/security
+Expires: 2027-09-27T00:00:00.000Z
+Preferred-Languages: en, es
+Canonical: https://periplo.xyz/.well-known/security.txt
+Policy: https://periplo.xyz/en/security

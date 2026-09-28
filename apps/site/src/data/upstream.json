@@ -1,0 +1,280 @@
+{
+  "checkedAt": "2026-09-28T00:59:39.607Z",
+  "items": [
+    {
+      "ref": "OpenZeppelin/stellar-contracts#839",
+      "repo": "OpenZeppelin/stellar-contracts",
+      "number": 839,
+      "kind": "issue",
+      "title": "Signer::Delegated + ContextRuleType::CallContract: __check_auth traps (UnreachableCodeReached) on a real signed auth entry (asking for help diagnosing, not sure yet if it's our construction or a coverage gap)",
+      "url": "https://github.com/OpenZeppelin/stellar-contracts/issues/839",
+      "state": "closed_completed",
+      "createdAt": "2026-08-15T02:20:25Z",
+      "closedAt": "2026-09-02T16:23:56Z"
+    },
+    {
+      "ref": "OpenZeppelin/stellar-contracts#863",
+      "repo": "OpenZeppelin/stellar-contracts",
+      "number": 863,
+      "kind": "issue",
+      "title": "Signer::Delegated: recording-mode simulation never surfaces the delegate's signing requirement (likely explains #839's trap)",
+      "url": "https://github.com/OpenZeppelin/stellar-contracts/issues/863",
+      "state": "closed_completed",
+      "createdAt": "2026-09-01T19:59:09Z",
+      "closedAt": "2026-09-02T15:15:32Z"
+    },
+    {
+      "ref": "StellarCN/py-stellar-base#1215",
+      "repo": "StellarCN/py-stellar-base",
+      "number": 1215,
+      "kind": "issue",
+      "title": "authorize_entry(): sequential CAP-71 delegate signing silently invalidates an earlier signature on expiration mismatch",
+      "url": "https://github.com/StellarCN/py-stellar-base/issues/1215",
+      "state": "closed_completed",
+      "createdAt": "2026-09-01T20:28:32Z",
+      "closedAt": "2026-09-08T02:49:54Z"
+    },
+    {
+      "ref": "stellar/js-stellar-sdk#1655",
+      "repo": "stellar/js-stellar-sdk",
+      "number": 1655,
+      "kind": "issue",
+      "title": "needsNonInvokerSigningBy()/signAuthEntries() only see the top-level node of a SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES entry, so an outstanding delegate signature is never reported",
+      "url": "https://github.com/stellar/js-stellar-sdk/issues/1655",
+      "state": "open",
+      "createdAt": "2026-08-15T07:47:46Z",
+      "closedAt": null
+    },
+    {
+      "ref": "stellar/js-stellar-sdk#1672",
+      "repo": "stellar/js-stellar-sdk",
+      "number": 1672,
+      "kind": "pr",
+      "title": "fix(contract): walk every CAP-71 delegate node, not just the top level",
+      "url": "https://github.com/stellar/js-stellar-sdk/pull/1672",
+      "state": "closed_unmerged",
+      "createdAt": "2026-08-20T15:45:30Z",
+      "closedAt": "2026-09-26T17:31:15Z"
+    },
+    {
+      "ref": "stellar/js-stellar-sdk#1681",
+      "repo": "stellar/js-stellar-sdk",
+      "number": 1681,
+      "kind": "issue",
+      "title": "AssembledTransaction.signAuthEntries can't represent a non-master-key signer for a plain Address credential, in two separate ways",
+      "url": "https://github.com/stellar/js-stellar-sdk/issues/1681",
+      "state": "closed_completed",
+      "createdAt": "2026-08-21T20:15:23Z",
+      "closedAt": "2026-09-26T17:18:42Z"
+    },
+    {
+      "ref": "stellar/js-stellar-sdk#1683",
+      "repo": "stellar/js-stellar-sdk",
+      "number": 1683,
+      "kind": "issue",
+      "title": "authorizeEntry's bare-signature fallback ignores forAddress, so a signer targeting a non-top-level address gets verified against the wrong public key",
+      "url": "https://github.com/stellar/js-stellar-sdk/issues/1683",
+      "state": "closed_completed",
+      "createdAt": "2026-08-21T23:51:47Z",
+      "closedAt": "2026-09-24T21:52:35Z"
+    },
+    {
+      "ref": "stellar/js-stellar-sdk#1699",
+      "repo": "stellar/js-stellar-sdk",
+      "number": 1699,
+      "kind": "issue",
+      "title": "XdrLargeInt.toU128()/.toU256()/.toU64() silently wrap negative values instead of throwing RangeError",
+      "url": "https://github.com/stellar/js-stellar-sdk/issues/1699",
+      "state": "closed_not_planned",
+      "createdAt": "2026-09-01T16:07:17Z",
+      "closedAt": "2026-09-01T16:25:27Z"
+    },
+    {
+      "ref": "stellar/stellar-dev-skill#103",
+      "repo": "stellar/stellar-dev-skill",
+      "number": 103,
+      "kind": "pr",
+      "title": "fix: point ECOSYSTEM_CARDS copyValue at raw content, not GitHub's blob HTML page",
+      "url": "https://github.com/stellar/stellar-dev-skill/pull/103",
+      "state": "merged",
+      "createdAt": "2026-08-16T23:02:52Z",
+      "closedAt": "2026-08-28T16:44:07Z"
+    },
+    {
+      "ref": "x402-foundation/x402#3098",
+      "repo": "x402-foundation/x402",
+      "number": 3098,
+      "kind": "pr",
+      "title": "docs: add upto scheme implementation spec for Stellar",
+      "url": "https://github.com/x402-foundation/x402/pull/3098",
+      "state": "open",
+      "createdAt": "2026-08-08T18:07:58Z",
+      "closedAt": null
+    },
+    {
+      "ref": "x402-foundation/x402#3121",
+      "repo": "x402-foundation/x402",
+      "number": 3121,
+      "kind": "issue",
+      "title": "[Bug]: extractDiscoveryInfo builds a broken canonical URL for mcp://tool/{toolName} resources",
+      "url": "https://github.com/x402-foundation/x402/issues/3121",
+      "state": "open",
+      "createdAt": "2026-08-11T03:45:02Z",
+      "closedAt": null
+    },
+    {
+      "ref": "x402-foundation/x402#3138",
+      "repo": "x402-foundation/x402",
+      "number": 3138,
+      "kind": "pr",
+      "title": "fix(bazaar): use raw resource URL as canonical for opaque-origin schemes",
+      "url": "https://github.com/x402-foundation/x402/pull/3138",
+      "state": "open",
+      "createdAt": "2026-08-12T20:15:59Z",
+      "closedAt": null
+    },
+    {
+      "ref": "x402-foundation/x402#3169",
+      "repo": "x402-foundation/x402",
+      "number": 3169,
+      "kind": "issue",
+      "title": "isValidRouteTemplate's traversal/scheme-injection checks decode routeTemplate once, so double percent-encoding bypasses both",
+      "url": "https://github.com/x402-foundation/x402/issues/3169",
+      "state": "closed_completed",
+      "createdAt": "2026-08-15T07:47:39Z",
+      "closedAt": "2026-09-09T08:37:45Z"
+    },
+    {
+      "ref": "x402-foundation/x402#3172",
+      "repo": "x402-foundation/x402",
+      "number": 3172,
+      "kind": "issue",
+      "title": "x402Facilitator.derivePattern() silently drops wildcard coverage when a single facilitator registers networks from multiple CAIP-2 namespaces",
+      "url": "https://github.com/x402-foundation/x402/issues/3172",
+      "state": "open",
+      "createdAt": "2026-08-15T17:25:10Z",
+      "closedAt": null
+    },
+    {
+      "ref": "x402-foundation/x402#3187",
+      "repo": "x402-foundation/x402",
+      "number": 3187,
+      "kind": "issue",
+      "title": "[Bug]: e2e client eagerly derives EVM+SVM signers regardless of --families, crashing single-family conformance runs",
+      "url": "https://github.com/x402-foundation/x402/issues/3187",
+      "state": "closed_completed",
+      "createdAt": "2026-08-17T20:29:30Z",
+      "closedAt": "2026-08-31T09:59:56Z"
+    },
+    {
+      "ref": "x402-foundation/x402#3215",
+      "repo": "x402-foundation/x402",
+      "number": 3215,
+      "kind": "pr",
+      "title": "fix(core): derive one wildcard pattern per namespace, not one for the whole registration",
+      "url": "https://github.com/x402-foundation/x402/pull/3215",
+      "state": "open",
+      "createdAt": "2026-08-20T15:53:56Z",
+      "closedAt": null
+    },
+    {
+      "ref": "x402-foundation/x402#3228",
+      "repo": "x402-foundation/x402",
+      "number": 3228,
+      "kind": "pr",
+      "title": "fix(e2e): scope EVM/SVM client signer derivation to selected families",
+      "url": "https://github.com/x402-foundation/x402/pull/3228",
+      "state": "merged",
+      "createdAt": "2026-08-22T00:38:36Z",
+      "closedAt": "2026-08-31T09:59:54Z"
+    },
+    {
+      "ref": "x402-foundation/x402#3270",
+      "repo": "x402-foundation/x402",
+      "number": 3270,
+      "kind": "issue",
+      "title": "HTTPFacilitatorClient.settle()/verify() discard the EXTENSION-RESPONSES header instead of returning it",
+      "url": "https://github.com/x402-foundation/x402/issues/3270",
+      "state": "closed_completed",
+      "createdAt": "2026-08-26T06:16:11Z",
+      "closedAt": "2026-08-31T15:59:02Z"
+    },
+    {
+      "ref": "x402-foundation/x402#3332",
+      "repo": "x402-foundation/x402",
+      "number": 3332,
+      "kind": "issue",
+      "title": "@x402/stellar: feeBumpSigner documented as a facilitator address by getSigners() but excluded from every facilitator-safety check",
+      "url": "https://github.com/x402-foundation/x402/issues/3332",
+      "state": "closed_completed",
+      "createdAt": "2026-09-01T16:08:03Z",
+      "closedAt": "2026-09-03T07:02:09Z"
+    },
+    {
+      "ref": "x402-foundation/x402#3333",
+      "repo": "x402-foundation/x402",
+      "number": 3333,
+      "kind": "issue",
+      "title": "@x402/stellar: areFeesSponsored: false accepted with no validation, silently breaks 100% of settlements against the official client",
+      "url": "https://github.com/x402-foundation/x402/issues/3333",
+      "state": "open",
+      "createdAt": "2026-09-01T16:08:47Z",
+      "closedAt": null
+    },
+    {
+      "ref": "x402-foundation/x402#3334",
+      "repo": "x402-foundation/x402",
+      "number": 3334,
+      "kind": "issue",
+      "title": "@x402/core: settlePayment() settlement-override resolution never enforces its own documented ceiling against PaymentRequirements.amount",
+      "url": "https://github.com/x402-foundation/x402/issues/3334",
+      "state": "closed_completed",
+      "createdAt": "2026-09-01T16:09:37Z",
+      "closedAt": "2026-09-08T12:11:29Z"
+    },
+    {
+      "ref": "x402-foundation/x402#3336",
+      "repo": "x402-foundation/x402",
+      "number": 3336,
+      "kind": "pr",
+      "title": "fix(stellar): include feeBumpSigner in facilitator-safety checks",
+      "url": "https://github.com/x402-foundation/x402/pull/3336",
+      "state": "merged",
+      "createdAt": "2026-09-01T16:29:54Z",
+      "closedAt": "2026-09-03T07:02:08Z"
+    },
+    {
+      "ref": "x402-foundation/x402#3338",
+      "repo": "x402-foundation/x402",
+      "number": 3338,
+      "kind": "pr",
+      "title": "fix(core): enforce settlement override ceiling against PaymentRequirements.amount",
+      "url": "https://github.com/x402-foundation/x402/pull/3338",
+      "state": "open",
+      "createdAt": "2026-09-01T16:38:31Z",
+      "closedAt": null
+    },
+    {
+      "ref": "x402-foundation/x402#3339",
+      "repo": "x402-foundation/x402",
+      "number": 3339,
+      "kind": "pr",
+      "title": "docs(stellar): cross-reference areFeesSponsored's unsupported-false limitation on the constructor",
+      "url": "https://github.com/x402-foundation/x402/pull/3339",
+      "state": "open",
+      "createdAt": "2026-09-01T16:39:49Z",
+      "closedAt": null
+    },
+    {
+      "ref": "x402-foundation/x402#3341",
+      "repo": "x402-foundation/x402",
+      "number": 3341,
+      "kind": "issue",
+      "title": "Spec: batch-settlement on Stellar needs a different voucher-signing mechanism than upto (require_auth caps expiration at 180 days)",
+      "url": "https://github.com/x402-foundation/x402/issues/3341",
+      "state": "open",
+      "createdAt": "2026-09-01T18:37:12Z",
+      "closedAt": null
+    }
+  ]
+}
