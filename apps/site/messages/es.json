@@ -22,8 +22,9 @@
   },
   "hero": {
     "eyebrow": "x402 · Stellar testnet",
-    "title": "Pagos x402 en Stellar, sin custodiar fondos de nadie.",
-    "lede": "Periplo es un facilitador x402 no custodial y de código abierto para Stellar: verifica y liquida pagos que el comprador firma, y solo patrocina la comisión de red.",
+    "title": "Pagos x402 en Stellar que cobran solo lo que se usa.",
+    "lede": "Periplo es un facilitador x402 no custodial y de código abierto. Con upto, quien compra firma un techo de gasto una sola vez y solo se liquida el uso real; el contrato hace cumplir el techo y nunca guarda fondos.",
+    "uptoNote": "Estamos proponiendo upto para Stellar dentro del estándar x402, para que cualquier facilitador lo use igual (PR abierto,",
     "ctaLaunch": "Launch App",
     "ctaGithub": "Ver en GitHub",
     "testnetNote": "Solo testnet. Periplo no opera en mainnet todavía."

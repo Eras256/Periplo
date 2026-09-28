@@ -531,6 +531,12 @@ code,
   letter-spacing: -0.02em;
 }
 
+.hero__note {
+  color: var(--muted);
+  font-size: 0.9rem;
+  max-width: 60ch;
+}
+
 .hero__ctas {
   display: flex;
   flex-wrap: wrap;

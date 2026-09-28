@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
-import { REPO_URL } from "@/lib/links";
+import { REPO_URL, UPTO_SPEC_PR_URL } from "@/lib/links";
 
 const STOPS = {
   en: ["buyer", "service · 402", "periplo", "stellar"],
@@ -61,6 +61,13 @@ export function Hero({ locale, t }: { readonly locale: Locale; readonly t: Dicti
           <p className="eyebrow">{t.eyebrow}</p>
           <h1 id="hero-title">{t.title}</h1>
           <p className="lede">{t.lede}</p>
+          <p className="hero__note">
+            {t.uptoNote}{" "}
+            <a href={UPTO_SPEC_PR_URL} target="_blank" rel="noreferrer" className="mono">
+              x402-foundation/x402#3098
+            </a>
+            )
+          </p>
           <div className="hero__ctas">
             <Link href={`/${locale}/demo`} className="btn">
               {t.ctaLaunch}
