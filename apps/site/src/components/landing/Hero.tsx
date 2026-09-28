@@ -72,6 +72,9 @@ export function Hero({ locale, t }: { readonly locale: Locale; readonly t: Dicti
             <Link href={`/${locale}/demo`} className="btn">
               {t.ctaLaunch}
             </Link>
+            <Link href={`/${locale}/docs`} className="btn btn--ghost">
+              {t.ctaDocs}
+            </Link>
             <a href={REPO_URL} className="btn btn--ghost" target="_blank" rel="noreferrer">
               {t.ctaGithub}
             </a>

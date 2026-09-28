@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ClientLibrary } from "@/components/landing/ClientLibrary";
 import { Evidence } from "@/components/landing/Evidence";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
@@ -17,6 +18,7 @@ export default async function Home({ params }: { readonly params: Promise<{ loca
       <Hero locale={locale} t={t.hero} />
       <HowItWorks t={t.how} />
       <Evidence locale={locale} t={t.evidence} />
+      <ClientLibrary locale={locale} t={t.clientLibrary} />
       <LiveStatus locale={locale} t={t.status} />
       <Upstream locale={locale} t={t.upstream} />
       <OpenSource t={t.openSource} />

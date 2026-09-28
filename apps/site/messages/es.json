@@ -19,7 +19,8 @@
     "themeLight": "Claro",
     "themeDark": "Oscuro",
     "themeSystem": "Sistema",
-    "home": "Inicio de Periplo"
+    "home": "Inicio de Periplo",
+    "docs": "Docs"
   },
   "hero": {
     "eyebrow": "x402 · Stellar testnet",
@@ -28,7 +29,8 @@
     "uptoNote": "Estamos proponiendo upto para Stellar dentro del estándar x402, para que cualquier facilitador lo use igual (PR abierto,",
     "ctaLaunch": "Launch App",
     "ctaGithub": "Ver en GitHub",
-    "testnetNote": "Solo testnet. Periplo no opera en mainnet todavía."
+    "testnetNote": "Solo testnet. Periplo no opera en mainnet todavía.",
+    "ctaDocs": "Leer la documentación"
   },
   "how": {
     "title": "Cómo funciona",
@@ -138,7 +140,8 @@
     "security": "Seguridad",
     "copyright": "© 2026 Colaboradores de Periplo · Apache-2.0",
     "independent": "Proyecto independiente de código abierto. No está afiliado, respaldado ni patrocinado por la Stellar Development Foundation.",
-    "testnetOnly": "Solo Stellar testnet. Periplo no opera en mainnet todavía."
+    "testnetOnly": "Solo Stellar testnet. Periplo no opera en mainnet todavía.",
+    "npm": "npm"
   },
   "demo": {
     "metaTitle": "Demo de UptoSettlement",
@@ -236,7 +239,8 @@
       "contract": "Contrato UptoSettlement",
       "asset": "Activo ({asset})",
       "assetUsdc": "Activo (USDC de testnet)",
-      "disclaimer": "Todo en esta página ocurre en Stellar testnet. PTEST y el USDC de testnet son activos de prueba sin valor. Periplo no opera en mainnet todavía."
+      "disclaimer": "Todo en esta página ocurre en Stellar testnet. PTEST y el USDC de testnet son activos de prueba sin valor. Periplo no opera en mainnet todavía.",
+      "useFromCode": "Úsalo desde tu propio código"
     }
   },
   "legal": {
@@ -267,5 +271,27 @@
     "title": "Página no encontrada",
     "text": "Esta página no existe.",
     "home": "Ir al inicio"
+  },
+  "docs": {
+    "eyebrow": "Docs",
+    "title": "Documentación",
+    "lede": "La librería cliente periplo: qué hace hoy, con honestidad, y cómo instalarla.",
+    "metaTitle": "Documentación",
+    "metaDescription": "Documentación de la librería cliente periplo: instalación, qué hacen upto y exact, y qué funciona hoy en stellar:testnet.",
+    "scopeNote": "Esta sección hoy cubre Introducción e Instalación. Los inicios rápidos y la referencia completa de la API necesitan un facilitador que soporte upto de extremo a extremo, algo que el despliegue público todavía no anuncia; no se publican hasta poder mostrar salida real y verificada.",
+    "sidebarLabel": "Secciones de la documentación",
+    "lastUpdated": "Última actualización",
+    "copy": "Copiar",
+    "copied": "Copiado"
+  },
+  "home": {},
+  "clientLibrary": {
+    "eyebrow": "06",
+    "title": "Librería cliente",
+    "lede": "periplo es el paquete de npm detrás de estos ejemplos: firma un techo upto como comprador, o anúncialo y liquida el uso real como vendedor.",
+    "install": "npm i periplo",
+    "example": "import { createUptoStellarPayer, payAndFetch } from \"periplo\";\n\nconst payer = createUptoStellarPayer(buyerSecret, \"stellar:testnet\", {\n  facilitatorBaseUrl: \"https://periplo-testnet.fly.dev\",\n  maxSpendPerAuthorization: 1_000_000n, // 0.1 USDC, 7 decimales\n});\n\nconst response = await payAndFetch(resourceUrl, payer);",
+    "ctaDocs": "Leer la documentación",
+    "ctaNpm": "Ver en npm"
   }
 }

@@ -17,6 +17,7 @@ export function Navbar({ locale, t }: { readonly locale: Locale; readonly t: Dic
 
   const links = [
     { href: `/${locale}#how`, label: t.how },
+    { href: `/${locale}/docs`, label: t.docs },
     { href: `/${locale}#evidence`, label: t.evidence },
     { href: `/${locale}#status`, label: t.status },
     { href: `/${locale}#upstream`, label: t.upstream },

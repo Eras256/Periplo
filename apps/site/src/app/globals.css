@@ -1314,3 +1314,124 @@ input[aria-invalid="true"] {
 .real input {
   flex: 0 0 auto;
 }
+
+/* ---------- Docs ---------- */
+.docs-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding-bottom: 72px;
+}
+
+.docs-sidebar {
+  order: 2;
+}
+
+.docs-sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 2px solid var(--border);
+}
+
+.docs-sidebar li {
+  margin: 0;
+}
+
+.docs-sidebar a {
+  display: block;
+  padding: 4px 12px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.docs-sidebar a:hover {
+  color: var(--accent);
+}
+
+.docs-sidebar__sub a {
+  padding-left: 24px;
+  font-size: 0.85rem;
+}
+
+.docs-content {
+  order: 1;
+  min-width: 0;
+  max-width: 72ch;
+}
+
+.docs-content pre {
+  position: relative;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.docs-content code {
+  background: var(--surface-2);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.docs-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.copy-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.copy-button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.client-library__install,
+.client-library__example {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (min-width: 860px) {
+  .docs-layout {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .docs-sidebar {
+    order: 1;
+    position: sticky;
+    top: calc(var(--nav-h) + 24px);
+  }
+
+  .docs-content {
+    order: 2;
+  }
+}
