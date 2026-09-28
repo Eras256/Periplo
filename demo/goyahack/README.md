@@ -92,7 +92,7 @@ commit
 (the tip of `main` at deploy time), using host `rustc 1.97.1` / `cargo
 1.97.1` (matching the embedded `rsver`) targeting `wasm32v1-none`, with
 `soroban-sdk 27.0.5` pinned in `Cargo.lock` (matching the embedded
-`rssdkver`). Two independent rebuilds both reproduced the exact deployed
+`rssdkver`). Three independent rebuilds all reproduced the exact deployed
 hash:
 
 ```bash
@@ -112,6 +112,12 @@ sha256sum target/wasm32v1-none/release/upto_settlement.wasm
 # 110a3758f141d7e9684063c4990042b3cc027b03000672a11f199f3db778c243  ← matches
 ```
 
+The third rebuild used that same `upto-settlement-7d13b59.tar.gz`, but
+downloaded fresh from the published [GitHub Release asset](https://github.com/Eras256/Periplo/releases/download/upto-settlement-source-7d13b59/upto-settlement-7d13b59.tar.gz)
+below (`source_uri`) rather than the local file: its bytes matched the
+local archive's SHA-256, and rebuilding from it reached the same
+`110a3758...` a third time.
+
 **SEP-58 fields** ([`ecosystem/sep-0058.md`](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0058.md),
 Draft v0.6.0), recorded here rather than in the WASM, per the SEP's own §3
 ("useful for retrofitting metadata onto already-deployed contracts"):
@@ -119,7 +125,7 @@ Draft v0.6.0), recorded here rather than in the WASM, per the SEP's own §3
 | field | value |
 | --- | --- |
 | `source_sha256` | `bc889c1be2b930c887b9a43199ad2dcefd2528264bf011b864e32daee511e5a3` |
-| `source_uri` | Not provided. The SEP requires a durable, immutable archive host ("on-the-fly source archives are deliberately not relied upon because those bytes can change"); we have not published a release asset tonight. The archive is reproducible on demand with the `git archive` command above, against this exact commit and prefix. |
+| `source_uri` | [`github.com/Eras256/Periplo/releases/download/upto-settlement-source-7d13b59/upto-settlement-7d13b59.tar.gz`](https://github.com/Eras256/Periplo/releases/download/upto-settlement-source-7d13b59/upto-settlement-7d13b59.tar.gz), a durable, immutable GitHub Release asset (not an on-the-fly source archive, which the SEP says not to rely on since those bytes can change). Downloaded back and re-verified: its own SHA-256 matches `source_sha256` above, and rebuilding straight from it reproduces the deployed WASM's hash a third time. |
 | `bldopt` | `--locked` |
 | `bldimg` | Not provided. This rebuild ran directly on the host toolchain (`rustc`/`cargo` 1.97.1), not inside a digest-pinned container. SEP-58 states `bldimg` "has no default; when absent it must be supplied externally to make a rebuild possible", so this is real, twice-confirmed evidence that this source produces this WASM in a matching toolchain, but it is not a fully conformant SEP-58 record: a verifier without the same host Rust version installed cannot yet reproduce it byte-for-byte from these fields alone. |
 
