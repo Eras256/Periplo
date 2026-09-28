@@ -3,19 +3,22 @@ import { createServiceRoleClient, type Database } from "@periplo/bazaar";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { processBazaarExtension } from "./discovery.js";
 import { loadSupabaseTestEnv } from "./test-env.js";
 
 /**
- * Real integration test against the live Supabase project (spec §5 Phase 4
+ * Real integration test against a Supabase instance (spec §5 Phase 4
  * gate: "a payment carrying the extension results in a catalog row and a
  * success header; a crafted hostile routeTemplate results in a rejected
  * header with a specific reason and no row"). The "header" half of the
  * gate is app.test.ts's job (fake core, no DB needed); this file is the
- * "row" half, which needs the real table. Skipped, not failed, without
- * Supabase credentials, same pattern as
- * `packages/bazaar/src/db/resources.integration.test.ts`.
+ * "row" half, which needs a real table: in CI an ephemeral local stack,
+ * never the live project (`loadSupabaseTestEnv` refuses a non-local URL).
+ * Skipped, not failed, without Supabase credentials, same pattern as
+ * `packages/bazaar/src/db/resources.integration.test.ts`. `beforeAll`
+ * deletes anything a crashed previous run left under this suite's URL
+ * prefix.
  */
 
 const env = loadSupabaseTestEnv();
@@ -67,6 +70,10 @@ describe.skipIf(!env)("automatic cataloging: real Supabase (spec §5 Phase 4 gat
   const service: SupabaseClient<Database> = createServiceRoleClient(url, serviceRoleKey);
 
   const createdUrls: string[] = [];
+
+  beforeAll(async () => {
+    await service.from("resources").delete().like("url", `${TEST_URL_PREFIX}%`);
+  });
 
   afterEach(async () => {
     while (createdUrls.length > 0) {

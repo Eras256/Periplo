@@ -17,6 +17,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
+  assertSupabaseUrlSafeForTests,
   type CatalogAcceptsEntry,
   createServiceRoleClient,
   type Database,
@@ -75,6 +76,7 @@ function loadEnv(): { url: string; serviceRoleKey: string } {
     );
     process.exit(1);
   }
+  assertSupabaseUrlSafeForTests(url);
   return { url, serviceRoleKey };
 }
 

@@ -9,7 +9,7 @@ architecture.
 | Service | What | Where | Config |
 | --- | --- | --- | --- |
 | Facilitator (`apps/facilitator`) | `verify`/`settle`/`supported`, automatic Bazaar cataloging, `GET /discovery/*`, the demo resource | Fly.io, app `periplo-testnet`, region `iad`, `stellar:testnet` only | [`fly.facilitator.toml`](../fly.facilitator.toml): `shared-cpu-1x`, 512MB, 1 machine, `min_machines_running = 1` (never scales to zero, spec §8's latency SLO) |
-| Catalog database | `resources` table, full-text + vector indexes, RLS | Supabase (managed Postgres + pgvector) | [`supabase/config.toml`](../supabase/config.toml), schema in [`supabase/migrations/`](../supabase/migrations) |
+| Catalog database | `resources` table, full-text + vector indexes, RLS | Supabase (managed Postgres + pgvector) | [`supabase/config.toml`](../supabase/config.toml), schema in [`supabase/migrations/`](../supabase/migrations). CI and the tests use a throwaway local stack instead; only the manual `prod-parity` workflow writes here |
 | Repository, CI | Source, `.github/workflows/ci.yml` | GitHub, `Eras256/Periplo` (public) | Free for a public repository |
 | Contracts | `UptoSettlement`, `agent-verifier`, `agent-smart-account` | Stellar `testnet`, no separate hosting, they're on-chain | Deployed via the `stellar` CLI, addresses in `conformance/RESULTS.md` and `docs/DEFERRED.md` |
 
@@ -38,7 +38,8 @@ Checked after the deploy, not assumed: `GET /health` returns 200; a real
 `exact` settlement against `/demo/temperature-convert`
 ([`4aec2ca9...`](https://stellar.expert/explorer/testnet/tx/4aec2ca95afaed11bb4cf5de21eebe05d247a4b9b60ead64acf4ae99cd95d75c))
 is `successful: true` on Horizon with the primary fee-sponsor as source
-account; the catalog holds the same three resources as before; and
+account; the catalog held the same three resources as before (one of them a Phase 2
+test row, removed afterwards, leaving two); and
 [periplo.xyz/es](https://periplo.xyz/es) and `/es/demo` render the live
 status and the settlements in a real browser. The four fee-payer accounts hold
 only native XLM on Horizon, which is what the boot-time non-custodial check

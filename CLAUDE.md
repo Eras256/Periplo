@@ -249,11 +249,12 @@ Upstream issues and PRs cited in the docs are re-checked by the
   authority, not an incidental technical signal such as an author field, a
   shared local path or a user-level config file. Ask rather than infer.
 - A CI gate failing on a commit that did not touch related code is not
-  evidence of flakiness; find the real cause before re-running. `eval/` shares
-  the production Supabase project (no isolated database), so two `pnpm eval`
-  runs close together in time can race the same fixture rows and collapse
-  nDCG@10. Compare the failing run's timestamps with the runs around it
-  (`gh run list`, `gh run view --log`) before assuming noise.
+  evidence of flakiness; find the real cause before re-running. Compare the
+  failing run's timestamps with the runs around it (`gh run list`,
+  `gh run view --log`) before assuming noise. CI runs `pnpm eval` and the
+  Supabase integration suites against an ephemeral local stack, never the
+  production project; they refuse a non-local `SUPABASE_URL` unless
+  `PERIPLO_ALLOW_REMOTE_SUPABASE_TESTS=1` (`docs/TOOLING.md`).
 - A PR against an upstream repo that requires signed commits (confirmed:
   `x402-foundation/x402`) must be signed from the commit that creates the
   branch. A dedicated SSH signing key exists at `~/.ssh/id_ed25519_signing`,

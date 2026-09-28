@@ -3,7 +3,11 @@
  * Node's built-in `process.loadEnvFile()` (no `dotenv` dependency), return
  * `null` when the real testnet key isn't configured so integration tests
  * skip cleanly instead of failing on a fork or a secrets-less environment.
+ * `loadSupabaseTestEnv` refuses a non-local `SUPABASE_URL` (see
+ * `assertSupabaseUrlSafeForTests` in `@periplo/bazaar`).
  */
+
+import { assertSupabaseUrlSafeForTests } from "@periplo/bazaar";
 
 let attemptedEnvFileLoad = false;
 
@@ -53,5 +57,6 @@ export function loadSupabaseTestEnv(): SupabaseTestEnv | null {
   if (!url || !serviceRoleKey) {
     return null;
   }
+  assertSupabaseUrlSafeForTests(url);
   return { url, serviceRoleKey };
 }

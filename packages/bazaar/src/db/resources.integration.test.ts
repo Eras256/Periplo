@@ -1,28 +1,53 @@
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createAnonClient, createServiceRoleClient, type Database } from "./client.js";
 import { loadSupabaseTestEnv } from "./test-env.js";
 
 /**
- * Integration tests against the REAL Supabase project (spec Phase 2 gate:
- * "RLS policy tests pass"). Skipped, not failed, when credentials
- * aren't available, so this suite degrades gracefully on a fork or an
- * environment without the repo's Supabase secrets, per docs/DEFERRED.md.
+ * Integration tests for the `resources` table's RLS policies (spec Phase 2
+ * gate: "RLS policy tests pass"). CI runs them against an ephemeral local
+ * Supabase stack built from `supabase/migrations/`; the manual
+ * `prod-parity` workflow runs them against the real project, which needs
+ * `PERIPLO_ALLOW_REMOTE_SUPABASE_TESTS=1` (`loadSupabaseTestEnv` refuses a
+ * non-local URL otherwise). Skipped, not failed, when credentials aren't
+ * available at all.
  *
  * Every test that inserts a row cleans it up via the service-role client
- * in `afterEach`, regardless of pass/fail, so a failed assertion doesn't
- * leave test rows in the shared project database.
+ * in `afterEach`, regardless of pass/fail. A process that dies between the
+ * insert and `afterEach` can still leave a row, which is why `beforeAll`
+ * also deletes everything under this suite's reserved URL prefix.
  */
 
 const env = loadSupabaseTestEnv();
 
-// A URL prefix reserved for this suite's rows, so cleanup can also sweep
-// anything a crashed previous run left behind without touching real data.
+// A URL prefix reserved for this suite's rows: the `beforeAll` sweep below
+// removes anything a crashed previous run left behind, without touching
+// real data.
 const TEST_URL_PREFIX = "https://periplo-phase2-test.example/";
 
 function testUrl(): string {
   return `${TEST_URL_PREFIX}${randomUUID()}`;
+}
+
+/**
+ * Two mechanisms can stop an anon write, and both satisfy the policy. With a
+ * table-level UPDATE/DELETE grant (the production project today), RLS makes
+ * the row invisible for writes and PostgREST returns zero rows with no error.
+ * On a database built only from supabase/migrations/, which grant `select`
+ * alone to anon, the request fails with 42501 before RLS is reached. What
+ * must hold either way is that nothing was modified, which each test then
+ * confirms through the service role.
+ */
+function expectWriteBlocked(
+  error: { code?: string } | null,
+  data: readonly unknown[] | null
+): void {
+  if (error) {
+    expect(error.code).toBe("42501");
+  } else {
+    expect(data).toEqual([]);
+  }
 }
 
 describe.skipIf(!env)("resources table: RLS policy (spec §5 Phase 2 gate)", () => {
@@ -34,6 +59,10 @@ describe.skipIf(!env)("resources table: RLS policy (spec §5 Phase 2 gate)", () 
   const service: SupabaseClient<Database> = createServiceRoleClient(url, serviceRoleKey);
 
   const createdUrls: string[] = [];
+
+  beforeAll(async () => {
+    await service.from("resources").delete().like("url", `${TEST_URL_PREFIX}%`);
+  });
 
   afterEach(async () => {
     while (createdUrls.length > 0) {
@@ -112,11 +141,7 @@ describe.skipIf(!env)("resources table: RLS policy (spec §5 Phase 2 gate)", () 
       .eq("url", rowUrl)
       .select();
 
-    // PostgREST returns an empty result (not an RLS error) for an UPDATE
-    // that matches zero rows under RLS: the row is invisible to anon for
-    // writes, so zero rows are affected rather than an explicit denial.
-    expect(error).toBeNull();
-    expect(data).toEqual([]);
+    expectWriteBlocked(error, data);
 
     const { data: unchanged } = await service
       .from("resources")
@@ -138,8 +163,8 @@ describe.skipIf(!env)("resources table: RLS policy (spec §5 Phase 2 gate)", () 
     });
     createdUrls.push(rowUrl);
 
-    const { error } = await anon.from("resources").delete().eq("url", rowUrl);
-    expect(error).toBeNull(); // no error, but nothing is deleted (see UPDATE test above)
+    const { data, error } = await anon.from("resources").delete().eq("url", rowUrl).select();
+    expectWriteBlocked(error, data);
 
     const { data: stillThere } = await service
       .from("resources")

@@ -1,0 +1,48 @@
+name: Prod parity (RLS against the real project, manual)
+
+# Runs the RLS integration suite against the REAL Supabase project, and
+# only when someone starts it by hand (Actions tab, "Run workflow"). It is
+# the one check that the production project's policies and grants match
+# supabase/migrations/, which the ephemeral database in ci.yml cannot show.
+#
+# It writes and deletes its own rows in the live `resources` table, under
+# the reserved prefix https://periplo-phase2-test.example/, so run it when
+# nobody is reading the catalog in a way that matters. It sets
+# PERIPLO_ALLOW_REMOTE_SUPABASE_TESTS=1 because the suite otherwise refuses
+# a non-local SUPABASE_URL (packages/bazaar/src/db/local-only.ts).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-parity
+  cancel-in-progress: false
+
+jobs:
+  rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PERIPLO_ALLOW_REMOTE_SUPABASE_TESTS: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+
+      - name: RLS suite against the real project
+        run: pnpm exec vitest run packages/bazaar/src/db/resources.integration.test.ts
