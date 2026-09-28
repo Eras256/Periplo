@@ -2,9 +2,9 @@ import type { Locale } from "@/i18n/config";
 
 /**
  * A curated subset of conformance/RESULTS.md plus the UptoSettlement demo's
- * first settlement. Every hash here is a real stellar:testnet transaction;
+ * two settlements (PTEST and testnet USDC). Every hash here is a real stellar:testnet transaction;
  * each description paraphrases only what RESULTS.md (or
- * demo/goyahack/README.md for the last one) records about it.
+ * demo/goyahack/README.md for the last two) records about it.
  */
 export interface EvidenceItem {
   readonly hash: string;
@@ -19,8 +19,8 @@ export const EVIDENCE: readonly EvidenceItem[] = [
     date: "2026-08-07",
     scheme: "exact",
     text: {
-      en: "First full pipeline: a payment signed with @x402/stellar, verified and settled by Periplo's facilitator core.",
-      es: "Primer flujo completo: un pago firmado con @x402/stellar, verificado y liquidado por el núcleo del facilitador de Periplo.",
+      en: "Periplo's first full pipeline: a payment signed with @x402/stellar, verified and settled by Periplo's facilitator core.",
+      es: "Primer flujo completo de Periplo: un pago firmado con @x402/stellar, verificado y liquidado por el núcleo del facilitador de Periplo.",
     },
   },
   {
@@ -46,8 +46,8 @@ export const EVIDENCE: readonly EvidenceItem[] = [
     date: "2026-08-26",
     scheme: "exact",
     text: {
-      en: "First payment between an external seller and an independent buyer, neither of them this project, in testnet USDC.",
-      es: "Primer pago entre un vendedor externo y un comprador independiente, ninguno de los dos este proyecto, en USDC de testnet.",
+      en: "Periplo's first payment between an external seller and an independent buyer, neither of them this project, in testnet USDC.",
+      es: "Primer pago a través de Periplo entre un vendedor externo y un comprador independiente, ninguno de los dos este proyecto, en USDC de testnet.",
     },
   },
   {
@@ -75,6 +75,15 @@ export const EVIDENCE: readonly EvidenceItem[] = [
     text: {
       en: "Metered API: a 0.1 PTEST ceiling for up to 20 rows; 10 rows were returned, so 0.05 PTEST was settled and the rest refunded.",
       es: "API medida: un techo de 0.1 PTEST para hasta 20 filas; se devolvieron 10, así que se liquidaron 0.05 PTEST y el resto se reembolsó.",
+    },
+  },
+  {
+    hash: "d554adfb8f41efca8a5c14d7c82ded1330d3819bddd610ead51ab78257c5cafb",
+    date: "2026-09-27",
+    scheme: "upto",
+    text: {
+      en: "The same contract, in testnet USDC: a 0.10 USDC ceiling and 0.05 USDC settled, the rest refunded. The asset travels inside each signed authorization, so the contract was not redeployed.",
+      es: "El mismo contrato, en USDC de testnet: un techo de 0.10 USDC y 0.05 USDC liquidados, con el resto reembolsado. El activo viaja dentro de cada autorización firmada, así que el contrato no se volvió a desplegar.",
     },
   },
 ];

@@ -60,8 +60,11 @@ checker, which does not drive TypeScript 7); tests run through the root
 
 ## Deploying (from the project owner's Vercel account)
 
-Not yet tested on Vercel itself; verified locally with `next build` and
-`next start` in a real browser.
+Tested on Vercel: deployed as `periplo-site.vercel.app` (project
+`periplo-site`, root `apps/site`) on 2026-09-27. The build log showed pnpm
+11.22.0 through corepack and no `sharp` install. The repo-root
+`vercel.json` belongs to `apps/upto-demo`'s project; Vercel reads
+`vercel.json` from the project's root directory, so it does not apply here.
 
 - Framework preset: Next.js. Root directory: `apps/site`.
 - Install and build: leave Vercel's defaults (`pnpm install`,

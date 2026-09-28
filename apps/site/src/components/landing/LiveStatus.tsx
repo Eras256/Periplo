@@ -167,8 +167,8 @@ export function LiveStatus({
                 {t.checkedAt}{" "}
                 <time dateTime={state.status.checkedAt}>
                   {time.format(new Date(state.status.checkedAt))}
-                </time>
-                . {t.cacheNote}
+                </time>{" "}
+                · {t.cacheNote}
               </p>
             </>
           ) : null}

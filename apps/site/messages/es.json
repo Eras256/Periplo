@@ -86,7 +86,7 @@
     "catalog": "Recursos catalogados",
     "lastSettlement": "Última liquidación",
     "none": "Ninguna desde el último reinicio",
-    "checkedAt": "Consultado a las",
+    "checkedAt": "Consultado:",
     "uptoMissing": "Este despliegue todavía no anuncia upto.",
     "cacheNote": "Las respuestas se guardan en caché hasta 30 segundos.",
     "days": "d",

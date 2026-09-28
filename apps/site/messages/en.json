@@ -86,7 +86,7 @@
     "catalog": "Cataloged resources",
     "lastSettlement": "Last settlement",
     "none": "None since last restart",
-    "checkedAt": "Checked at",
+    "checkedAt": "Checked:",
     "uptoMissing": "upto is not advertised by this deployment yet.",
     "cacheNote": "Responses are cached for up to 30 seconds.",
     "days": "d",

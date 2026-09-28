@@ -3108,9 +3108,12 @@ Its first real settlement, read by the page itself:
   such, that never produces a transaction hash.
 - No hosting account is wired to this machine (the `fly` CLI here has no
   login), so publishing the page is left to the repo owner's static host.
-- The deployed Wasm hash (`110a3758...`) has not been compared against a
-  local build of `contracts/upto-settlement`; the page relies only on the
-  `Settled` event layout, which matches `lib.rs`.
+- ~~The deployed Wasm hash (`110a3758...`) has not been compared against a
+  local build.~~ Resolved in `776accc`: the on-chain WASM was rebuilt from
+  `contracts/upto-settlement` at `7d13b59` and matched byte for byte, twice
+  (details in `demo/goyahack/README.md`, "Reproducible build").
+  `apps/upto-demo/README.md` still carries the old sentence and is left
+  untouched while that app backs the GOYA HACK submission.
 - Machine note: `pnpm` on this machine's `PATH` is a standalone 9.15.0,
   not the pinned 11.22.0, and `licence-check` shells out to whatever
   `pnpm` is on `PATH`, failing with `ERR_PNPM_MISSING_PACKAGE_INDEX_FILE`.
