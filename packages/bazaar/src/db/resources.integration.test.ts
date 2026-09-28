@@ -30,6 +30,26 @@ function testUrl(): string {
   return `${TEST_URL_PREFIX}${randomUUID()}`;
 }
 
+/**
+ * Two mechanisms can stop an anon write, and both satisfy the policy. With a
+ * table-level UPDATE/DELETE grant (the production project today), RLS makes
+ * the row invisible for writes and PostgREST returns zero rows with no error.
+ * On a database built only from supabase/migrations/, which grant `select`
+ * alone to anon, the request fails with 42501 before RLS is reached. What
+ * must hold either way is that nothing was modified, which each test then
+ * confirms through the service role.
+ */
+function expectWriteBlocked(
+  error: { code?: string } | null,
+  data: readonly unknown[] | null
+): void {
+  if (error) {
+    expect(error.code).toBe("42501");
+  } else {
+    expect(data).toEqual([]);
+  }
+}
+
 describe.skipIf(!env)("resources table: RLS policy (spec §5 Phase 2 gate)", () => {
   // Non-null assertion is safe here: describe.skipIf(!env) means this
   // block never runs when env is null.
@@ -121,11 +141,7 @@ describe.skipIf(!env)("resources table: RLS policy (spec §5 Phase 2 gate)", () 
       .eq("url", rowUrl)
       .select();
 
-    // PostgREST returns an empty result (not an RLS error) for an UPDATE
-    // that matches zero rows under RLS: the row is invisible to anon for
-    // writes, so zero rows are affected rather than an explicit denial.
-    expect(error).toBeNull();
-    expect(data).toEqual([]);
+    expectWriteBlocked(error, data);
 
     const { data: unchanged } = await service
       .from("resources")
@@ -147,8 +163,8 @@ describe.skipIf(!env)("resources table: RLS policy (spec §5 Phase 2 gate)", () 
     });
     createdUrls.push(rowUrl);
 
-    const { error } = await anon.from("resources").delete().eq("url", rowUrl);
-    expect(error).toBeNull(); // no error, but nothing is deleted (see UPDATE test above)
+    const { data, error } = await anon.from("resources").delete().eq("url", rowUrl).select();
+    expectWriteBlocked(error, data);
 
     const { data: stillThere } = await service
       .from("resources")
