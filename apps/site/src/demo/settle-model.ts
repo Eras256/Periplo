@@ -1,7 +1,7 @@
 import { PRICE_PER_TOKEN } from "./simulation";
 
-/** Hard ceiling per real settlement: 0.10 USDC (7 decimals). Enforced by the server, never by the browser. */
-export const MAX_CEILING = 1_000_000n;
+/** Hard ceiling per real settlement: 1.00 USDC (7 decimals). Enforced by the server, never by the browser. */
+export const MAX_CEILING = 10_000_000n;
 /** Smallest ceiling the demo accepts: one token's price, same floor as the simulator's form. */
 export const MIN_CEILING = PRICE_PER_TOKEN;
 /** Upper bound on the declared token count; well above the ceiling's worth so "usage above the ceiling" is reachable. */
@@ -80,6 +80,8 @@ export type SettleErrorCode =
   | SettleRequestError
   | "rate_limited_visitor"
   | "rate_limited_global"
+  | "budget_visitor"
+  | "budget_global"
   | "demo_unavailable"
   | "demo_unfunded"
   | "busy"

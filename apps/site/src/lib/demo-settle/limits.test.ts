@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  checkBudget,
   checkLimits,
   mergeRecent,
   type RecentSettlement,
+  readBudget,
   readLimit,
   visitorTag,
   WINDOW_MS,
@@ -11,10 +13,16 @@ import {
 const NOW = Date.UTC(2026, 8, 28, 12, 0, 0);
 const A = visitorTag("203.0.113.7", "p".repeat(32));
 const B = visitorTag("198.51.100.9", "p".repeat(32));
-const entry = (hash: string, ageMs: number, tag: string | null): RecentSettlement => ({
+const entry = (
+  hash: string,
+  ageMs: number,
+  tag: string | null,
+  charged = 0n
+): RecentSettlement => ({
   hash,
   createdAt: NOW - ageMs,
   visitorTag: tag,
+  charged,
 });
 
 describe("visitorTag", () => {
@@ -67,10 +75,66 @@ describe("checkLimits", () => {
   });
 });
 
+describe("checkBudget", () => {
+  const base = { tag: A, now: NOW, visitorBudget: 1_000_000n, globalBudget: 3_000_000n };
+
+  it("allows a charge that fits both budgets", () => {
+    const recent = [entry("h1", 1000, A, 400_000n), entry("h2", 1000, B, 900_000n)];
+    expect(checkBudget({ ...base, recent, amount: 600_000n })).toEqual({ ok: true });
+  });
+
+  it("blocks a visitor whose charged total plus this charge would pass their budget", () => {
+    const recent = [entry("h1", 3_600_000, A, 700_000n), entry("h2", 1000, A, 200_000n)];
+    expect(checkBudget({ ...base, recent, amount: 200_000n })).toEqual({
+      ok: false,
+      code: "budget_visitor",
+      retryAfterSeconds: Math.ceil((WINDOW_MS - 3_600_000) / 1000),
+    });
+  });
+
+  it("blocks everyone once the global budget would be passed", () => {
+    const recent = [
+      entry("h1", 1000, B, 1_000_000n),
+      entry("h2", 2000, B, 1_000_000n),
+      entry("h3", 3000, B, 900_000n),
+    ];
+    const verdict = checkBudget({ ...base, recent, amount: 200_000n });
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.code).toBe("budget_global");
+  });
+
+  it("counts an unconfirmed attempt at the amount recorded for it and ignores charges older than 24 h", () => {
+    const recent = [entry("old", WINDOW_MS + 5, A, 900_000n), entry("pending", 10, A, 1_000_000n)];
+    expect(checkBudget({ ...base, recent, amount: 1n }).ok).toBe(false);
+    expect(
+      checkBudget({ ...base, recent: [recent[0] as RecentSettlement], amount: 900_000n })
+    ).toEqual({ ok: true });
+  });
+
+  it("a charge larger than the whole budget can never fit, and says to retry after a full window", () => {
+    expect(checkBudget({ ...base, recent: [], amount: 1_000_001n })).toEqual({
+      ok: false,
+      code: "budget_visitor",
+      retryAfterSeconds: WINDOW_MS / 1000,
+    });
+  });
+});
+
+describe("readBudget", () => {
+  it("parses USDC decimals, falls back on anything else and clamps to the maximum", () => {
+    expect(readBudget("0.05", 1n)).toBe(500_000n);
+    expect(readBudget("2", 1n)).toBe(20_000_000n);
+    expect(readBudget("abc", 7n)).toBe(7n);
+    expect(readBudget(undefined, 7n)).toBe(7n);
+    expect(readBudget("999999", 7n)).toBe(1_000_000_000n);
+  });
+});
+
 describe("mergeRecent", () => {
   it("adds local attempts Horizon has not ingested yet, without double counting", () => {
-    const merged = mergeRecent([entry("h1", 1, A)], [entry("h1", 1, A), entry("h2", 2, A)]);
+    const merged = mergeRecent([entry("h1", 1, A)], [entry("h1", 1, A, 5n), entry("h2", 2, A)]);
     expect(merged.map((item) => item.hash)).toEqual(["h1", "h2"]);
+    expect(merged[0]?.charged).toBe(5n);
   });
 });
 

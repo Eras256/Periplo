@@ -1,11 +1,15 @@
-import { parseSettleRequest, type SettleErrorCode } from "@/demo/settle-model";
+import { computeCharge, parseSettleRequest, type SettleErrorCode } from "@/demo/settle-model";
 import {
+  checkBudget,
   checkLimits,
+  DEFAULT_GLOBAL_BUDGET,
   DEFAULT_GLOBAL_LIMIT,
+  DEFAULT_VISITOR_BUDGET,
   DEFAULT_VISITOR_LIMIT,
   MAX_GLOBAL_LIMIT,
   mergeRecent,
   type RecentSettlement,
+  readBudget,
   readLimit,
   visitorTag,
 } from "@/lib/demo-settle/limits";
@@ -38,6 +42,8 @@ const STATUS: Record<SettleErrorCode, number> = {
   unsupported_network: 400,
   rate_limited_visitor: 429,
   rate_limited_global: 429,
+  budget_visitor: 429,
+  budget_global: 429,
   demo_unavailable: 503,
   demo_unfunded: 503,
   busy: 503,
@@ -124,6 +130,19 @@ export async function POST(request: Request) {
         return fail(verdict.code, { "Retry-After": String(verdict.retryAfterSeconds) });
       }
 
+      const budget = checkBudget({
+        recent,
+        tag,
+        now: Date.now(),
+        amount: computeCharge(parsed.value).actual,
+        visitorBudget: readBudget(process.env.DEMO_VISITOR_DAILY_BUDGET, DEFAULT_VISITOR_BUDGET),
+        globalBudget: readBudget(process.env.DEMO_GLOBAL_DAILY_BUDGET, DEFAULT_GLOBAL_BUDGET),
+      });
+      if (!budget.ok) {
+        log("limited", { code: budget.code });
+        return fail(budget.code, { "Retry-After": String(budget.retryAfterSeconds) });
+      }
+
       try {
         const outcome = await settleOnTestnet(config, parsed.value, tag, deadline);
         recentLocal = [outcome.local, ...recentLocal].filter(
@@ -140,7 +159,12 @@ export async function POST(request: Request) {
           // A submitted-but-unconfirmed hash is logged (a hash is public) so it can be reconciled by hand.
           if (error.hash) {
             recentLocal = [
-              { hash: error.hash, createdAt: Date.now(), visitorTag: tag },
+              {
+                hash: error.hash,
+                createdAt: Date.now(),
+                visitorTag: tag,
+                charged: parsed.value.ceiling,
+              },
               ...recentLocal,
             ];
           }

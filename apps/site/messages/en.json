@@ -217,7 +217,9 @@
         "seller": "Seller",
         "fellBack": "The real settlement did not complete, so this is the in-browser simulation (no transaction was sent). The evidence below is a real, earlier settlement.",
         "errors": {
-          "invalid": "The request was not valid: the ceiling must be between 0.00001 and 0.10 USDC, and the usage a whole number of tokens.",
+          "budget_visitor": "You have reached the daily USDC budget for real settlements from your connection. It frees up gradually over the next 24 hours.",
+          "budget_global": "The demo has reached its daily USDC budget for real settlements. It frees up gradually over the next 24 hours.",
+          "invalid": "The request was not valid: the ceiling must be between 0.00001 and 1.00 USDC, and the usage a whole number of tokens.",
           "rate_limited_visitor": "You have reached the daily limit of real settlements from your connection.",
           "rate_limited_global": "The demo has reached its daily limit of real settlements.",
           "demo_unavailable": "The real settlement is not available right now.",

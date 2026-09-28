@@ -217,7 +217,9 @@
         "seller": "Vendedor",
         "fellBack": "La liquidación real no se completó, así que esto es la simulación en tu navegador (no se envió ninguna transacción). La evidencia de abajo es una liquidación real anterior.",
         "errors": {
-          "invalid": "La solicitud no fue válida: el techo debe estar entre 0.00001 y 0.10 USDC, y el uso ser un número entero de tokens.",
+          "budget_visitor": "Alcanzaste el presupuesto diario de USDC para liquidaciones reales desde tu conexión. Se libera poco a poco durante las próximas 24 horas.",
+          "budget_global": "El demo alcanzó su presupuesto diario de USDC para liquidaciones reales. Se libera poco a poco durante las próximas 24 horas.",
+          "invalid": "La solicitud no fue válida: el techo debe estar entre 0.00001 y 1.00 USDC, y el uso ser un número entero de tokens.",
           "rate_limited_visitor": "Alcanzaste el límite diario de liquidaciones reales desde tu conexión.",
           "rate_limited_global": "El demo alcanzó su límite diario de liquidaciones reales.",
           "demo_unavailable": "La liquidación real no está disponible en este momento.",

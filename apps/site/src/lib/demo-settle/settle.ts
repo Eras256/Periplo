@@ -9,9 +9,11 @@ import {
   nativeToScVal,
   Operation,
   rpc,
+  scValToNative,
   TransactionBuilder,
   xdr,
 } from "@stellar/stellar-sdk";
+import { cursorLedger } from "../../demo/chain-settlements";
 import { UPTO_CONTRACT_ID, USDC_CONTRACT_ID } from "../../demo/contract";
 import { computeCharge, type SettleRequest, type SettleSuccess } from "../../demo/settle-model";
 import { decodeSettledEvent } from "../../demo/settled-event";
@@ -119,19 +121,56 @@ export async function assertNonCustodial(config: DemoConfig, now = Date.now()): 
   return balance;
 }
 
-/** Transactions the submitter already made in the last day, newest first (one Horizon page). */
+/** Amounts charged by the demo buyer's settlements over the last day, keyed by transaction hash, from the contract's own events. */
+async function fetchCharges(config: DemoConfig): Promise<Map<string, bigint>> {
+  const server = new rpc.Server(RPC_URL);
+  const latest = await server.getLatestLedger();
+  const startLedger = Math.max(1, latest.sequence - 17_500);
+  const filters = [
+    {
+      type: "contract" as const,
+      contractIds: [UPTO_CONTRACT_ID],
+      topics: [
+        [SETTLED_TOPIC, new Address(config.buyer.publicKey()).toScVal().toXDR("base64"), "*"],
+      ],
+    },
+  ];
+  const charges = new Map<string, bigint>();
+  let cursor: string | undefined;
+  // The RPC scans a bounded window of ledgers per call, so empty pages are normal: follow the
+  // cursor until it reaches the latest ledger.
+  for (let page = 0; page < 60; page++) {
+    const result = await server.getEvents(
+      cursor ? { filters, cursor, limit: 200 } : { startLedger, filters, limit: 200 }
+    );
+    for (const event of result.events) {
+      if (!event.inSuccessfulContractCall) continue;
+      const body = scValToNative(event.value) as { actual_amount?: bigint };
+      if (typeof body.actual_amount === "bigint") charges.set(event.txHash, body.actual_amount);
+    }
+    cursor = result.cursor;
+    if (result.events.length < 200 && cursorLedger(cursor) >= result.latestLedger) return charges;
+  }
+  throw new DemoSettleError("demo_unavailable", "events_scan_incomplete");
+}
+
+/** Transactions the submitter already made in the last day, newest first (one Horizon page), with what each charged. */
 export async function fetchRecentSettlements(config: DemoConfig): Promise<RecentSettlement[]> {
-  const page = await horizon()
-    .transactions()
-    .forAccount(config.submitter.publicKey())
-    .order("desc")
-    .limit(200)
-    .includeFailed(true)
-    .call();
+  const [page, charges] = await Promise.all([
+    horizon()
+      .transactions()
+      .forAccount(config.submitter.publicKey())
+      .order("desc")
+      .limit(200)
+      .includeFailed(true)
+      .call(),
+    fetchCharges(config),
+  ]);
   return page.records.map((record) => ({
     hash: record.hash,
     createdAt: Date.parse(record.created_at),
     visitorTag: tagFromEnvelope(record.envelope_xdr),
+    charged: charges.get(record.hash) ?? 0n,
   }));
 }
 
@@ -338,7 +377,12 @@ export async function settleOnTestnet(
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
-  const local: RecentSettlement = { hash, createdAt: Date.now(), visitorTag: tag };
+  const local: RecentSettlement = {
+    hash,
+    createdAt: Date.now(),
+    visitorTag: tag,
+    charged: charge.actual,
+  };
   if (!confirmed) throw new DemoSettleError("unconfirmed", "poll_deadline", hash);
   if (confirmed.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
     throw new DemoSettleError("failed", "transaction_failed", hash);

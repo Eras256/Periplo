@@ -41,7 +41,7 @@ describe("parseSettleRequest", () => {
     }
   });
 
-  it("enforces the 0.10 USDC maximum and the one-token minimum on the server", () => {
+  it("enforces the 1.00 USDC maximum and the one-token minimum on the server", () => {
     expect(parseSettleRequest({ ceiling: (MAX_CEILING + 1n).toString(), tokens: 1 })).toEqual({
       ok: false,
       error: "ceiling_out_of_range",

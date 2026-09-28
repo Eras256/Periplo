@@ -88,7 +88,9 @@ Tested on Vercel: deployed as `periplo-site.vercel.app` (project
   server-side; none may ever carry the `NEXT_PUBLIC_` prefix:
   `DEMO_BUYER_SECRET`, `DEMO_SUBMITTER_SECRET`, `DEMO_RATE_PEPPER`,
   `DEMO_SELLER_PUBLIC`, and optionally `DEMO_GLOBAL_DAILY_LIMIT` (default
-  40, at most 150) and `DEMO_VISITOR_DAILY_LIMIT` (default 5). Without the
+  40, at most 150), `DEMO_VISITOR_DAILY_LIMIT` (default 5),
+  `DEMO_GLOBAL_DAILY_BUDGET` (USDC, default 10) and `DEMO_VISITOR_DAILY_BUDGET`
+  (USDC, default 1). Without the
   four required ones the route answers `demo_unavailable` and the page falls
   back to the in-browser simulation.
 - Domain: `periplo.xyz`. The site redirects `/` to `/en` or `/es` from the
@@ -108,8 +110,11 @@ another signer, or equals the buyer or seller). The hash is returned only
 after the transaction is confirmed and its `settled` event has been read
 back and matches the request.
 
-- Limits: at most 0.10 USDC per settlement; a rolling 24 h global cap and a
-  per-visitor cap, both counted from the submitter account's own
+- Limits: the ceiling is free up to 1.00 USDC per settlement. Two rolling
+  24 h caps apply, each both global and per visitor: a count of settlements and a
+  USDC budget for what is actually charged (10 USDC global, 1 USDC per
+  visitor by default; the settled events of the demo buyer are the source of
+  the amounts). The counts are read from the submitter account's own
   transactions on Horizon (the ledger is the counter, so it survives cold
   starts and is shared across instances). Soroban transactions cannot carry
   a memo, so the visitor tag (16 bytes of an HMAC of the connecting address,

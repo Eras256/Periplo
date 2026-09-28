@@ -32,6 +32,8 @@ function errorKey(code: string): ErrorKey {
 const ERROR_KEYS: Readonly<Record<ErrorKey, true>> = {
   rate_limited_visitor: true,
   rate_limited_global: true,
+  budget_visitor: true,
+  budget_global: true,
   demo_unavailable: true,
   demo_unfunded: true,
   busy: true,

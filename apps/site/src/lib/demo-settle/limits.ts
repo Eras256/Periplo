@@ -1,10 +1,15 @@
 import { createHmac } from "node:crypto";
+import { parseAmount } from "../../demo/amount";
 
 export const WINDOW_MS = 24 * 60 * 60 * 1000;
 export const DEFAULT_GLOBAL_LIMIT = 40;
 export const DEFAULT_VISITOR_LIMIT = 5;
 /** Horizon returns at most 200 rows per page; the counter reads one page, so the global cap must stay under it. */
 export const MAX_GLOBAL_LIMIT = 150;
+/** Daily USDC budgets, in 7-decimal base units, over the same rolling window. */
+export const DEFAULT_VISITOR_BUDGET = 10_000_000n;
+export const DEFAULT_GLOBAL_BUDGET = 100_000_000n;
+export const MAX_BUDGET = 1_000_000_000n;
 
 /** One settlement attempt the submitter account has already made, read from Horizon or remembered locally. */
 export interface RecentSettlement {
@@ -12,6 +17,8 @@ export interface RecentSettlement {
   readonly createdAt: number;
   /** 32 hex chars: the visitor tag carried in the first 16 bytes of the authorization nonce, or `null` when unreadable. */
   readonly visitorTag: string | null;
+  /** Base units actually charged (from the settled event); a submitted-but-unconfirmed attempt counts at its ceiling. */
+  readonly charged: bigint;
 }
 
 export type LimitVerdict =
@@ -80,6 +87,71 @@ export function mergeRecent(
   fromHorizon: readonly RecentSettlement[],
   local: readonly RecentSettlement[]
 ): RecentSettlement[] {
+  const localByHash = new Map(local.map((entry) => [entry.hash, entry]));
+  const merged = fromHorizon.map((entry) => {
+    const mine = localByHash.get(entry.hash);
+    return mine && mine.charged > entry.charged ? { ...entry, charged: mine.charged } : entry;
+  });
   const seen = new Set(fromHorizon.map((entry) => entry.hash));
-  return [...fromHorizon, ...local.filter((entry) => !seen.has(entry.hash))];
+  return [...merged, ...local.filter((entry) => !seen.has(entry.hash))];
+}
+
+export type BudgetVerdict =
+  | { readonly ok: true }
+  | {
+      readonly ok: false;
+      readonly code: "budget_visitor" | "budget_global";
+      readonly retryAfterSeconds: number;
+    };
+
+/** Reads a budget in USDC (`"1"`, `"0.05"`); anything else keeps the fallback, and it never exceeds `MAX_BUDGET`. */
+export function readBudget(raw: string | undefined, fallback: bigint): bigint {
+  const units = raw === undefined ? null : parseAmount(raw);
+  return units === null ? fallback : units > MAX_BUDGET ? MAX_BUDGET : units;
+}
+
+function budgetFits(
+  entries: readonly RecentSettlement[],
+  amount: bigint,
+  budget: bigint,
+  now: number
+): { readonly fits: true } | { readonly fits: false; readonly retryAfterSeconds: number } {
+  const ordered = [...entries].sort((a, b) => a.createdAt - b.createdAt);
+  let total = ordered.reduce((sum, entry) => sum + entry.charged, 0n);
+  if (total + amount <= budget) return { fits: true };
+  for (const entry of ordered) {
+    total -= entry.charged;
+    if (total + amount <= budget) {
+      return {
+        fits: false,
+        retryAfterSeconds: Math.max(1, Math.ceil((entry.createdAt + WINDOW_MS - now) / 1000)),
+      };
+    }
+  }
+  return { fits: false, retryAfterSeconds: Math.ceil(WINDOW_MS / 1000) };
+}
+
+/**
+ * Whether settling `amount` now stays inside the rolling-24 h USDC budgets. The amount is what
+ * will actually be charged (the server prices it), so the check is exact rather than a ceiling reservation.
+ */
+export function checkBudget(input: {
+  readonly recent: readonly RecentSettlement[];
+  readonly tag: string;
+  readonly now: number;
+  readonly amount: bigint;
+  readonly visitorBudget: bigint;
+  readonly globalBudget: bigint;
+}): BudgetVerdict {
+  const inWindow = input.recent.filter((entry) => input.now - entry.createdAt < WINDOW_MS);
+  const mine = inWindow.filter((entry) => entry.visitorTag === input.tag);
+  const visitor = budgetFits(mine, input.amount, input.visitorBudget, input.now);
+  if (!visitor.fits) {
+    return { ok: false, code: "budget_visitor", retryAfterSeconds: visitor.retryAfterSeconds };
+  }
+  const global = budgetFits(inWindow, input.amount, input.globalBudget, input.now);
+  if (!global.fits) {
+    return { ok: false, code: "budget_global", retryAfterSeconds: global.retryAfterSeconds };
+  }
+  return { ok: true };
 }
