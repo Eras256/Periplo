@@ -68,3 +68,67 @@ To settle in testnet USDC instead, override the asset for that run:
 
 This is `stellar:testnet` only. No mainnet key or mainnet contract is
 involved anywhere in this demo.
+
+## Reproducible build
+
+The deployed WASM at `CA7OYVXWPSQHXNBWJQZ7TCKQILAVBHWDAPNRJTKY66LHR5K5LFXRV6TW` was
+fetched back from testnet and independently rebuilt from source, twice, with
+byte-identical results.
+
+**What's deployed.** `stellar contract fetch --id
+CA7OYVXWPSQHXNBWJQZ7TCKQILAVBHWDAPNRJTKY66LHR5K5LFXRV6TW --network testnet`
+returns a WASM whose SHA-256 is
+`110a3758f141d7e9684063c4990042b3cc027b03000672a11f199f3db778c243`, matching
+the hash stellar.expert shows for this contract. `stellar contract info meta
+--wasm-hash 110a3758...` reports the embedded `soroban-sdk` build metadata
+(automatically emitted by the SDK, not something this project added):
+`rsver: 1.97.1`, `rssdkver: 27.0.5#ea54f95d3f2f49e0487b29fd1a9f469638f09aba`.
+No `bldimg`/`bldopt`/`source_sha256` SEP-58 fields are embedded in the WASM
+itself; this contract predates adding them (see the proposal below).
+
+**Reproducing it from source, without redeploying.** The WASM was built from
+commit
+[`7d13b59`](https://github.com/Eras256/Periplo/commit/7d13b59d7d512a91b1fc7e2e6d76d3fa7365aea4)
+(the tip of `main` at deploy time), using host `rustc 1.97.1` / `cargo
+1.97.1` (matching the embedded `rsver`) targeting `wasm32v1-none`, with
+`soroban-sdk 27.0.5` pinned in `Cargo.lock` (matching the embedded
+`rssdkver`). Two independent rebuilds both reproduced the exact deployed
+hash:
+
+```bash
+# 1. A clean checkout of just the contract's source tree at that commit
+git archive --format=tar.gz --prefix=upto-settlement-7d13b59/ \
+  7d13b59:contracts/upto-settlement > upto-settlement-7d13b59.tar.gz
+sha256sum upto-settlement-7d13b59.tar.gz
+# bc889c1be2b930c887b9a43199ad2dcefd2528264bf011b864e32daee511e5a3
+
+# 2. Extract into a fresh directory and build with a fresh target dir
+tar -xzf upto-settlement-7d13b59.tar.gz -C /some/clean/dir
+cd /some/clean/dir/upto-settlement-7d13b59
+cargo build --locked --release --target wasm32v1-none
+
+# 3. Compare
+sha256sum target/wasm32v1-none/release/upto_settlement.wasm
+# 110a3758f141d7e9684063c4990042b3cc027b03000672a11f199f3db778c243  ← matches
+```
+
+**SEP-58 fields** ([`ecosystem/sep-0058.md`](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0058.md),
+Draft v0.6.0), recorded here rather than in the WASM, per the SEP's own §3
+("useful for retrofitting metadata onto already-deployed contracts"):
+
+| field | value |
+| --- | --- |
+| `source_sha256` | `bc889c1be2b930c887b9a43199ad2dcefd2528264bf011b864e32daee511e5a3` |
+| `source_uri` | Not provided. The SEP requires a durable, immutable archive host ("on-the-fly source archives are deliberately not relied upon because those bytes can change"); we have not published a release asset tonight. The archive is reproducible on demand with the `git archive` command above, against this exact commit and prefix. |
+| `bldopt` | `--locked` |
+| `bldimg` | Not provided. This rebuild ran directly on the host toolchain (`rustc`/`cargo` 1.97.1), not inside a digest-pinned container. SEP-58 states `bldimg` "has no default; when absent it must be supplied externally to make a rebuild possible", so this is real, twice-confirmed evidence that this source produces this WASM in a matching toolchain, but it is not a fully conformant SEP-58 record: a verifier without the same host Rust version installed cannot yet reproduce it byte-for-byte from these fields alone. |
+
+**This is honest, not a "verified" badge.** stellar.expert's own "Build
+Verified" status reads [SEP-55](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0055.md)
+GitHub Attestations produced by the `stellar-expert/soroban-build-workflow`
+CI action, tied to a specific GitHub Actions run, not SEP-58's on-wasm
+`--meta` vocabulary directly (confirmed against Stellar Docs' own Contract
+Explorer page and the `soroban-build-workflow` repo, not assumed). This
+contract has neither a SEP-55 attestation nor embedded SEP-58 fields today;
+what's above is a manual, independently reproducible rebuild anyone can
+redo with the commands shown, not an explorer-displayed "verified" badge.
