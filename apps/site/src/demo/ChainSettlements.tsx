@@ -5,7 +5,7 @@ import { type Dictionary, format } from "@/i18n/dictionaries";
 import { accountUrl, contractUrl, txUrl } from "@/lib/links";
 import { AuthorizedVsCharged } from "./AuthorizedVsCharged";
 import type { ChainSettlement } from "./chain-settlements";
-import { ASSET_CONTRACT_ID } from "./contract";
+import { knownAssetCode } from "./contract";
 import {
   type ChainSettlementsState,
   POLL_INTERVAL_MS,
@@ -59,13 +59,15 @@ export function ChainSettlements({
   const dateFormat = new Intl.DateTimeFormat(intl, { dateStyle: "medium", timeStyle: "short" });
   const timeFormat = new Intl.DateTimeFormat(intl, { timeStyle: "medium" });
 
-  const amountProps = (settlement: ChainSettlement) =>
-    settlement.asset === ASSET_CONTRACT_ID
-      ? {}
-      : {
-          unit: format(t.baseUnitsOf, { asset: shorten(settlement.asset) }),
-          format: (units: bigint) => units.toString(),
-        };
+  /** The contract accepts any SEP-41 token; only PTEST and USDC have known decimals here, so others show raw base units. */
+  const amountProps = (settlement: ChainSettlement) => {
+    const code = knownAssetCode(settlement.asset);
+    if (code) return { unit: code };
+    return {
+      unit: format(t.baseUnitsOf, { asset: shorten(settlement.asset) }),
+      format: (units: bigint) => units.toString(),
+    };
+  };
 
   return (
     <section className="card" aria-labelledby="chain-title" aria-busy={loading}>

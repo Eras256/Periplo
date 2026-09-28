@@ -144,7 +144,7 @@
     "eyebrow": "Demo · UptoSettlement",
     "title": "Sign a ceiling. Pay only for what you use.",
     "lede": "With UptoSettlement, the buyer signs a maximum amount once. The facilitator then settles only the real usage on Stellar (tokens generated, seconds of access, rows returned) and the contract refunds the rest in the same transaction.",
-    "badgeTestAsset": "Test asset: {asset}",
+    "badgeTestAssets": "Test assets: PTEST and testnet USDC",
     "authorized": "Authorized (signed ceiling)",
     "charged": "Actually charged",
     "refunded": "Refunded to the buyer",
@@ -192,7 +192,8 @@
     "facts": {
       "contract": "UptoSettlement contract",
       "asset": "Asset ({asset})",
-      "disclaimer": "Everything on this page happens on Stellar testnet. {asset} is a test asset with no value. Periplo does not operate on mainnet yet."
+      "assetUsdc": "Asset (testnet USDC)",
+      "disclaimer": "Everything on this page happens on Stellar testnet. PTEST and testnet USDC are test assets with no value. Periplo does not operate on mainnet yet."
     }
   },
   "legal": {

@@ -144,7 +144,7 @@
     "eyebrow": "Demo · UptoSettlement",
     "title": "Autorizas un techo. Pagas solo lo que usas.",
     "lede": "Con UptoSettlement, quien compra firma un monto máximo una sola vez. Después, el facilitador liquida en Stellar únicamente el uso real (tokens generados, segundos de acceso, filas devueltas) y el contrato devuelve el resto en la misma transacción.",
-    "badgeTestAsset": "Activo de prueba: {asset}",
+    "badgeTestAssets": "Activos de prueba: PTEST y USDC de testnet",
     "authorized": "Autorizado (techo firmado)",
     "charged": "Cobrado de verdad",
     "refunded": "Devuelto al comprador",
@@ -192,7 +192,8 @@
     "facts": {
       "contract": "Contrato UptoSettlement",
       "asset": "Activo ({asset})",
-      "disclaimer": "Todo en esta página ocurre en Stellar testnet. {asset} es un activo de prueba sin valor. Periplo no opera en mainnet todavía."
+      "assetUsdc": "Activo (USDC de testnet)",
+      "disclaimer": "Todo en esta página ocurre en Stellar testnet. PTEST y el USDC de testnet son activos de prueba sin valor. Periplo no opera en mainnet todavía."
     }
   },
   "legal": {

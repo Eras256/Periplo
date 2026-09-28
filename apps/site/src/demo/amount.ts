@@ -1,4 +1,4 @@
-/** PTEST is a classic Stellar asset exposed through its SAC: 7 decimals, like every classic asset. */
+/** PTEST and testnet USDC are classic assets exposed through their SACs: 7 decimals, like every classic asset. */
 export const ASSET_DECIMALS = 7;
 const SCALE = 10n ** BigInt(ASSET_DECIMALS);
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Address, ChainSettlements } from "@/demo/ChainSettlements";
-import { ASSET_CODE, ASSET_CONTRACT_ID, UPTO_CONTRACT_ID } from "@/demo/contract";
+import { ASSET_CODE, ASSET_CONTRACT_ID, UPTO_CONTRACT_ID, USDC_CONTRACT_ID } from "@/demo/contract";
 import { Simulator } from "@/demo/Simulator";
 import { isLocale } from "@/i18n/config";
 import { format, getDictionary } from "@/i18n/dictionaries";
@@ -39,7 +39,7 @@ export default async function DemoPage({
         <p className="lede">{t.lede}</p>
         <p className="row">
           <span className="tag tag--accent">Stellar testnet</span>
-          <span className="tag">{format(t.badgeTestAsset, { asset: ASSET_CODE })}</span>
+          <span className="tag">{t.badgeTestAssets}</span>
         </p>
       </header>
       <div className="demo">
@@ -58,8 +58,14 @@ export default async function DemoPage({
               <Address id={ASSET_CONTRACT_ID} full />
             </dd>
           </div>
+          <div>
+            <dt>{t.facts.assetUsdc}</dt>
+            <dd>
+              <Address id={USDC_CONTRACT_ID} full />
+            </dd>
+          </div>
         </dl>
-        <p className="muted small">{format(t.facts.disclaimer, { asset: ASSET_CODE })}</p>
+        <p className="muted small">{t.facts.disclaimer}</p>
       </div>
     </div>
   );
