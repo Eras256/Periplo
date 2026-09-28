@@ -21,6 +21,38 @@ size, last settled transaction per network) has been live since
 2026-09-03, corrected here from an earlier "telemetry doesn't exist yet"
 claim that outran the real work.
 
+## Commit running in production
+
+The facilitator on `periplo-testnet` runs commit
+[`09ecfd8`](https://github.com/Eras256/Periplo/commit/09ecfd8bad00ac4ad6ea4d42ed28ec47dd0eae5c),
+Fly release `v20` (2026-09-27, CDMX evening), replacing `v19` (2026-09-11).
+It was built from a clean checkout of that exact commit with the command in
+`docs/DECENTRALIZATION.md`, no secrets or configuration changed. The code the
+image ships differs from `v19` only in comments, so the wire behaviour is
+unchanged: `GET /supported` is byte-identical before and after (`exact` on
+`stellar:testnet`, `areFeesSponsored: true`, the `bazaar` extension, the same
+four fee-payer accounts), and `upto` is still not advertised on this
+deployment.
+
+Checked after the deploy, not assumed: `GET /health` returns 200; a real
+`exact` settlement against `/demo/temperature-convert`
+([`4aec2ca9...`](https://stellar.expert/explorer/testnet/tx/4aec2ca95afaed11bb4cf5de21eebe05d247a4b9b60ead64acf4ae99cd95d75c))
+is `successful: true` on Horizon with the primary fee-sponsor as source
+account; the catalog holds the same three resources as before; and
+[periplo.xyz/es](https://periplo.xyz/es) and `/es/demo` render the live
+status and the settlements in a real browser. The four fee-payer accounts hold
+only native XLM on Horizon, which is what the boot-time non-custodial check
+(`apps/facilitator/src/boot-safety.ts`) enforces for every configured signer.
+
+`GET /status` restarts from zero on every deploy (uptime, request counts and
+last settled transaction are in memory only, see
+`apps/facilitator/src/telemetry.ts`), so its
+counters are not comparable across releases.
+
+Update this section on every redeploy. The commit that runs is not
+necessarily `HEAD` of `main`: a later commit that touches only `apps/site`
+or the docs does not change what the facilitator serves.
+
 ## Who pays, right now
 
 The project owner, during the build. There is no revenue: the
