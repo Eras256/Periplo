@@ -1,18 +1,51 @@
 {
-  "name": "@periplo/helpers",
-  "private": true,
-  "version": "0.0.0",
-  "description": "Seller/buyer helper libraries (spec §3 row 5): discovery metadata declaration for resource servers, a discover/pay/retry client for buyers.",
+  "name": "periplo",
+  "version": "0.1.0",
+  "description": "Client library for x402 payments on Stellar, focused on upto: sign a spending ceiling once, settle only the real usage.",
   "license": "Apache-2.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Eras256/Periplo.git",
+    "directory": "packages/helpers"
+  },
+  "homepage": "https://github.com/Eras256/Periplo/tree/main/packages/helpers#readme",
+  "bugs": {
+    "url": "https://github.com/Eras256/Periplo/issues"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
+    "@stellar/stellar-sdk": "16.3.0",
     "@x402/core": "2.22.0",
     "@x402/extensions": "2.22.0",
     "@x402/stellar": "2.22.0"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
   }
 }

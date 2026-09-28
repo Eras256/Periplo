@@ -60,14 +60,17 @@ import type {
 
 export class NoAcceptablePaymentOptionError extends Error {
   override readonly name = "NoAcceptablePaymentOptionError";
+  readonly code = "no_acceptable_payment_option";
 }
 
 export class NoDiscoverableResourceError extends Error {
   override readonly name = "NoDiscoverableResourceError";
+  readonly code = "no_discoverable_resource";
 }
 
 export class PaymentFailedError extends Error {
   override readonly name = "PaymentFailedError";
+  readonly code = "payment_failed";
   readonly status: number;
   constructor(message: string, status: number) {
     super(message);
@@ -77,6 +80,7 @@ export class PaymentFailedError extends Error {
 
 export class UnexpectedResponseError extends Error {
   override readonly name = "UnexpectedResponseError";
+  readonly code = "unexpected_response";
   readonly status: number;
   constructor(message: string, status: number) {
     super(message);
@@ -129,6 +133,17 @@ export interface PayAndFetchOptions {
    * a 5xx on the paid retry) is retried; a definitive rejection is not. */
   readonly maxAttempts?: number;
   readonly retryDelayMs?: number;
+  /**
+   * Picks which offered `PaymentRequirements` to pay, given the 402
+   * challenge's `accepts` and `payer.network`. Defaults to
+   * `selectExactStellarRequirement`, so existing `exact`-scheme callers
+   * are unaffected. Pass `selectUptoStellarRequirement` to pay an `upto`
+   * challenge with the same fetch/retry mechanics.
+   */
+  readonly selectRequirement?: (
+    accepts: readonly PaymentRequirements[],
+    network: string
+  ) => PaymentRequirements | undefined;
 }
 
 /** Picks the first Stellar `exact` payment option matching `network`.
@@ -168,10 +183,11 @@ export async function payAndFetch(
   const maxAttempts = options.maxAttempts ?? 1;
   const retryDelayMs = options.retryDelayMs ?? 0;
 
+  const selectRequirement = options.selectRequirement ?? selectExactStellarRequirement;
   let lastError: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await attemptPayAndFetch(resourceUrl, payer, fetchImpl);
+      return await attemptPayAndFetch(resourceUrl, payer, fetchImpl, selectRequirement);
     } catch (error) {
       lastError = error;
       const retryable =
@@ -194,7 +210,11 @@ export async function payAndFetch(
 async function attemptPayAndFetch(
   resourceUrl: string,
   payer: PaymentPayer,
-  fetchImpl: typeof fetch
+  fetchImpl: typeof fetch,
+  selectRequirement: (
+    accepts: readonly PaymentRequirements[],
+    network: string
+  ) => PaymentRequirements | undefined
 ): Promise<BuyerFetchResult> {
   const firstResponse = await fetchImpl(resourceUrl);
   if (firstResponse.status !== 402) {
@@ -215,10 +235,10 @@ async function attemptPayAndFetch(
     );
   }
   const paymentRequired = decodePaymentRequiredHeader(paymentRequiredHeader);
-  const requirements = selectExactStellarRequirement(paymentRequired.accepts, payer.network);
+  const requirements = selectRequirement(paymentRequired.accepts, payer.network);
   if (!requirements) {
     throw new NoAcceptablePaymentOptionError(
-      `${resourceUrl} offered no "exact" payment option for ${payer.network} ` +
+      `${resourceUrl} offered no acceptable payment option for ${payer.network} ` +
         `(offered: ${paymentRequired.accepts.map((a) => `${a.scheme}/${a.network}`).join(", ")})`
     );
   }
@@ -291,13 +311,19 @@ export async function searchBazaar(
   return (await response.json()) as SearchDiscoveryResourcesResponse;
 }
 
-/** The first search result carrying an `exact` option for `payer.network`,
- * in the order the facilitator ranked them. Pure given the response. */
+/** The first search result carrying a payable option for `payer.network`,
+ * in the order the facilitator ranked them. Pure given the response.
+ * Defaults to the `exact` scheme; pass `selectUptoStellarRequirement` to
+ * discover `upto`-payable resources instead. */
 export function selectPayableResource(
   results: SearchDiscoveryResourcesResponse,
-  network: string
+  network: string,
+  selectRequirement: (
+    accepts: readonly PaymentRequirements[],
+    network: string
+  ) => PaymentRequirements | undefined = selectExactStellarRequirement
 ): DiscoveryResource | undefined {
-  return results.resources.find((r) => selectExactStellarRequirement(r.accepts, network));
+  return results.resources.find((r) => selectRequirement(r.accepts, network));
 }
 
 /**
@@ -361,11 +387,12 @@ export async function discoverPayAndFetch(
   options: PayAndFetchOptions = {}
 ): Promise<BuyerFetchResult & { resource: DiscoveryResource }> {
   const fetchImpl = options.fetchImpl ?? fetch;
+  const selectRequirement = options.selectRequirement ?? selectExactStellarRequirement;
   const results = await searchBazaar(facilitatorBaseUrl, { query }, fetchImpl);
-  const resource = selectPayableResource(results, payer.network);
+  const resource = selectPayableResource(results, payer.network, selectRequirement);
   if (!resource) {
     throw new NoDiscoverableResourceError(
-      `No resource matching "${query}" at ${facilitatorBaseUrl} offers an "exact" ` +
+      `No resource matching "${query}" at ${facilitatorBaseUrl} offers an acceptable ` +
         `option for ${payer.network} (${results.resources.length} result(s) found)`
     );
   }

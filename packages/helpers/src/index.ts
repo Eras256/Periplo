@@ -25,3 +25,24 @@ export {
 } from "./paid-resource.js";
 
 export { createExactStellarPayer } from "./stellar-payer.js";
+
+export {
+  type CreateUptoStellarPayerOptions,
+  createUptoStellarPayer,
+  NoUptoPaymentOptionError,
+  SpendingCeilingExceededError,
+  selectUptoStellarRequirement,
+  UptoFacilitatorSignerUnavailableError,
+  UptoMainnetNotSupportedError,
+  UptoSimulationError,
+} from "./upto-payer.js";
+
+export {
+  buildUptoRequirements,
+  settleUptoUsage,
+  type UptoFacilitatorOptions,
+  type UptoRequirementConfig,
+  UptoSettlementExceedsCeilingError,
+  UptoSettlementFailedError,
+  verifyUptoPayment,
+} from "./upto-seller.js";

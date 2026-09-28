@@ -15,7 +15,7 @@
  *   node --env-file=apps/facilitator/.env apps/facilitator/scripts/buyer-helper-demo.ts
  */
 
-import { createExactStellarPayer, discoverPayAndFetch } from "@periplo/helpers";
+import { createExactStellarPayer, discoverPayAndFetch } from "periplo";
 
 const FACILITATOR_BASE_URL =
   process.env.DEMO_RESOURCE_BASE_URL ?? "https://periplo-testnet.fly.dev";
