@@ -29,9 +29,8 @@ includes `txHash` in each event.
 ## Contract and asset
 
 - UptoSettlement: `CA7OYVXWPSQHXNBWJQZ7TCKQILAVBHWDAPNRJTKY66LHR5K5LFXRV6TW`,
-  created at ledger 4905262 (tx `2b8084b4bc...`). An isolated deployment,
-  separate from `CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`
-  (the one `conformance/RESULTS.md` cites); the two must not share traffic.
+  created at ledger 4905262 (tx `2b8084b4bc...`), a dedicated deployment
+  for this demo.
 - Asset: `PTEST`, a classic testnet asset with no value, SAC
   `CCK2UCUDA2CYGBHIPURM6TIXZEHULBVIGPVB2UTP3R2LCIKB3O5P723X`. Settlements in
   any other SEP-41 token are shown in raw base units, since only PTEST's
