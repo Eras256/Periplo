@@ -1,0 +1,56 @@
+name: UptoSettlement containerized build (SEP-58)
+
+# Manual only, never on push or pull_request: this is a verification tool,
+# not part of the deploy pipeline, and must never touch ci.yml's own gate
+# or the Vercel deploy trigger.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  # docker.io/stellar/stellar-cli:26.1.0, amd64, single-arch manifest digest
+  # (not the multi-arch list digest), read from Docker Hub's own tag API.
+  BLDIMG: docker.io/stellar/stellar-cli@sha256:ccdebe3bd4af47e01f275c3da6caeb2752d02b06bc8bc1b3db534432498810c0
+  SOURCE_URI: https://github.com/Eras256/Periplo/releases/download/upto-settlement-source-7d13b59/upto-settlement-7d13b59.tar.gz
+  SOURCE_SHA256: bc889c1be2b930c887b9a43199ad2dcefd2528264bf011b864e32daee511e5a3
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve the pinned image's rust toolchain
+        run: |
+          RUSTUP_TOOLCHAIN=$(docker run --rm --entrypoint rustup "$BLDIMG" default | cut -d' ' -f1)
+          echo "RUSTUP_TOOLCHAIN=$RUSTUP_TOOLCHAIN" >> "$GITHUB_ENV"
+          echo "Resolved toolchain: $RUSTUP_TOOLCHAIN"
+
+      - name: Build inside the pinned container (SEP-58 Appendix A)
+        run: |
+          docker run --rm -v "$PWD:/source" -e RUSTUP_TOOLCHAIN "$BLDIMG" \
+            contract build \
+              --manifest-path=contracts/upto-settlement/Cargo.toml \
+              --optimize \
+              --meta bldimg="$BLDIMG" \
+              --meta bldopt=--manifest-path=contracts/upto-settlement/Cargo.toml \
+              --meta bldopt=--optimize \
+              --meta source_uri="$SOURCE_URI" \
+              --meta source_sha256="$SOURCE_SHA256"
+
+      - name: Hash the result
+        run: |
+          WASM=$(find target/wasm32v1-none/release -maxdepth 1 -name '*.wasm' ! -name '*.d' | head -1)
+          echo "WASM_PATH=$WASM" >> "$GITHUB_ENV"
+          echo "=== $WASM ==="
+          sha256sum "$WASM"
+
+      - name: Upload the wasm as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: upto-settlement-containerized-wasm
+          path: ${{ env.WASM_PATH }}
+          retention-days: 7
