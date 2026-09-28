@@ -281,6 +281,19 @@ code,
   flex: none;
 }
 
+.dot--ok {
+  color: var(--ok);
+}
+
+.wallet-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 /* ---------- Navbar ---------- */
 .nav {
   position: sticky;

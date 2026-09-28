@@ -7,7 +7,9 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { BrandLockup } from "./Logo";
+import { POLLAR_ENABLED } from "./PollarClientProvider";
 import { ThemeSelector } from "./ThemeSelector";
+import { WalletConnect } from "./WalletConnect";
 
 export function Navbar({ locale, t }: { readonly locale: Locale; readonly t: Dictionary["nav"] }) {
   const [open, setOpen] = useState(false);
@@ -71,6 +73,7 @@ export function Navbar({ locale, t }: { readonly locale: Locale; readonly t: Dic
           <div className="nav__desktop-only" style={{ gap: 8, alignItems: "center" }}>
             <LanguageSwitch locale={locale} label={t.language} />
             <ThemeSelector labels={themeLabels} />
+            {POLLAR_ENABLED ? <WalletConnect /> : null}
           </div>
           <Link href={`/${locale}/demo`} className="btn btn--sm">
             {t.launch}
@@ -113,6 +116,11 @@ export function Navbar({ locale, t }: { readonly locale: Locale; readonly t: Dic
           <LanguageSwitch locale={locale} label={t.language} />
           <ThemeSelector labels={themeLabels} />
         </div>
+        {POLLAR_ENABLED ? (
+          <div className="mobile-panel__row">
+            <WalletConnect />
+          </div>
+        ) : null}
         <Link href={`/${locale}/demo`} className="btn" onClick={() => setOpen(false)}>
           {t.launch}
         </Link>

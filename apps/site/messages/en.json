@@ -20,7 +20,10 @@
     "themeDark": "Dark",
     "themeSystem": "System",
     "home": "Periplo home",
-    "docs": "Docs"
+    "docs": "Docs",
+    "walletConnect": "Connect wallet",
+    "walletNotConnected": "Wallet: not connected",
+    "walletConnected": "Connected"
   },
   "hero": {
     "eyebrow": "x402 · Stellar testnet",

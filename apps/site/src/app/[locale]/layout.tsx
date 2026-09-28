@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
+import { PollarClientProvider } from "@/components/PollarClientProvider";
 import { THEME_BOOTSTRAP } from "@/components/ThemeSelector";
 import { isLocale, LOCALES } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
@@ -75,12 +76,14 @@ export default async function LocaleLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>
       <body>
-        <a className="skip-link" href="#main">
-          {t.nav.skip}
-        </a>
-        <Navbar locale={locale} t={t.nav} />
-        <main id="main">{children}</main>
-        <Footer locale={locale} t={t.footer} tagline={t.hero.lede} />
+        <PollarClientProvider>
+          <a className="skip-link" href="#main">
+            {t.nav.skip}
+          </a>
+          <Navbar locale={locale} t={t.nav} />
+          <main id="main">{children}</main>
+          <Footer locale={locale} t={t.footer} tagline={t.hero.lede} />
+        </PollarClientProvider>
       </body>
     </html>
   );

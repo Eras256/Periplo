@@ -20,7 +20,10 @@
     "themeDark": "Oscuro",
     "themeSystem": "Sistema",
     "home": "Inicio de Periplo",
-    "docs": "Docs"
+    "docs": "Docs",
+    "walletConnect": "Conectar wallet",
+    "walletNotConnected": "Wallet: no conectada",
+    "walletConnected": "Conectada"
   },
   "hero": {
     "eyebrow": "x402 · Stellar testnet",
