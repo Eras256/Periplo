@@ -74,7 +74,11 @@ function startMeteredServer(): Promise<{ server: http.Server; port: number }> {
       const rows = queryDataset(q, maxRows);
       res.setHeader("Content-Type", "application/json");
       res.end(
-        JSON.stringify({ rows, rowsReturned: rows.length, pricePerRowStroops: PRICE_PER_ROW_STROOPS.toString() })
+        JSON.stringify({
+          rows,
+          rowsReturned: rows.length,
+          pricePerRowStroops: PRICE_PER_ROW_STROOPS.toString(),
+        })
       );
     });
     server.listen(0, "127.0.0.1", () => {
