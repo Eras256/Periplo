@@ -10,10 +10,36 @@ import { formatAmount, parseAmount } from "./amount";
 import type { ChainSettlement } from "./chain-settlements";
 import { SIMULATION_ASSET_CODE } from "./contract";
 import { findReference, REFERENCE_SETTLEMENT_HASH } from "./reference";
-import { MAX_TOKENS } from "./settle-model";
+import { MAX_CEILING, MAX_TOKENS } from "./settle-model";
 import { PRICE_PER_TOKEN, sumUsage } from "./simulation";
 import { type RealSettlementPhase, useRealSettlement } from "./useRealSettlement";
 import { type SimulationPhase, useSimulation } from "./useSimulation";
+
+type ErrorKey = keyof Dictionary["demo"]["sim"]["real"]["errors"];
+
+/** Request-validation codes share one message; anything the page does not know falls back to "failed". */
+function errorKey(code: string): ErrorKey {
+  if (
+    code.startsWith("invalid_") ||
+    code === "ceiling_out_of_range" ||
+    code === "unsupported_network"
+  ) {
+    return "invalid";
+  }
+  return code in ERROR_KEYS ? (code as ErrorKey) : "failed";
+}
+
+const ERROR_KEYS: Readonly<Record<ErrorKey, true>> = {
+  rate_limited_visitor: true,
+  rate_limited_global: true,
+  demo_unavailable: true,
+  demo_unfunded: true,
+  busy: true,
+  unconfirmed: true,
+  failed: true,
+  network: true,
+  invalid: true,
+};
 
 function stepIndex(phase: SimulationPhase): number {
   return phase.step === "idle" ? 0 : phase.step === "metering" ? 1 : 2;
@@ -32,8 +58,13 @@ function CeilingForm({
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const ceiling = parseAmount(value);
-    if (ceiling === null || ceiling < PRICE_PER_TOKEN) {
-      setError(format(t.invalid, { min: formatAmount(PRICE_PER_TOKEN) }));
+    if (ceiling === null || ceiling < PRICE_PER_TOKEN || ceiling > MAX_CEILING) {
+      setError(
+        format(t.invalid, {
+          min: formatAmount(PRICE_PER_TOKEN),
+          max: formatAmount(MAX_CEILING),
+        })
+      );
       return;
     }
     setError(null);
@@ -92,6 +123,7 @@ function Metering({
   const declared = /^\d{1,7}$/.test(shownTokens) ? Number(shownTokens) : null;
   const tokensValid = declared !== null && declared <= MAX_TOKENS;
   const pending = real.status === "pending";
+  const ceilingTokens = Number(phase.ceiling / PRICE_PER_TOKEN);
 
   return (
     <div className="stack">
@@ -149,6 +181,24 @@ function Metering({
           aria-invalid={!tokensValid}
           aria-describedby="tokens-hint"
         />
+        <div className="row">
+          {(
+            [
+              [s.real.presets.zero, 0],
+              [s.real.presets.exact, ceilingTokens],
+              [s.real.presets.above, ceilingTokens * 2],
+            ] as const
+          ).map(([label, value]) => (
+            <button
+              key={label}
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => setTokensText(String(value))}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <p id="tokens-hint" className="muted small">
           {format(s.real.tokensHint, {
             price: `${formatAmount(PRICE_PER_TOKEN)} ${SIMULATION_ASSET_CODE}`,
@@ -335,9 +385,7 @@ export function Simulator({
             <>
               {real.phase.status === "failed" ? (
                 <p className="notice" role="alert">
-                  {s.real.errors[real.phase.code as keyof typeof s.real.errors] ??
-                    s.real.errors.failed}{" "}
-                  {s.real.fellBack}
+                  {s.real.errors[errorKey(real.phase.code)]} {s.real.fellBack}
                 </p>
               ) : null}
               <AuthorizedVsCharged

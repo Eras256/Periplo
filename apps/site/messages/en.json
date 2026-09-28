@@ -180,7 +180,7 @@
       "ceilingLabel": "Spending ceiling ({asset})",
       "authorize": "Authorize ceiling",
       "hint": "The buyer signs this maximum once. In the real flow it is an authorization signature over the contract. The simulation signs nothing; a real settlement is signed by the project's demo buyer, not by you.",
-      "invalid": "Enter an amount greater than {min} with up to 7 decimals.",
+      "invalid": "Enter an amount between {min} and {max} USDC with up to 7 decimals. The demo caps each real settlement at {max}.",
       "ceilingSummary": "Authorized ceiling: {ceiling}. Simulated rate: {price} per generated token.",
       "calls": "{calls} calls · {tokens} tokens",
       "reached": "Ceiling reached: the service stops answering calls. The contract never allows charging more than what was signed.",
@@ -197,10 +197,15 @@
         "transaction": "Transaction"
       },
       "real": {
+        "presets": {
+          "zero": "Use nothing (0)",
+          "exact": "Use exactly the ceiling",
+          "above": "Use more than the ceiling"
+        },
         "title": "Settle for real on testnet",
         "disclosure": "This is a real settlement on Stellar testnet. The buyer is a test account owned by the project that signs the ceiling on your behalf; you sign nothing in your browser. Testnet USDC has no value.",
         "tokensLabel": "Tokens used",
-        "tokensHint": "You choose the usage in this demo. The server prices it at {price} per token and never trusts an amount from your browser. If the usage costs more than the ceiling, the charge stops at the ceiling.",
+        "tokensHint": "You choose the usage in this demo. The server prices it at {price} per token and never trusts an amount from your browser. Enter 0 to use nothing: the whole ceiling goes back to the buyer. If the usage costs more than the ceiling, the charge stops at the ceiling.",
         "button": "Settle on testnet (real)",
         "pending": "Signing the ceiling with the demo buyer and waiting for the transaction to be confirmed on testnet. This can take up to a minute…",
         "settledTitle": "Settled on Stellar testnet",
@@ -212,6 +217,7 @@
         "seller": "Seller",
         "fellBack": "The real settlement did not complete, so this is the in-browser simulation (no transaction was sent). The evidence below is a real, earlier settlement.",
         "errors": {
+          "invalid": "The request was not valid: the ceiling must be between 0.00001 and 0.10 USDC, and the usage a whole number of tokens.",
           "rate_limited_visitor": "You have reached the daily limit of real settlements from your connection.",
           "rate_limited_global": "The demo has reached its daily limit of real settlements.",
           "demo_unavailable": "The real settlement is not available right now.",

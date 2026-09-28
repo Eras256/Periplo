@@ -180,7 +180,7 @@
       "ceilingLabel": "Techo de gasto ({asset})",
       "authorize": "Autorizar techo",
       "hint": "El comprador firma este máximo una sola vez. En el flujo real es una firma de autorización sobre el contrato. La simulación no firma nada; una liquidación real la firma el comprador de demo del proyecto, no tú.",
-      "invalid": "Escribe un monto mayor a {min} con hasta 7 decimales.",
+      "invalid": "Escribe un monto entre {min} y {max} USDC con hasta 7 decimales. El demo limita cada liquidación real a {max}.",
       "ceilingSummary": "Techo autorizado: {ceiling}. Tarifa simulada: {price} por token generado.",
       "calls": "{calls} llamadas · {tokens} tokens",
       "reached": "Techo alcanzado: el servicio deja de atender llamadas. El contrato nunca permite cobrar más de lo firmado.",
@@ -197,10 +197,15 @@
         "transaction": "Transacción"
       },
       "real": {
+        "presets": {
+          "zero": "No usar nada (0)",
+          "exact": "Usar justo el techo",
+          "above": "Usar más que el techo"
+        },
         "title": "Liquida de verdad en testnet",
         "disclosure": "Esta es una liquidación real en Stellar testnet. El comprador es una cuenta de prueba del proyecto que firma el techo por ti; tú no firmas nada en tu navegador. El USDC de testnet no tiene valor.",
         "tokensLabel": "Tokens usados",
-        "tokensHint": "En este demo tú eliges el uso. El servidor lo cotiza a {price} por token y nunca confía en un monto que venga de tu navegador. Si el uso cuesta más que el techo, el cobro se queda en el techo.",
+        "tokensHint": "En este demo tú eliges el uso. El servidor lo cotiza a {price} por token y nunca confía en un monto que venga de tu navegador. Escribe 0 para no usar nada: todo el techo regresa al comprador. Si el uso cuesta más que el techo, el cobro se queda en el techo.",
         "button": "Liquidar en testnet (real)",
         "pending": "Firmando el techo con el comprador del demo y esperando que la transacción se confirme en testnet. Puede tardar hasta un minuto…",
         "settledTitle": "Liquidado en Stellar testnet",
@@ -212,6 +217,7 @@
         "seller": "Vendedor",
         "fellBack": "La liquidación real no se completó, así que esto es la simulación en tu navegador (no se envió ninguna transacción). La evidencia de abajo es una liquidación real anterior.",
         "errors": {
+          "invalid": "La solicitud no fue válida: el techo debe estar entre 0.00001 y 0.10 USDC, y el uso ser un número entero de tokens.",
           "rate_limited_visitor": "Alcanzaste el límite diario de liquidaciones reales desde tu conexión.",
           "rate_limited_global": "El demo alcanzó su límite diario de liquidaciones reales.",
           "demo_unavailable": "La liquidación real no está disponible en este momento.",
