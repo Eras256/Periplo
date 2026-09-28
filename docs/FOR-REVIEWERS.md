@@ -17,9 +17,11 @@ you can check it yourself before reading another word.
 
 Two adjacent implementations in this same SCF #45 round chose to build on the
 `upto` payment spec this project opened upstream, rather than fork their
-own: [Rialto merged into the same spec file](https://github.com/x402-foundation/x402/pull/3134),
+own: [Rialto's design was incorporated into the same spec document](https://github.com/x402-foundation/x402/pull/3134),
 and [AutoLayer stated on the thread](https://github.com/x402-foundation/x402/pull/3098)
-that it "will not open a third competing spec PR." Read
+that it "will not open a third competing spec PR." (That is a change inside
+our PR, not an upstream merge: `#3098` and `#3134` are both still open
+against `x402-foundation/x402`, `merged: false` as of 2026-09-27.) Read
 [the "ecosystem is converging" section of README.md](../README.md#the-ecosystem-is-converging-on-this-spec-not-the-other-way-around)
 or the full [`docs/UPTO-CONVERGENCE.md`](UPTO-CONVERGENCE.md) devlog for
 the sourced, dated version.

@@ -55,9 +55,12 @@ rather than fork their own.
 - **Rialto** ([Iam0TI](https://github.com/Iam0TI), `0d1026/Rialto`)
   opened a competing design against the same spec file
   ([`#3134`](https://github.com/x402-foundation/x402/pull/3134), the
-  `stateless` profile). It was credited and merged into `#3098` as a
-  second named profile, not left as a rival PR for maintainers to
-  arbitrate between.
+  `stateless` profile). Its content was credited and incorporated into
+  `#3098`'s own spec document as a second named profile, not left as a
+  rival PR for maintainers to arbitrate between. That is a change inside
+  our PR, not an upstream merge: `#3098` and `#3134` are both still open
+  against `x402-foundation/x402` (`merged: false` on the GitHub API,
+  checked 2026-09-27), and neither is in its `main`.
 - **AutoLayer** (`autolayer-labs`) engaged the same `#3098` thread and
   said directly that it "will not open a third competing spec PR,"
   committing instead to implement whichever profile maintainers select
@@ -76,7 +79,7 @@ source](https://github.com/x402-foundation/x402/pull/3134#issuecomment-537378368
 (rail402, Rialto, openx402, LumenGate, and this project's contract via
 `#3098`) against a proposed reconciliation of the spec, and named this
 contract's own handling of nonce-TTL replay as one of the cases the
-merged spec should require every implementation to answer correctly.
+consolidated spec should require every implementation to answer correctly.
 It already does, verified live on testnet, not just asserted; full
 technical detail in [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md#independent-external-validation-of-the-replay-row-2026-08-21).
 This is the kind of evidence no competitor can manufacture: an
@@ -103,7 +106,7 @@ C-account payers, 7 of 7 tests passing), and bomanaps and
 [davedumto](https://github.com/x402-foundation/x402/pull/3134#issuecomment-5373783683)
 (a third independent reviewer who compared five real Stellar `upto`
 implementations in source) have since agreed on a concrete structure
-for the merged document. Full, sourced chronology in
+for the consolidated document (a proposal; `#3098` is still open). Full, sourced chronology in
 `docs/UPTO-CONVERGENCE.md`.
 
 Also responded on `#3098` itself to pedro-pelicioni's pricing-metadata
@@ -1271,8 +1274,8 @@ project's design, described below, and `stateless`, an alternative
 contributed by [Iam0TI](https://github.com/Iam0TI) via
 [0d1026/Rialto](https://github.com/0d1026/Rialto) and
 [x402-foundation/x402#3134](https://github.com/x402-foundation/x402/pull/3134),
-credited and merged into the same spec rather than left as a second,
-competing PR. The Soroban contract, `contracts/upto-settlement`, is
+credited and incorporated into the same spec PR (still open, not merged
+upstream) rather than left as a second, competing PR. The Soroban contract, `contracts/upto-settlement`, is
 built, tested, and deployed to `stellar:testnet`
 (`CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQFW`), with a real
 settled transaction recorded in

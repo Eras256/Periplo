@@ -554,7 +554,8 @@ PR directly instead of a local directory.
 
 **Deliberately not mirrored into this repo** (`spec/scheme_upto_stellar.md`
 does not exist here, and won't): the RFP deliverable is "merged upstream
-into the x402 package," so the PR itself is the evidence, not a local
+into the x402 package" (`#3098` is still open, not merged, as of
+2026-09-27), so the PR itself is the evidence, not a local
 copy. A duplicate invites drift (one copy updates, the other doesn't) and
 a fork of a spec that's actively being upstreamed reads oddly, the
 spec's place is upstream. The Soroban contract
@@ -1118,7 +1119,7 @@ spec language `#3098`'s prose was missing entirely (it was written in
 G-account terms only, even though the contract mechanism already worked
 for C-accounts). A comment was posted to `#3134` crediting the specific
 strengths found, raising the `autoRevoke` finding, and proposing the
-merged-spec outcome the author had already asked for. `#3098` was marked
+consolidated-spec outcome the author had already asked for. `#3098` was marked
 ready for review once this landed.
 
 ### x402-foundation/x402 requires signed commits. Nothing was configured for it in this environment
