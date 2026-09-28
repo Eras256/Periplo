@@ -6,13 +6,17 @@ import {
   type RecentSettlement,
   readBudget,
   readLimit,
-  visitorTag,
+  utcDay,
+  visitorTagForDay,
+  visitorTags,
   WINDOW_MS,
 } from "./limits";
 
 const NOW = Date.UTC(2026, 8, 28, 12, 0, 0);
-const A = visitorTag("203.0.113.7", "p".repeat(32));
-const B = visitorTag("198.51.100.9", "p".repeat(32));
+const PEPPER = "p".repeat(32);
+const A = visitorTagForDay("203.0.113.7", PEPPER, utcDay(NOW));
+const B = visitorTagForDay("198.51.100.9", PEPPER, utcDay(NOW));
+const A_YESTERDAY = visitorTagForDay("203.0.113.7", PEPPER, utcDay(NOW - 24 * 60 * 60 * 1000));
 const entry = (
   hash: string,
   ageMs: number,
@@ -25,17 +29,25 @@ const entry = (
   charged,
 });
 
-describe("visitorTag", () => {
-  it("is a stable 16-byte keyed tag that does not contain the address", () => {
-    expect(A).toMatch(/^[0-9a-f]{32}$/);
-    expect(visitorTag("203.0.113.7", "p".repeat(32))).toBe(A);
-    expect(visitorTag("203.0.113.7", "q".repeat(32))).not.toBe(A);
+describe("visitorTagForDay / visitorTags", () => {
+  it("is a stable, coarse 16-bit keyed tag that does not contain the address", () => {
+    expect(A).toMatch(/^[0-9a-f]{4}$/);
+    expect(visitorTagForDay("203.0.113.7", PEPPER, utcDay(NOW))).toBe(A);
+    expect(visitorTagForDay("203.0.113.7", "q".repeat(32), utcDay(NOW))).not.toBe(A);
     expect(A).not.toContain("203");
+  });
+
+  it("changes when the UTC day changes, for the same address and pepper", () => {
+    expect(A_YESTERDAY).not.toBe(A);
+  });
+
+  it("visitorTags returns today's tag first, then yesterday's", () => {
+    expect(visitorTags("203.0.113.7", PEPPER, NOW)).toEqual([A, A_YESTERDAY]);
   });
 });
 
 describe("checkLimits", () => {
-  const base = { tag: A, now: NOW, globalLimit: 5, visitorLimit: 2 };
+  const base = { tags: [A], now: NOW, globalLimit: 5, visitorLimit: 2 };
 
   it("allows a visitor under both caps", () => {
     expect(checkLimits({ ...base, recent: [entry("h1", 1000, A), entry("h2", 2000, B)] })).toEqual({
@@ -73,10 +85,17 @@ describe("checkLimits", () => {
     ];
     expect(checkLimits({ ...base, recent })).toEqual({ ok: true });
   });
+
+  it("still counts an entry tagged with yesterday's day-tag when checked with both tags", () => {
+    const recent = [entry("h1", 1000, A_YESTERDAY), entry("h2", 500, A_YESTERDAY)];
+    const verdict = checkLimits({ ...base, tags: [A, A_YESTERDAY], recent });
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.code).toBe("rate_limited_visitor");
+  });
 });
 
 describe("checkBudget", () => {
-  const base = { tag: A, now: NOW, visitorBudget: 1_000_000n, globalBudget: 3_000_000n };
+  const base = { tags: [A], now: NOW, visitorBudget: 1_000_000n, globalBudget: 3_000_000n };
 
   it("allows a charge that fits both budgets", () => {
     const recent = [entry("h1", 1000, A, 400_000n), entry("h2", 1000, B, 900_000n)];
@@ -117,6 +136,13 @@ describe("checkBudget", () => {
       code: "budget_visitor",
       retryAfterSeconds: WINDOW_MS / 1000,
     });
+  });
+
+  it("still counts yesterday's charges against the visitor's budget when checked with both tags", () => {
+    const recent = [entry("h1", 1000, A_YESTERDAY, 900_000n)];
+    const verdict = checkBudget({ ...base, tags: [A, A_YESTERDAY], recent, amount: 200_000n });
+    expect(verdict.ok).toBe(false);
+    if (!verdict.ok) expect(verdict.code).toBe("budget_visitor");
   });
 });
 

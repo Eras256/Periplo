@@ -174,7 +174,7 @@ export async function fetchRecentSettlements(config: DemoConfig): Promise<Recent
   }));
 }
 
-/** Reads the visitor tag back out of a settle transaction: the first 16 bytes of the signed nonce. */
+/** Reads the visitor tag back out of a settle transaction: the first 2 bytes (16 bits) of the signed nonce. */
 export function tagFromEnvelope(envelopeXdr: string): string | null {
   try {
     const envelope = xdr.TransactionEnvelope.fromXDR(envelopeXdr, "base64");
@@ -185,7 +185,7 @@ export function tagFromEnvelope(envelopeXdr: string): string | null {
       ?.find((entry) => entry.key().sym().toString() === "nonce")
       ?.val()
       .bytes();
-    return nonce && nonce.length === 32 ? nonce.subarray(0, 16).toString("hex") : null;
+    return nonce && nonce.length === 32 ? nonce.subarray(0, 2).toString("hex") : null;
   } catch {
     return null;
   }
@@ -247,7 +247,7 @@ async function buildSignedSettlement(
     maxAmount: request.ceiling,
     validAfterLedger: latest.sequence,
     deadlineLedger: validUntil,
-    nonce: Buffer.concat([Buffer.from(tag, "hex"), randomBytes(16)]),
+    nonce: Buffer.concat([Buffer.from(tag, "hex"), randomBytes(30)]),
     facilitator: config.submitter.publicKey(),
   });
   // `build()` advances the account's sequence, so every build starts from a fresh Account.

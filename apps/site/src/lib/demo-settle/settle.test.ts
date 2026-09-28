@@ -49,8 +49,8 @@ describe("authorizationScVal", () => {
 
 describe("tagFromEnvelope", () => {
   it("reads the visitor tag back out of a settle transaction's signed nonce", () => {
-    const tag = "ab".repeat(16);
-    const nonce = Buffer.concat([Buffer.from(tag, "hex"), Buffer.alloc(16, 9)]);
+    const tag = "ab12";
+    const nonce = Buffer.concat([Buffer.from(tag, "hex"), Buffer.alloc(30, 9)]);
     const tx = new TransactionBuilder(new Account(submitter.publicKey(), "1"), {
       fee: "100",
       networkPassphrase: Networks.TESTNET,

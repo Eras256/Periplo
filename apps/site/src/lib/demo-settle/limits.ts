@@ -15,7 +15,7 @@ export const MAX_BUDGET = 1_000_000_000n;
 export interface RecentSettlement {
   readonly hash: string;
   readonly createdAt: number;
-  /** 32 hex chars: the visitor tag carried in the first 16 bytes of the authorization nonce, or `null` when unreadable. */
+  /** 4 hex chars (16 bits): the day-scoped visitor tag carried in the authorization nonce, or `null` when unreadable. */
   readonly visitorTag: string | null;
   /** Base units actually charged (from the settled event); a submitted-but-unconfirmed attempt counts at its ceiling. */
   readonly charged: bigint;
@@ -29,13 +29,31 @@ export type LimitVerdict =
       readonly retryAfterSeconds: number;
     };
 
+/** `"YYYY-MM-DD"` in UTC: the tag's binding period, so it never outlives one day on-chain. */
+export function utcDay(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
 /**
- * Keyed, one-way tag for a visitor address (16 bytes as 32 hex chars): the address
- * itself is never stored or logged. Soroban transactions cannot carry a memo, so the
- * tag travels as the first half of the authorization nonce, which stays on the ledger.
+ * Keyed, one-way, day-scoped tag for a visitor address (16 bits, 4 hex chars): far too
+ * coarse to identify a visitor on its own, and it stops meaning anything once the day
+ * rolls over. The address itself is never stored or logged. Soroban transactions cannot
+ * carry a memo, so the tag travels as the first two bytes of the authorization nonce,
+ * which stays on the ledger.
  */
-export function visitorTag(address: string, pepper: string): string {
-  return createHmac("sha256", pepper).update(`visitor:${address}`).digest("hex").slice(0, 32);
+export function visitorTagForDay(address: string, pepper: string, day: string): string {
+  return createHmac("sha256", pepper).update(`${day}:visitor:${address}`).digest("hex").slice(0, 4);
+}
+
+/** Today's tag (for a new settlement's nonce) and yesterday's (a 24 h window can still hold entries tagged with it). */
+export function visitorTags(
+  address: string,
+  pepper: string,
+  now: number
+): readonly [string, string] {
+  const today = visitorTagForDay(address, pepper, utcDay(now));
+  const yesterday = visitorTagForDay(address, pepper, utcDay(now - 24 * 60 * 60 * 1000));
+  return [today, yesterday];
 }
 
 export function readLimit(raw: string | undefined, fallback: number, max: number): number {
@@ -50,7 +68,7 @@ export function readLimit(raw: string | undefined, fallback: number, max: number
  */
 export function checkLimits(input: {
   readonly recent: readonly RecentSettlement[];
-  readonly tag: string;
+  readonly tags: readonly string[];
   readonly now: number;
   readonly globalLimit: number;
   readonly visitorLimit: number;
@@ -64,7 +82,9 @@ export function checkLimits(input: {
     return Math.max(1, Math.ceil((at - input.now) / 1000));
   };
 
-  const mine = inWindow.filter((entry) => entry.visitorTag === input.tag);
+  const mine = inWindow.filter(
+    (entry) => entry.visitorTag !== null && input.tags.includes(entry.visitorTag)
+  );
   if (mine.length >= input.visitorLimit) {
     return {
       ok: false,
@@ -137,14 +157,16 @@ function budgetFits(
  */
 export function checkBudget(input: {
   readonly recent: readonly RecentSettlement[];
-  readonly tag: string;
+  readonly tags: readonly string[];
   readonly now: number;
   readonly amount: bigint;
   readonly visitorBudget: bigint;
   readonly globalBudget: bigint;
 }): BudgetVerdict {
   const inWindow = input.recent.filter((entry) => input.now - entry.createdAt < WINDOW_MS);
-  const mine = inWindow.filter((entry) => entry.visitorTag === input.tag);
+  const mine = inWindow.filter(
+    (entry) => entry.visitorTag !== null && input.tags.includes(entry.visitorTag)
+  );
   const visitor = budgetFits(mine, input.amount, input.visitorBudget, input.now);
   if (!visitor.fits) {
     return { ok: false, code: "budget_visitor", retryAfterSeconds: visitor.retryAfterSeconds };

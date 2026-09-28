@@ -11,7 +11,7 @@ import {
   type RecentSettlement,
   readBudget,
   readLimit,
-  visitorTag,
+  visitorTags,
 } from "@/lib/demo-settle/limits";
 import { createQueue, QueueFullError } from "@/lib/demo-settle/queue";
 import {
@@ -95,7 +95,9 @@ export async function POST(request: Request) {
     log("unavailable", { code: "pepper" });
     return fail("demo_unavailable");
   }
-  const tag = visitorTag(visitorAddress(request), pepper);
+  const now = Date.now();
+  const [tag, previousTag] = visitorTags(visitorAddress(request), pepper, now);
+  const tags = [tag, previousTag];
 
   try {
     return await queue.run(async () => {
@@ -112,7 +114,7 @@ export async function POST(request: Request) {
       }
       const verdict = checkLimits({
         recent,
-        tag,
+        tags,
         now: Date.now(),
         globalLimit: readLimit(
           process.env.DEMO_GLOBAL_DAILY_LIMIT,
@@ -132,7 +134,7 @@ export async function POST(request: Request) {
 
       const budget = checkBudget({
         recent,
-        tag,
+        tags,
         now: Date.now(),
         amount: computeCharge(parsed.value).actual,
         visitorBudget: readBudget(process.env.DEMO_VISITOR_DAILY_BUDGET, DEFAULT_VISITOR_BUDGET),
