@@ -47,7 +47,7 @@ jobs:
 
       - name: Hash the result
         run: |
-          WASM=$(find target/wasm32v1-none/release -maxdepth 1 -name '*.wasm' ! -name '*.d' | head -1)
+          WASM=$(find contracts/upto-settlement/target/wasm32v1-none/release -maxdepth 1 -name '*.wasm' | head -1)
           echo "WASM_PATH=$WASM" >> "$GITHUB_ENV"
           echo "=== $WASM ==="
           sha256sum "$WASM"
