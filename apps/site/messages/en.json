@@ -24,7 +24,7 @@
   "hero": {
     "eyebrow": "x402 · Stellar testnet",
     "title": "x402 payments on Stellar that charge only for what's used.",
-    "lede": "Periplo is an open-source x402 facilitator: in x402, the facilitator is the service that verifies and sends the payment the buyer signs. With upto, the buyer signs a spending ceiling once and only the real usage settles; the contract enforces the ceiling and its balance is zero after every settlement.",
+    "lede": "Periplo is an open-source, non-custodial x402 facilitator: in x402, the facilitator is the service that verifies and sends the payment the buyer signs. With upto, the buyer signs a spending ceiling once and only the real usage settles; the contract enforces the ceiling and its balance is zero after every settlement.",
     "uptoNote": "We're proposing upto for Stellar inside the x402 standard, so any facilitator can use it the same way (open PR,",
     "ctaLaunch": "Launch App",
     "ctaGithub": "View on GitHub",
