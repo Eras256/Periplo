@@ -1,0 +1,230 @@
+{
+  "meta": {
+    "title": "Periplo: non-custodial x402 facilitator for Stellar",
+    "description": "Periplo verifies and settles x402 payments on Stellar that buyers sign themselves, sponsoring only the network fee. Open source, Apache-2.0, testnet only.",
+    "ogAlt": "Periplo. Sign a ceiling. Pay only for what you use."
+  },
+  "nav": {
+    "skip": "Skip to content",
+    "how": "How it works",
+    "evidence": "Evidence",
+    "status": "Live status",
+    "upstream": "Upstream",
+    "openSource": "Open source",
+    "launch": "Launch App",
+    "menuOpen": "Open menu",
+    "menuClose": "Close menu",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "home": "Periplo home"
+  },
+  "hero": {
+    "eyebrow": "x402 · Stellar testnet",
+    "title": "x402 payments on Stellar that charge only for what's used.",
+    "lede": "Periplo is an open-source, non-custodial x402 facilitator. With upto, the buyer signs a spending ceiling once and only the real usage settles; the contract enforces the ceiling and never holds funds.",
+    "uptoNote": "We're proposing upto for Stellar inside the x402 standard, so any facilitator can use it the same way (open PR,",
+    "ctaLaunch": "Launch App",
+    "ctaGithub": "View on GitHub",
+    "testnetNote": "Testnet only. Periplo does not operate on mainnet yet."
+  },
+  "how": {
+    "title": "How it works",
+    "lede": "A service answers HTTP 402 with its price. The buyer signs a payment; Periplo checks it and submits it to Stellar. Two schemes cover two ways of charging.",
+    "exact": {
+      "title": "exact: a fixed price",
+      "steps": [
+        "The service asks for a fixed amount.",
+        "The buyer signs exactly that amount.",
+        "Periplo verifies it and settles that same amount."
+      ],
+      "note": "For requests with a known price, like one API call at a flat rate."
+    },
+    "upto": {
+      "title": "upto: pay for real usage",
+      "steps": [
+        "The buyer signs a spending ceiling once.",
+        "The service measures what was actually used.",
+        "Only the real amount is settled; the contract refunds the rest in the same transaction."
+      ],
+      "note": "For usage you only know afterwards: tokens generated, seconds of access, rows returned."
+    },
+    "diagramLabel": "Diagram comparing exact and upto settlement",
+    "signed": "signed",
+    "settled": "settled",
+    "refunded": "refunded",
+    "facts": {
+      "custodyTitle": "Non-custodial by construction",
+      "custodyText": "The facilitator only pays network fees. It refuses to start with a key that can move user funds, and it is never the source or signer of a buyer's payment.",
+      "discoveryTitle": "Discovery included",
+      "discoveryText": "Resources settled through Periplo can be cataloged so agents can find them by searching, not by knowing the URL in advance.",
+      "uptoTitle": "Where upto runs today",
+      "uptoText": "upto settles against the UptoSettlement contract on testnet. The public facilitator only advertises the schemes listed in its live status below."
+    },
+    "threatModel": "Read the threat model"
+  },
+  "evidence": {
+    "title": "Evidence on testnet",
+    "lede": "Real stellar:testnet transactions, each one linked to the block explorer so you can check it yourself.",
+    "viewTx": "View transaction",
+    "allResults": "All recorded results (conformance/RESULTS.md)"
+  },
+  "status": {
+    "title": "Facilitator live status",
+    "lede": "Read from the public deployment's /supported and /status endpoints when you open this page.",
+    "loading": "Contacting the facilitator…",
+    "error": "The facilitator did not respond. It may be restarting or unreachable right now.",
+    "retry": "Retry",
+    "network": "Network",
+    "schemes": "Advertised schemes",
+    "extensions": "Extensions",
+    "feePayers": "Fee-paying accounts",
+    "uptime": "Uptime since last restart",
+    "requests": "Requests served since last restart",
+    "errorRate": "Error rate",
+    "catalog": "Cataloged resources",
+    "lastSettlement": "Last settlement",
+    "none": "None since last restart",
+    "checkedAt": "Checked:",
+    "uptoMissing": "upto is not advertised by this deployment yet.",
+    "cacheNote": "Responses are cached for up to 30 seconds.",
+    "days": "d",
+    "hours": "h",
+    "minutes": "min"
+  },
+  "upstream": {
+    "title": "Upstream contributions",
+    "lede": "Bugs Periplo found and fixes it proposed in the libraries it builds on. The state of each one comes from the GitHub API, not from memory.",
+    "checkedAt": "State checked against the GitHub API on",
+    "prs": "Pull requests",
+    "issues": "Issues",
+    "states": {
+      "open": "Open",
+      "merged": "Merged",
+      "closed_unmerged": "Closed without merge",
+      "closed_completed": "Closed as resolved",
+      "closed_not_planned": "Closed as not planned"
+    },
+    "showMore": "Show {count} more"
+  },
+  "openSource": {
+    "title": "Open source",
+    "lede": "All of Periplo is public under Apache-2.0: the facilitator, the discovery catalog, the contracts and this site.",
+    "license": "License",
+    "repo": "Repository",
+    "docs": "Documentation",
+    "docLinks": {
+      "readme": "README",
+      "sellers": "Selling through Periplo",
+      "threatModel": "Threat model",
+      "interop": "Interoperability",
+      "uptoConvergence": "upto spec convergence"
+    }
+  },
+  "footer": {
+    "product": "Product",
+    "demo": "Demo",
+    "facilitator": "Facilitator (testnet)",
+    "docs": "Docs",
+    "openSource": "Open source",
+    "github": "GitHub",
+    "license": "Apache-2.0 license",
+    "legal": "Legal",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "disclaimers": "Disclaimers",
+    "security": "Security",
+    "copyright": "© 2026 Periplo contributors · Apache-2.0",
+    "independent": "Independent open-source project. Not affiliated with, endorsed by or sponsored by the Stellar Development Foundation.",
+    "testnetOnly": "Stellar testnet only. Periplo does not operate on mainnet yet."
+  },
+  "demo": {
+    "metaTitle": "UptoSettlement demo",
+    "metaDescription": "Real UptoSettlement settlements on Stellar testnet, and an in-browser simulation of the same flow.",
+    "eyebrow": "Demo · UptoSettlement",
+    "title": "Sign a ceiling. Pay only for what you use.",
+    "lede": "With UptoSettlement, the buyer signs a maximum amount once. The facilitator then settles only the real usage on Stellar (tokens generated, seconds of access, rows returned) and the contract refunds the rest in the same transaction.",
+    "badgeTestAssets": "Test assets: PTEST and testnet USDC",
+    "authorized": "Authorized (signed ceiling)",
+    "charged": "Actually charged",
+    "refunded": "Refunded to the buyer",
+    "unused": "Unused (would be refunded)",
+    "ofCeiling": "{percent}% of the ceiling",
+    "baseUnitsOf": "base units of {asset}",
+    "chain": {
+      "title": "Real settlements on testnet",
+      "tag": "On-chain data",
+      "lede": "settled events from the contract, read directly from the public Soroban RPC on testnet. The page checks again every {seconds} s while it is visible (periodic polling, not streaming). The RPC keeps about 7 days of events.",
+      "errorWithData": "Could not update: {error} Showing the last data retrieved.",
+      "errorNoData": "Could not read testnet: {error}",
+      "retry": "Retry",
+      "loading": "Querying testnet…",
+      "empty": "No settlements from this contract within the window the RPC keeps.",
+      "buyer": "Buyer",
+      "seller": "seller",
+      "transaction": "Transaction",
+      "lastChecked": "Last checked",
+      "updating": "updating…",
+      "errConnect": "Could not reach the Soroban RPC on testnet.",
+      "errStatus": "The testnet RPC answered {status}.",
+      "errRejected": "The testnet RPC rejected {method}: {detail}",
+      "errUnknown": "Could not read testnet."
+    },
+    "sim": {
+      "title": "Try it yourself",
+      "tag": "Simulation in your browser",
+      "lede": "Walk through the same flow with amounts generated locally. It sends no transactions and does not touch testnet; the real settlements are in the section above.",
+      "steps": ["Authorize a ceiling", "Metered usage", "Settlement"],
+      "ceilingLabel": "Spending ceiling ({asset})",
+      "authorize": "Authorize ceiling",
+      "hint": "The buyer signs this maximum once. In the real flow it is an authorization signature over the contract; nothing is signed here.",
+      "invalid": "Enter an amount greater than {min} with up to 7 decimals.",
+      "ceilingSummary": "Authorized ceiling: {ceiling}. Simulated rate: {price} per generated token.",
+      "calls": "{calls} calls · {tokens} tokens",
+      "reached": "Ceiling reached: the service stops answering calls. The contract never allows charging more than what was signed.",
+      "listLabel": "Metered calls, most recent first",
+      "waiting": "Waiting for the first call…",
+      "call": "Call #{id} · {tokens} tokens",
+      "settle": "Finish and settle only what was used",
+      "settledNote": "Simulated: no transaction was sent. On testnet, this same result is a single call to settle that transfers the charged amount to the seller and refunds the rest to the buyer in the same transaction.",
+      "again": "Try again"
+    },
+    "facts": {
+      "contract": "UptoSettlement contract",
+      "asset": "Asset ({asset})",
+      "assetUsdc": "Asset (testnet USDC)",
+      "disclaimer": "Everything on this page happens on Stellar testnet. PTEST and testnet USDC are test assets with no value. Periplo does not operate on mainnet yet."
+    }
+  },
+  "legal": {
+    "lastUpdated": "Last updated",
+    "notAdvice": "These pages describe how Periplo actually works. They have not been reviewed by a lawyer and are not legal advice.",
+    "docs": {
+      "terms": "Terms of use",
+      "privacy": "Privacy",
+      "disclaimers": "Disclaimers"
+    }
+  },
+  "security": {
+    "title": "Security",
+    "lede": "How to report a vulnerability in Periplo, and what the design already protects against.",
+    "reportTitle": "Reporting a vulnerability",
+    "reportText": "Report vulnerabilities privately through GitHub's private vulnerability reporting. Only the maintainers see the report until an advisory is published. Please do not open public issues with exploit details.",
+    "reportLink": "Report privately through GitHub",
+    "designTitle": "What the design protects against",
+    "design": [
+      "The facilitator refuses to start if its key could move user funds.",
+      "It is never the source, operation source or signer of a buyer's payment; it only pays the network fee.",
+      "With upto, the buyer's signature covers a ceiling, and the contract rejects any settlement above it.",
+      "Every rejected payment returns an explicit reason."
+    ],
+    "threatModel": "Full threat model"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "text": "This page does not exist.",
+    "home": "Go to the home page"
+  }
+}

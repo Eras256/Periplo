@@ -111,6 +111,8 @@ to `stellar:testnet` at `CAK3R734WLT4JU2XMQOJ6NIB3BWGPI442CH44EFJG5AORMXFE7G4MQF
 and `apps/upto-demo` (a static UptoSettlement page, built ahead of Phase 9 on
 purpose and kept out of `apps/hub`; it reads only the separate
 `CA7OYVXW...V6TW` deployment, never `CAK3R734...`; see `docs/DEFERRED.md`).
+`apps/site` is periplo.xyz (Next.js, `/en` and `/es`, demo at `/demo`), also
+outside Phase 9; see its README for why Next.js and what is pending before deploy.
 Planned, not built: `apps/hub`, `packages/mcp`, `spec/`, a `conformance/`
 runner, `examples/`. Do not create empty placeholder directories for phases
 that have not started (spec §12: no invented scope).

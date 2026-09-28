@@ -1,0 +1,230 @@
+{
+  "meta": {
+    "title": "Periplo: facilitador x402 no custodial para Stellar",
+    "description": "Periplo verifica y liquida pagos x402 en Stellar que el comprador firma, y solo patrocina la comisión de red. Código abierto, Apache-2.0, solo testnet.",
+    "ogAlt": "Periplo. Autorizas un techo. Pagas solo lo que usas."
+  },
+  "nav": {
+    "skip": "Saltar al contenido",
+    "how": "Cómo funciona",
+    "evidence": "Evidencia",
+    "status": "Estado en vivo",
+    "upstream": "Upstream",
+    "openSource": "Código abierto",
+    "launch": "Launch App",
+    "menuOpen": "Abrir menú",
+    "menuClose": "Cerrar menú",
+    "language": "Idioma",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "themeSystem": "Sistema",
+    "home": "Inicio de Periplo"
+  },
+  "hero": {
+    "eyebrow": "x402 · Stellar testnet",
+    "title": "Pagos x402 en Stellar que cobran solo lo que se usa.",
+    "lede": "Periplo es un facilitador x402 no custodial y de código abierto. Con upto, quien compra firma un techo de gasto una sola vez y solo se liquida el uso real; el contrato hace cumplir el techo y nunca guarda fondos.",
+    "uptoNote": "Estamos proponiendo upto para Stellar dentro del estándar x402, para que cualquier facilitador lo use igual (PR abierto,",
+    "ctaLaunch": "Launch App",
+    "ctaGithub": "Ver en GitHub",
+    "testnetNote": "Solo testnet. Periplo no opera en mainnet todavía."
+  },
+  "how": {
+    "title": "Cómo funciona",
+    "lede": "Un servicio responde HTTP 402 con su precio. El comprador firma un pago; Periplo lo verifica y lo envía a Stellar. Dos esquemas cubren dos formas de cobrar.",
+    "exact": {
+      "title": "exact: precio fijo",
+      "steps": [
+        "El servicio pide un monto fijo.",
+        "El comprador firma exactamente ese monto.",
+        "Periplo lo verifica y liquida ese mismo monto."
+      ],
+      "note": "Para solicitudes con precio conocido, como una llamada a una API con tarifa plana."
+    },
+    "upto": {
+      "title": "upto: pagar el uso real",
+      "steps": [
+        "El comprador firma un techo de gasto una sola vez.",
+        "El servicio mide lo que realmente se usó.",
+        "Solo se liquida el monto real; el contrato devuelve el resto en la misma transacción."
+      ],
+      "note": "Para uso que solo se conoce después: tokens generados, segundos de acceso, filas devueltas."
+    },
+    "diagramLabel": "Diagrama que compara la liquidación exact y upto",
+    "signed": "firmado",
+    "settled": "liquidado",
+    "refunded": "devuelto",
+    "facts": {
+      "custodyTitle": "No custodial por diseño",
+      "custodyText": "El facilitador solo paga comisiones de red. Se niega a arrancar con una llave que pueda mover fondos de usuarios, y nunca es origen ni firmante del pago de un comprador.",
+      "discoveryTitle": "Descubrimiento incluido",
+      "discoveryText": "Los recursos que se liquidan a través de Periplo pueden catalogarse para que los agentes los encuentren buscando, sin conocer la URL de antemano.",
+      "uptoTitle": "Dónde corre upto hoy",
+      "uptoText": "upto liquida contra el contrato UptoSettlement en testnet. El facilitador público solo anuncia los esquemas que aparecen en su estado en vivo, más abajo."
+    },
+    "threatModel": "Leer el modelo de amenazas"
+  },
+  "evidence": {
+    "title": "Evidencia en testnet",
+    "lede": "Transacciones reales de stellar:testnet, cada una enlazada al explorador de bloques para que la compruebes tú.",
+    "viewTx": "Ver transacción",
+    "allResults": "Todos los resultados registrados (conformance/RESULTS.md)"
+  },
+  "status": {
+    "title": "Estado en vivo del facilitador",
+    "lede": "Se lee de los endpoints /supported y /status del despliegue público cuando abres esta página.",
+    "loading": "Consultando al facilitador…",
+    "error": "El facilitador no respondió. Puede estar reiniciándose o no estar accesible en este momento.",
+    "retry": "Reintentar",
+    "network": "Red",
+    "schemes": "Esquemas anunciados",
+    "extensions": "Extensiones",
+    "feePayers": "Cuentas que pagan comisiones",
+    "uptime": "Tiempo activo desde el último reinicio",
+    "requests": "Solicitudes atendidas desde el último reinicio",
+    "errorRate": "Tasa de error",
+    "catalog": "Recursos catalogados",
+    "lastSettlement": "Última liquidación",
+    "none": "Ninguna desde el último reinicio",
+    "checkedAt": "Consultado:",
+    "uptoMissing": "Este despliegue todavía no anuncia upto.",
+    "cacheNote": "Las respuestas se guardan en caché hasta 30 segundos.",
+    "days": "d",
+    "hours": "h",
+    "minutes": "min"
+  },
+  "upstream": {
+    "title": "Contribuciones upstream",
+    "lede": "Errores que Periplo encontró y arreglos que propuso en las librerías sobre las que se construye. El estado de cada uno viene de la API de GitHub, no de memoria.",
+    "checkedAt": "Estado verificado contra la API de GitHub el",
+    "prs": "Pull requests",
+    "issues": "Issues",
+    "states": {
+      "open": "Abierto",
+      "merged": "Integrado",
+      "closed_unmerged": "Cerrado sin integrar",
+      "closed_completed": "Cerrado como resuelto",
+      "closed_not_planned": "Cerrado como no planeado"
+    },
+    "showMore": "Ver {count} más"
+  },
+  "openSource": {
+    "title": "Código abierto",
+    "lede": "Todo Periplo es público bajo Apache-2.0: el facilitador, el catálogo de descubrimiento, los contratos y este sitio.",
+    "license": "Licencia",
+    "repo": "Repositorio",
+    "docs": "Documentación",
+    "docLinks": {
+      "readme": "README",
+      "sellers": "Vender a través de Periplo",
+      "threatModel": "Modelo de amenazas",
+      "interop": "Interoperabilidad",
+      "uptoConvergence": "Convergencia de la especificación upto"
+    }
+  },
+  "footer": {
+    "product": "Producto",
+    "demo": "Demo",
+    "facilitator": "Facilitador (testnet)",
+    "docs": "Documentación",
+    "openSource": "Código abierto",
+    "github": "GitHub",
+    "license": "Licencia Apache-2.0",
+    "legal": "Legal",
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "disclaimers": "Avisos",
+    "security": "Seguridad",
+    "copyright": "© 2026 Colaboradores de Periplo · Apache-2.0",
+    "independent": "Proyecto independiente de código abierto. No está afiliado, respaldado ni patrocinado por la Stellar Development Foundation.",
+    "testnetOnly": "Solo Stellar testnet. Periplo no opera en mainnet todavía."
+  },
+  "demo": {
+    "metaTitle": "Demo de UptoSettlement",
+    "metaDescription": "Liquidaciones reales de UptoSettlement en Stellar testnet, y una simulación del mismo flujo en tu navegador.",
+    "eyebrow": "Demo · UptoSettlement",
+    "title": "Autorizas un techo. Pagas solo lo que usas.",
+    "lede": "Con UptoSettlement, quien compra firma un monto máximo una sola vez. Después, el facilitador liquida en Stellar únicamente el uso real (tokens generados, segundos de acceso, filas devueltas) y el contrato devuelve el resto en la misma transacción.",
+    "badgeTestAssets": "Activos de prueba: PTEST y USDC de testnet",
+    "authorized": "Autorizado (techo firmado)",
+    "charged": "Cobrado de verdad",
+    "refunded": "Devuelto al comprador",
+    "unused": "Sin usar (se devolvería)",
+    "ofCeiling": "{percent}% del techo",
+    "baseUnitsOf": "unidades base de {asset}",
+    "chain": {
+      "title": "Liquidaciones reales en testnet",
+      "tag": "Datos on-chain",
+      "lede": "Eventos settled del contrato, leídos directamente del RPC público de Soroban en testnet. La página vuelve a consultar cada {seconds} s mientras está visible (consulta periódica, no streaming). El RPC conserva unos 7 días de eventos.",
+      "errorWithData": "No se pudo actualizar: {error} Se muestran los últimos datos obtenidos.",
+      "errorNoData": "No se pudo leer testnet: {error}",
+      "retry": "Reintentar",
+      "loading": "Consultando testnet…",
+      "empty": "Todavía no hay liquidaciones de este contrato dentro de la ventana que conserva el RPC.",
+      "buyer": "Comprador",
+      "seller": "vendedor",
+      "transaction": "Transacción",
+      "lastChecked": "Última consulta",
+      "updating": "actualizando…",
+      "errConnect": "No se pudo conectar con el RPC de Soroban en testnet.",
+      "errStatus": "El RPC de testnet respondió {status}.",
+      "errRejected": "El RPC de testnet rechazó {method}: {detail}",
+      "errUnknown": "No se pudo leer testnet."
+    },
+    "sim": {
+      "title": "Pruébalo tú",
+      "tag": "Simulación en tu navegador",
+      "lede": "Recorre el mismo flujo con montos generados localmente. No envía transacciones ni toca testnet; las liquidaciones reales están en la sección de arriba.",
+      "steps": ["Autorizar un techo", "Uso medido", "Liquidación"],
+      "ceilingLabel": "Techo de gasto ({asset})",
+      "authorize": "Autorizar techo",
+      "hint": "El comprador firma este máximo una sola vez. En el flujo real es una firma de autorización sobre el contrato; aquí no se firma nada.",
+      "invalid": "Escribe un monto mayor a {min} con hasta 7 decimales.",
+      "ceilingSummary": "Techo autorizado: {ceiling}. Tarifa simulada: {price} por token generado.",
+      "calls": "{calls} llamadas · {tokens} tokens",
+      "reached": "Techo alcanzado: el servicio deja de atender llamadas. El contrato nunca permite cobrar más de lo firmado.",
+      "listLabel": "Llamadas medidas, la más reciente primero",
+      "waiting": "Esperando la primera llamada…",
+      "call": "Llamada #{id} · {tokens} tokens",
+      "settle": "Terminar y liquidar solo lo usado",
+      "settledNote": "Simulado: no se envió ninguna transacción. En testnet, este mismo resultado es una sola llamada a settle que transfiere lo cobrado al vendedor y devuelve el resto al comprador en la misma transacción.",
+      "again": "Probar de nuevo"
+    },
+    "facts": {
+      "contract": "Contrato UptoSettlement",
+      "asset": "Activo ({asset})",
+      "assetUsdc": "Activo (USDC de testnet)",
+      "disclaimer": "Todo en esta página ocurre en Stellar testnet. PTEST y el USDC de testnet son activos de prueba sin valor. Periplo no opera en mainnet todavía."
+    }
+  },
+  "legal": {
+    "lastUpdated": "Última actualización",
+    "notAdvice": "Estas páginas describen cómo funciona Periplo en realidad. No han sido revisadas por un abogado y no son asesoría legal.",
+    "docs": {
+      "terms": "Términos de uso",
+      "privacy": "Privacidad",
+      "disclaimers": "Avisos"
+    }
+  },
+  "security": {
+    "title": "Seguridad",
+    "lede": "Cómo reportar una vulnerabilidad en Periplo, y de qué protege ya el diseño.",
+    "reportTitle": "Reportar una vulnerabilidad",
+    "reportText": "Reporta vulnerabilidades en privado con el reporte privado de vulnerabilidades de GitHub. Solo los mantenedores ven el reporte hasta que se publique un aviso. Por favor no abras issues públicos con detalles de explotación.",
+    "reportLink": "Reportar en privado por GitHub",
+    "designTitle": "De qué protege el diseño",
+    "design": [
+      "El facilitador se niega a arrancar si su llave pudiera mover fondos de usuarios.",
+      "Nunca es origen, origen de operación ni firmante del pago de un comprador; solo paga la comisión de red.",
+      "Con upto, la firma del comprador cubre un techo, y el contrato rechaza cualquier liquidación por encima.",
+      "Cada pago rechazado devuelve un motivo explícito."
+    ],
+    "threatModel": "Modelo de amenazas completo"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "text": "Esta página no existe.",
+    "home": "Ir al inicio"
+  }
+}
