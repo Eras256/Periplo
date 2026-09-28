@@ -1,0 +1,5 @@
+{
+  "installCommand": "pnpm install --frozen-lockfile --filter @periplo/upto-demo...",
+  "buildCommand": "pnpm --filter @periplo/upto-demo build",
+  "outputDirectory": "apps/upto-demo/dist"
+}
