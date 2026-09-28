@@ -45,6 +45,18 @@ field (that identity is shared with other projects).
 `OpenZeppelin/stellar-contracts#840` is excluded on purpose: the
 maintainer showed the finding was wrong.
 
+## Brand assets
+
+`public/brand/logo-lockup-{dark,light}.svg`, `public/og.png` (the
+bilingual 1200x630 social banner), `src/app/icon.svg`, `favicon.ico` and
+`apple-icon.png` come unmodified from the Periplo branding pack
+(2026-09-27). The pack's colors are not to be changed, so the navbar and
+footer swap between the light and dark lockup files per theme instead of
+recoloring one, and the lockup is never shown below the pack's tested
+32 px minimum. The wordmark is Space Grotesk (SIL OFL 1.1) already
+converted to outlines in the SVGs: no font file ships with the site and
+nothing is added to the npm dependency graph.
+
 ## Commands
 
 ```

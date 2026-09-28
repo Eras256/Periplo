@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { LanguageSwitch } from "./LanguageSwitch";
-import { LogoMark } from "./Logo";
+import { BrandLockup } from "./Logo";
 import { ThemeSelector } from "./ThemeSelector";
 
 export function Navbar({ locale, t }: { readonly locale: Locale; readonly t: Dictionary["nav"] }) {
@@ -55,8 +55,7 @@ export function Navbar({ locale, t }: { readonly locale: Locale; readonly t: Dic
     <header className="nav">
       <div className="container nav__inner">
         <Link href={`/${locale}`} className="brand" aria-label={t.home}>
-          <LogoMark />
-          <span>periplo</span>
+          <BrandLockup />
         </Link>
 
         <ul className="nav__links">

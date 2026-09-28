@@ -1,7 +1,8 @@
 {
   "meta": {
     "title": "Periplo: non-custodial x402 facilitator for Stellar",
-    "description": "Periplo verifies and settles x402 payments on Stellar that buyers sign themselves, sponsoring only the network fee. Open source, Apache-2.0, testnet only."
+    "description": "Periplo verifies and settles x402 payments on Stellar that buyers sign themselves, sponsoring only the network fee. Open source, Apache-2.0, testnet only.",
+    "ogAlt": "Periplo. Sign a ceiling. Pay only for what you use."
   },
   "nav": {
     "skip": "Skip to content",

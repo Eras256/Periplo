@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { FACILITATOR_URL, LICENSE_URL, README_URL, REPO_URL } from "@/lib/links";
-import { LogoMark } from "./Logo";
+import { BrandLockup } from "./Logo";
 
 export function Footer({
   locale,
@@ -46,8 +46,7 @@ export function Footer({
         <div className="footer__grid">
           <div className="footer__brand">
             <Link href={`/${locale}`} className="brand">
-              <LogoMark />
-              <span>periplo</span>
+              <BrandLockup />
             </Link>
             <p>{tagline}</p>
           </div>

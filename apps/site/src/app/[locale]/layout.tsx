@@ -19,8 +19,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0a0d14" },
-    { media: "(prefers-color-scheme: light)", color: "#f6f5f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0f17" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f7fa" },
   ],
 };
 
@@ -45,8 +45,14 @@ export async function generateMetadata({
       locale: locale === "es" ? "es_MX" : "en_US",
       alternateLocale: locale === "es" ? ["en_US"] : ["es_MX"],
       url: `/${locale}`,
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: t.ogAlt }],
     },
-    twitter: { card: "summary_large_image", title: t.title, description: t.description },
+    twitter: {
+      card: "summary_large_image",
+      title: t.title,
+      description: t.description,
+      images: [{ url: "/og.png", alt: t.ogAlt }],
+    },
     robots: { index: true, follow: true },
   };
 }

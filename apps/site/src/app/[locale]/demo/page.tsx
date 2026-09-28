@@ -39,7 +39,7 @@ export default async function DemoPage({
         <p className="lede">{t.lede}</p>
         <p className="row">
           <span className="tag tag--accent">Stellar testnet</span>
-          <span className="tag">{t.badgeTestAssets}</span>
+          <span className="tag tag--wrap">{t.badgeTestAssets}</span>
         </p>
       </header>
       <div className="demo">

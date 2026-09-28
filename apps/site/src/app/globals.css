@@ -2,8 +2,8 @@
    they chose "system" (no data-theme) and their OS prefers light. */
 :root {
   color-scheme: dark;
-  --bg: #0a0d14;
-  --bg-2: #0e131d;
+  --bg: #0b0f17;
+  --bg-2: #0e131c;
   --surface: #121824;
   --surface-2: #0f141e;
   --border: #232b3d;
@@ -11,13 +11,13 @@
   --text: #e8ebf2;
   --muted: #a0a9bd;
   --faint: #7d879c;
-  --accent: #5ee6c8;
+  --accent: #4fe3c1;
   --accent-strong: #2fc4a3;
   --accent-ink: #04140f;
-  --accent-soft: rgba(94, 230, 200, 0.12);
+  --accent-soft: rgba(79, 227, 193, 0.12);
   --authorized: #56607a;
-  --charged: #5ee6c8;
-  --ok: #5ee6c8;
+  --charged: #4fe3c1;
+  --ok: #4fe3c1;
   --warn: #f2c46d;
   --error: #ff9b9b;
   --error-bg: #2a1616;
@@ -33,12 +33,12 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     color-scheme: light;
-    --bg: #f6f5f1;
-    --bg-2: #efede7;
+    --bg: #f5f7fa;
+    --bg-2: #eceff4;
     --surface: #ffffff;
-    --surface-2: #f3f2ee;
-    --border: #dcdad2;
-    --border-strong: #c2bfb4;
+    --surface-2: #eef1f5;
+    --border: #d9dee6;
+    --border-strong: #bcc4d0;
     --text: #131722;
     --muted: #4e5668;
     --faint: #6a7183;
@@ -47,7 +47,7 @@
     --accent-ink: #ffffff;
     --accent-soft: rgba(10, 125, 99, 0.1);
     --authorized: #c2c9d6;
-    --charged: #0f9d7c;
+    --charged: #0a8c74;
     --ok: #0a7d63;
     --warn: #8a5a00;
     --error: #a3231b;
@@ -60,12 +60,12 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f6f5f1;
-  --bg-2: #efede7;
+  --bg: #f5f7fa;
+  --bg-2: #eceff4;
   --surface: #ffffff;
-  --surface-2: #f3f2ee;
-  --border: #dcdad2;
-  --border-strong: #c2bfb4;
+  --surface-2: #eef1f5;
+  --border: #d9dee6;
+  --border-strong: #bcc4d0;
   --text: #131722;
   --muted: #4e5668;
   --faint: #6a7183;
@@ -74,7 +74,7 @@
   --accent-ink: #ffffff;
   --accent-soft: rgba(10, 125, 99, 0.1);
   --authorized: #c2c9d6;
-  --charged: #0f9d7c;
+  --charged: #0a8c74;
   --ok: #0a7d63;
   --warn: #8a5a00;
   --error: #a3231b;
@@ -1213,4 +1213,64 @@ input[aria-invalid="true"] {
     transition: none;
     animation: none;
   }
+}
+
+/* Brand lockup: exactly one variant visible for the active theme (dark is the base). */
+.brand-lockup {
+  display: block;
+  height: 32px; /* brand pack: full icon tested down to 32 px, not below */
+  width: auto;
+}
+
+.brand-lockup--on-light {
+  display: none;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .brand-lockup--on-dark {
+    display: none;
+  }
+
+  :root:not([data-theme="dark"]) .brand-lockup--on-light {
+    display: block;
+  }
+}
+
+:root[data-theme="light"] .brand-lockup--on-dark {
+  display: none;
+}
+
+:root[data-theme="light"] .brand-lockup--on-light {
+  display: block;
+}
+
+/* Small phones (320-360 px): keep the lockup at its 32 px brand minimum and tighten the bar around it instead. */
+@media (max-width: 360px) {
+  .nav__inner {
+    gap: 8px;
+  }
+
+  .nav__actions {
+    gap: 6px;
+  }
+
+  .nav .btn--sm {
+    padding: 0 10px;
+  }
+
+  .nav .icon-btn {
+    width: 36px;
+  }
+}
+
+/* Long labels (badges, secondary buttons) wrap on narrow screens instead of forcing horizontal scroll; the navbar keeps single-line buttons. */
+.btn {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  padding-block: 8px;
+}
+
+.nav .btn {
+  white-space: nowrap;
 }

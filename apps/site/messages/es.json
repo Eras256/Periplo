@@ -1,7 +1,8 @@
 {
   "meta": {
     "title": "Periplo: facilitador x402 no custodial para Stellar",
-    "description": "Periplo verifica y liquida pagos x402 en Stellar que el comprador firma, y solo patrocina la comisión de red. Código abierto, Apache-2.0, solo testnet."
+    "description": "Periplo verifica y liquida pagos x402 en Stellar que el comprador firma, y solo patrocina la comisión de red. Código abierto, Apache-2.0, solo testnet.",
+    "ogAlt": "Periplo. Autorizas un techo. Pagas solo lo que usas."
   },
   "nav": {
     "skip": "Saltar al contenido",

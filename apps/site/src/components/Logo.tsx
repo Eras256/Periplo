@@ -1,27 +1,29 @@
-/** A periplus is a coastal voyage log: a route between waypoints. */
-export function LogoMark({ size = 28 }: { readonly size?: number }) {
+/**
+ * The brand lockup from the Periplo branding pack (public/brand/), used as
+ * shipped: the pack asks for its colors not to be changed, so the site
+ * swaps between the light and dark files instead of recoloring one. CSS in
+ * globals.css shows exactly one of the two for the active theme.
+ */
+export function BrandLockup({ height = 32 }: { readonly height?: number }) {
+  const width = Math.round((height * 467.84) / 112.68);
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-      <rect
-        x="1"
-        y="1"
-        width="30"
-        height="30"
-        rx="8"
-        fill="none"
-        stroke="currentColor"
-        opacity="0.35"
+    <>
+      {/* biome-ignore lint/performance/noImgElement: static SVG from the brand pack; the site does not use next/image optimization */}
+      <img
+        className="brand-lockup brand-lockup--on-dark"
+        src="/brand/logo-lockup-dark.svg"
+        alt="Periplo"
+        width={width}
+        height={height}
       />
-      <path
-        d="M7 22c3-9 7-12 10-8s6 3 8-6"
-        fill="none"
-        stroke="var(--accent)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeDasharray="0.1 4.2"
+      {/* biome-ignore lint/performance/noImgElement: static SVG from the brand pack; the site does not use next/image optimization */}
+      <img
+        className="brand-lockup brand-lockup--on-light"
+        src="/brand/logo-lockup-light.svg"
+        alt="Periplo"
+        width={width}
+        height={height}
       />
-      <circle cx="7" cy="22" r="2.6" fill="var(--accent)" />
-      <circle cx="25" cy="8" r="2.6" fill="none" stroke="var(--accent)" strokeWidth="2" />
-    </svg>
+    </>
   );
 }
