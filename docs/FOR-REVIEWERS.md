@@ -96,6 +96,16 @@ closed without merging, in favor of the maintainer's own
 `Closes #1655` (approved 2026-09-24, not yet merged as of this update). The
 signature check above describes the state of the branch on 2026-09-01.
 
+**Update, 2026-10-02 (checked against the GitHub API that day):** #1747
+merged on 2026-09-28 and closed #1655 as completed. It shipped in
+[v17.2.0](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.0) (2026-09-28), as did
+[#1742](https://github.com/stellar/js-stellar-sdk/pull/1742),
+[#1743](https://github.com/stellar/js-stellar-sdk/pull/1743),
+[#1744](https://github.com/stellar/js-stellar-sdk/pull/1744) and
+[#1745](https://github.com/stellar/js-stellar-sdk/pull/1745); the latest
+release is now [v17.2.1](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.1) (2026-10-01). This supersedes "not yet merged"
+above.
+
 The same defect class recurred the same day in a different official SDK:
 `StellarCN/py-stellar-base`'s `authorize_entry()` silently invalidates an
 earlier CAP-71 delegate's signature when a later delegate signs with a
