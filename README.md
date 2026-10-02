@@ -827,6 +827,23 @@ thing.
   28 today, so the "no impact today" severity notes no longer hold. The
   history below is kept as it happened.
 
+  **Update, 2026-10-02 (checked against the GitHub API that day; this
+  supersedes "none of these fixes is in a published release" above):**
+  the fixes are released. [v17.2.0](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.0) (2026-09-28) contains
+  [#1742](https://github.com/stellar/js-stellar-sdk/pull/1742),
+  [#1743](https://github.com/stellar/js-stellar-sdk/pull/1743),
+  [#1744](https://github.com/stellar/js-stellar-sdk/pull/1744),
+  [#1745](https://github.com/stellar/js-stellar-sdk/pull/1745) and
+  [#1747](https://github.com/stellar/js-stellar-sdk/pull/1747) (each
+  merge commit is an ancestor of the `v17.2.0` tag, and none is in
+  `v17.1.0`). #1747 merged on 2026-09-28 and closed
+  [#1655](https://github.com/stellar/js-stellar-sdk/issues/1655) as
+  completed. The latest release is now [v17.2.1](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.1) (2026-10-01), whose
+  release notes list only asset-ordering and map-key-sorting fixes. The merged #1747 differs from the version described above:
+  `needsNonInvokerSigningBy()` always walks delegate trees, and the opt-out
+  is `ignoreContractDelegates` on `sign()` and `signAndSend()`. This repo pins
+  `@stellar/stellar-sdk` `16.3.0` and has not been re-run against `v17.2.0`.
+
   **Status then (2026-09-01, see the update above): fixed, not just
   filed.**
   [stellar/js-stellar-sdk#1672](https://github.com/stellar/js-stellar-sdk/pull/1672),

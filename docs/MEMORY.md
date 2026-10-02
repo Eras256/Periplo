@@ -1133,3 +1133,17 @@ workaround. `pnpm run ci` green, 257 tests.
 - Correction: the first reproduction of `#1655` used `G...` accounts, whose
   delegates are not consulted in protocol 27 (per `#1747`'s docs); only the
   `C...` variant applies.
+
+## 2026-10-02: js-stellar-sdk fixes are released
+
+- The 2026-09-26 entry above says none of the `stellar/js-stellar-sdk`
+  fixes was in a published release (latest `v17.1.0`). That is superseded.
+  [v17.2.0](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.0) (2026-09-28) contains `#1742`, `#1743`, `#1744`, `#1745` and
+  `#1747`, checked that day by comparing each merge commit against the
+  `v17.2.0` and `v17.1.0` tags. `#1747` merged 2026-09-28 and closed
+  `#1655`. The latest release is [v17.2.1](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.1) (2026-10-01); the `16.3.1` LTS
+  backport (2026-10-01) carries only an asset-ordering fix.
+- Not done: this repo pins `@stellar/stellar-sdk` `16.3.0` and was not
+  re-run against `v17.2.0`, so the
+  `multisig-signer-demo.ts` revisit in `docs/DEFERRED.md` is unblocked but
+  still open.

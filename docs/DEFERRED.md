@@ -2163,6 +2163,15 @@ merged 2026-09-24. No `@stellar/stellar-sdk` release contains them yet
 (latest `v17.1.0`, 2026-09-14; LTS `16.3.0`, 2026-08-28), so the
 revisit above still waits on a release.
 
+**Update, 2026-10-02 (checked against the GitHub API that day):** the
+release the revisit was waiting on exists. [v17.2.0](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.0) (2026-09-28) contains
+`#1743` and `#1744` (their merge commits are ancestors of the tag and not
+of `v17.1.0`); the latest release is now [v17.2.1](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.1) (2026-10-01). So the
+revisit of `multisig-signer-demo.ts` is unblocked, not done: it has not
+been re-run against `v17.2.0` (this repo pins `@stellar/stellar-sdk`
+`16.3.0`), and the LTS line (`16.3.1`, 2026-10-01)
+carries only an asset-ordering backport, not these fixes.
+
 ## A second real catalog resource: genuinely blocked, not attempted with a shortcut
 
 **Superseded 2026-08-26, see "`EXTENSION-RESPONSES` never reached a
@@ -2801,6 +2810,18 @@ entries in this file say CAP-71 is not live on any network, which was true
 when they were written. CAP-71's own header says protocol 27, and both
 `horizon.stellar.org` and `horizon-testnet.stellar.org` report protocol 28
 as of 2026-09-26, so those "no impact today" severity notes no longer hold.
+
+**Update, 2026-10-02 (checked against the GitHub API that day; this
+supersedes "`#1655` remains open pending #1747" and "none of these fixes is
+in a published release" above):** `#1747` merged on 2026-09-28 and closed
+`#1655` as completed. [v17.2.0](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.0) (2026-09-28) contains `#1742`, `#1745` and
+`#1747` (plus `#1743`/`#1744`, see the `#1681` entry above); each merge
+commit is an ancestor of the `v17.2.0` tag and none is in `v17.1.0`. The
+released `needsNonInvokerSigningBy()` has no `includeDelegates` option:
+it always walks delegate trees, so the "opt-in `includeDelegates`" shape
+described above did not ship, and `ignoreContractDelegates` on `sign()` and
+`signAndSend()` is the opt-out. The latest release is now [v17.2.1](https://github.com/stellar/js-stellar-sdk/releases/tag/v17.2.1)
+(2026-10-01).
 
 **Second, resuming the broader search this review had paused, the same
 defect class turned up independently, the same day, in a different
