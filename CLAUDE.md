@@ -268,6 +268,14 @@ Upstream issues and PRs cited in the docs are re-checked by the
   source is not the source. Before reporting a commit as pushed, `git fetch`
   and compare against `origin/<branch>`. Before citing or paraphrasing any
   external issue, PR or file, re-fetch it the same turn.
+- Work reaches `main` through a normal, non-draft pull request that the
+  project owner reviews and merges; never push a branch directly to `main`.
+  Confirmed 2026-09-27: a direct push was refused at the tool level, and
+  the owner's own correction afterward was explicit ("PR normal, nunca
+  push directo a main"). Commit on a feature branch, `git pull --rebase`
+  right before pushing if `main` may have moved, push the branch (not
+  `:main`), then `gh pr create` and report the URL; do not treat a
+  deadline as grounds to push directly instead of opening the PR in time.
 
 ## Environment notes specific to this machine
 
